@@ -1,0 +1,140 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  ADMIN
+  BRANCH_LEADER
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  ON_SITE
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PARTIAL
+  PAID
+}
+
+model Organization {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  branches  Branch[]
+  users     User[]
+  customers Customer[]
+}
+
+model Branch {
+  id             String          @id @default(uuid())
+  name           String
+  location       String?
+  organization   Organization    @relation(fields: [organizationId], references: [id])
+  organizationId String
+  users          User[]
+  technicians    Technician[]
+  bookings       Booking[]
+  inventoryItems InventoryItem[]
+}
+
+model User {
+  id             String       @id @default(uuid())
+  email          String       @unique
+  password       String
+  role           UserRole     @default(BRANCH_LEADER)
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+  branch         Branch?      @relation(fields: [branchId], references: [id])
+  branchId       String?
+}
+
+model Technician {
+  id       String    @id @default(uuid())
+  name     String
+  phone    String?
+  branch   Branch    @relation(fields: [branchId], references: [id])
+  branchId String
+  bookings Booking[]
+  isActive Boolean   @default(true)
+}
+
+model Customer {
+  id             String       @id @default(uuid())
+  name           String
+  phone          String
+  address        String?
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+  bookings       Booking[]
+}
+
+model Booking {
+  id          String        @id @default(uuid())
+  serviceType String // e.g., "Cleaning", "Repair", "Installation"
+  status      BookingStatus @default(PENDING)
+  scheduledAt DateTime
+
+  customer   Customer @relation(fields: [customerId], references: [id])
+  customerId String
+
+  branch   Branch @relation(fields: [branchId], references: [id])
+  branchId String
+
+  technician   Technician? @relation(fields: [technicianId], references: [id])
+  technicianId String?
+
+  invoice       Invoice?
+  inventoryUses InventoryTransaction[]
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+}
+
+model Invoice {
+  id            String        @id @default(uuid())
+  amount        Float // SQLite doesn't support Decimal, Float is fine for demo
+  paymentStatus PaymentStatus @default(UNPAID)
+  paymentMethod String? // "CASH", "E_WALLET", "BANK", "CHEQUE"
+
+  booking   Booking @relation(fields: [bookingId], references: [id])
+  bookingId String  @unique
+
+  issuedAt DateTime  @default(now())
+  paidAt   DateTime?
+}
+
+/// Basic inventory item at a branch (parts, supplies, etc.)
+model InventoryItem {
+  id       String  @id @default(uuid())
+  name     String
+  sku      String? @unique
+  branch   Branch  @relation(fields: [branchId], references: [id])
+  branchId String
+  quantity Int     @default(0)
+  unitCost Float? // Optional estimated cost per unit for reporting
+
+  transactions InventoryTransaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Transaction log for inventory movements (usage, restock, adjustments)
+model InventoryTransaction {
+  id          String        @id @default(uuid())
+  item        InventoryItem @relation(fields: [itemId], references: [id])
+  itemId      String
+  booking     Booking?      @relation(fields: [bookingId], references: [id])
+  bookingId   String?
+  change      Int // positive = stock in, negative = stock out
+  description String?
+  createdAt   DateTime      @default(now())
+}

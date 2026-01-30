@@ -1,0 +1,8 @@
+# Ignore files that might confuse Railway
+docker-compose.yml
+frontend/
+node_modules/
+.git/
+.env
+*.md
+!RAILWAY_DEPLOYMENT.md
