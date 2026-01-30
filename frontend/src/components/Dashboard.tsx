@@ -79,8 +79,8 @@ const Dashboard = () => {
     // STATISTICS CALCULATION
     const stats = [
         { name: 'Active Bookings', value: bookings.filter(b => b.status !== 'COMPLETED' && b.status !== 'CANCELLED').length, icon: Clock, color: 'text-blue-600', bg: 'bg-blue-50' },
+        { name: 'Pending Dispatch', value: bookings.filter(b => !b.technicianId && b.status !== 'CANCELLED').length, icon: AlertCircle, color: 'text-rose-600', bg: 'bg-rose-50' },
         { name: 'Completed Total', value: bookings.filter(b => b.status === 'COMPLETED').length, icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-        { name: 'Pending Review', value: bookings.filter(b => b.status === 'PENDING').length, icon: AlertCircle, color: 'text-amber-600', bg: 'bg-amber-50' },
     ];
 
     const statusColors: Record<BookingStatus, string> = {
@@ -90,6 +90,14 @@ const Dashboard = () => {
         COMPLETED: 'bg-emerald-100 text-emerald-700 border-emerald-200',
         CANCELLED: 'bg-slate-100 text-slate-700 border-slate-200',
     };
+
+    const [dispatchOnly, setDispatchOnly] = useState(false);
+
+    const filteredBookings = bookings.filter(b => {
+        if (dispatchOnly) return !b.technicianId && b.status !== 'CANCELLED';
+        if (filterStatus === 'ALL') return true;
+        return b.status === filterStatus;
+    });
 
     return (
         <div className="animate-in fade-in duration-700">
@@ -101,6 +109,13 @@ const Dashboard = () => {
                 </div>
 
                 <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setDispatchOnly(!dispatchOnly)}
+                        className={`flex items-center gap-2 px-4 py-2 text-xs font-black uppercase tracking-tighter rounded-xl border transition-all ${dispatchOnly ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-300'}`}
+                    >
+                        <AlertCircle className="w-4 h-4" />
+                        {dispatchOnly ? 'Showing Unassigned' : 'Dispatch List'}
+                    </button>
                     <button
                         onClick={() => { setSelectedBooking(null); setIsBookingModalOpen(true); }}
                         className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-200 transition-all active:scale-95"
@@ -114,7 +129,11 @@ const Dashboard = () => {
             {/* STATS GRID */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
                 {stats.map((stat) => (
-                    <div key={stat.name} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-start gap-4 hover:shadow-md transition-shadow">
+                    <div
+                        key={stat.name}
+                        onClick={() => { if (stat.name === 'Pending Dispatch') setDispatchOnly(true); else setDispatchOnly(false); }}
+                        className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-start gap-4 hover:shadow-md transition-shadow cursor-pointer"
+                    >
                         <div className={`p-3 rounded-xl ${stat.bg}`}>
                             <stat.icon className={`w-6 h-6 ${stat.color}`} />
                         </div>
@@ -125,6 +144,23 @@ const Dashboard = () => {
                     </div>
                 ))}
             </div>
+
+            {/* FILTERS */}
+            {!dispatchOnly && (
+                <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
+                    {['ALL', ...Object.keys(statusColors)].map((status) => (
+                        <button
+                            key={status}
+                            onClick={() => setFilterStatus(status as any)}
+                            className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all whitespace-nowrap ${filterStatus === status
+                                ? 'bg-slate-900 text-white border-slate-900 shadow-md shadow-slate-200'
+                                : 'bg-white text-slate-400 border-slate-100 hover:border-slate-300'}`}
+                        >
+                            {status.replace('_', ' ')}
+                        </button>
+                    ))}
+                </div>
+            )}
 
             {/* BOOKINGS TABLE */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
@@ -140,17 +176,17 @@ const Dashboard = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {bookings.length === 0 ? (
+                            {filteredBookings.length === 0 ? (
                                 <tr>
                                     <td colSpan={5} className="px-6 py-20 text-center">
                                         <div className="flex flex-col items-center gap-2 opacity-30">
                                             <Calendar className="w-12 h-12" />
-                                            <p className="text-slate-600 font-medium">No bookings found in this branch.</p>
+                                            <p className="text-slate-600 font-medium">No bookings found {dispatchOnly ? 'matching dispatch criteria' : 'in this branch'}.</p>
                                         </div>
                                     </td>
                                 </tr>
                             ) : (
-                                bookings.map((booking) => (
+                                filteredBookings.map((booking) => (
                                     <tr key={booking.id} className="group hover:bg-blue-50/30 transition-colors">
                                         <td className="px-6 py-5">
                                             <div className="flex flex-col">

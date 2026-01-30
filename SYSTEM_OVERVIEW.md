@@ -17,23 +17,26 @@ The system is designed as a **Multi-Tenant** application.
 
 ## 📅 The Booking Workflow
 
-The booking process is the heart of the system. It follows a specific lifecycle:
+The booking process focused on streamlined customer discovery and flexible assignment.
 
-### 1. Creation (Internal or Public)
-- **Internal**: Staff create bookings for existing or new customers via the Dashboard.
-- **Public**: Potential customers use a public form (`PublicBooking.tsx`) to submit requests. The system automatically creates a `Customer` record (if the phone number is new) and links it to the selected `Branch`.
+### 1. Customer Discovery (Search or Create)
+- **Action**: Staff starts by searching for a Customer by **Name** or **Phone**.
+- **Existing**: If found, details (Name, Phone, Address) are auto-filled.
+- **New**: If not found, a new customer record is created inline with fields: Name, Phone, and Address.
+- **Goal**: Every booking is linked to a unique `Customer ID` for history tracking.
 
-### 2. Status Lifecycle
-Bookings move through the following enum-driven states:
-- `PENDING`: Newly created request.
-- `CONFIRMED`: Staff has scheduled the job.
-- `ON_SITE`: Technician has arrived at the customer's location.
-- `COMPLETED`: Job finished (requires an invoice to be created first - *Billing Guard*).
-- `CANCELLED`: Job aborted.
+### 2. Booking Details (The Job)
+- **Schedule**: Date of service selected via calendar.
+- **Service Type**: Selected from a dropdown: `Cleaning`, `Repair`, or `Maintenance`.
+- **Branch**: 
+  - Admins can select any branch.
+  - Branch Leaders are auto-filled and locked to their specific branch.
+- **Status**: Default state is `PENDING`.
 
-### 3. Technician Assignment
-- Bookings are assigned to a `Technician` (linked to a specific branch).
-- Only staff can assign technicians.
+### 3. Assignment (Flexible Scheduling)
+- **Default**: "Assign Later".
+- **Logic**: Bookings can be saved without a Technician.
+- **Management**: Admins/Leaders can visit a "Pending Dispatch" list later to assign a specific Technician once availability is confirmed.
 
 ---
 
