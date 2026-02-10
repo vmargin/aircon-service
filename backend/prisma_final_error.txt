@@ -1,0 +1,3 @@
+﻿Prisma schema loaded from prisma\schema.prisma
+Datasource "db": PostgreSQL database "postgres", schema "public" at "db.vawxkkeodnqyrzqvedsn.supabase.co:6543"
+
