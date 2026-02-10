@@ -35,10 +35,6 @@ app.get('/api/public/branches', getPublicBranches);
 app.post('/api/public/bookings', createPublicBooking);
 
 // Health & Root
-app.get('/', (req, res) => {
-    res.json({ message: "Aircon Service API - Running" });
-});
-
 app.get('/api/health', (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
