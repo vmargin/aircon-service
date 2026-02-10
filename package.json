@@ -1,0 +1,25 @@
+{
+    "name": "aircon-service-root",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "build": "npm run build --prefix frontend",
+        "postinstall": "npm install --prefix backend && npm install --prefix frontend"
+    },
+    "dependencies": {
+        "@prisma/client": "^6.19.1",
+        "bcryptjs": "^3.0.3",
+        "cors": "^2.8.5",
+        "dotenv": "^17.2.3",
+        "express": "^5.2.1",
+        "jsonwebtoken": "^9.0.3",
+        "pg": "^8.16.3",
+        "prisma": "^6.19.1",
+        "qrcode": "^1.5.4",
+        "uuid": "^13.0.0"
+    },
+    "devDependencies": {
+        "typescript": "^5.9.3",
+        "@types/node": "^25.0.10"
+    }
+}
