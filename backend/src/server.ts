@@ -5,8 +5,7 @@ import { login } from './controllers/authController';
 import { getBookings, createBooking, updateBooking } from './controllers/bookingController';
 import { getInvoices, createInvoice, updatePaymentStatus } from './controllers/invoiceController';
 import { getCustomers, createCustomer } from './controllers/customerController';
-import { getTechnicians, getBranches } from './controllers/technicianController';
-import { getInventory, createInventoryItem, getInventoryTransactions, createInventoryTransaction } from './controllers/inventoryController';
+import { getTechnicians, createTechnician, updateTechnician, deleteTechnician, getBranches } from './controllers/technicianController';
 import { getPublicBranches, createPublicBooking } from './controllers/publicController';
 import authenticate from './middleware/auth';
 
@@ -51,13 +50,10 @@ app.post('/api/customers', authenticate, createCustomer);
 
 // Technician & Branch Routes
 app.get('/api/technicians', authenticate, getTechnicians);
+app.post('/api/technicians', authenticate, createTechnician);
+app.patch('/api/technicians/:id', authenticate, updateTechnician);
+app.delete('/api/technicians/:id', authenticate, deleteTechnician);
 app.get('/api/branches', authenticate, getBranches);
-
-// Inventory Routes
-app.get('/api/inventory', authenticate, getInventory);
-app.post('/api/inventory', authenticate, createInventoryItem);
-app.get('/api/inventory/transactions', authenticate, getInventoryTransactions);
-app.post('/api/inventory/transactions', authenticate, createInventoryTransaction);
 
 // SERVER INIT
 const PORT = process.env.PORT || 5000;

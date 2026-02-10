@@ -23,9 +23,10 @@ const Customers = () => {
         },
     });
 
-    const filteredCustomers = customers.filter(c =>
-        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.phone.includes(searchTerm)
+    const safeCustomers = Array.isArray(customers) ? customers : [];
+    const filteredCustomers = safeCustomers.filter(c =>
+        c && (c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            c.phone.includes(searchTerm))
     );
 
     if (isLoading) return <div className="p-10 text-center animate-pulse">Syncing client database...</div>;

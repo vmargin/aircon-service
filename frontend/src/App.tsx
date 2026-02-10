@@ -8,23 +8,30 @@ import {
     Settings,
     Bell,
     BarChart3,
-    Package2
+    ChevronRight
 } from 'lucide-react';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import Financials from './components/Financials';
 import Customers from './components/Customers';
 import Reports from './components/Reports';
-import Inventory from './components/Inventory';
+import Technicians from './components/Technicians';
 import type { User } from './types';
 
 function App() {
     const [user, setUser] = useState<User | null>(null);
-    const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'FINANCIALS' | 'CUSTOMERS' | 'INVENTORY' | 'REPORTS'>('DASHBOARD');
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'financials' | 'customers' | 'reports' | 'technicians'>('dashboard');
 
     useEffect(() => {
         const savedUser = localStorage.getItem('user');
-        if (savedUser) setUser(JSON.parse(savedUser));
+        if (savedUser) {
+            try {
+                setUser(JSON.parse(savedUser));
+            } catch (e) {
+                console.error("Failed to parse user from localStorage", e);
+                localStorage.removeItem('user');
+            }
+        }
     }, []);
 
     const handleLogout = () => {
@@ -38,11 +45,11 @@ function App() {
     }
 
     const navItems = [
-        { id: 'DASHBOARD', label: 'Bookings', icon: LayoutDashboard },
-        { id: 'FINANCIALS', label: 'Financials', icon: DollarSign },
-        { id: 'CUSTOMERS', label: 'Customers', icon: Users },
-        { id: 'INVENTORY', label: 'Inventory', icon: Package2 },
-        { id: 'REPORTS', label: 'Reports', icon: BarChart3 },
+        { id: 'dashboard', label: 'Bookings', icon: LayoutDashboard },
+        { id: 'financials', label: 'Financials', icon: DollarSign },
+        { id: 'customers', label: 'Customers', icon: Users },
+        { id: 'technicians', label: 'Technicians', icon: UserIcon },
+        { id: 'reports', label: 'Reports', icon: BarChart3 },
     ] as const;
 
     return (
@@ -65,8 +72,8 @@ function App() {
                             key={item.id}
                             onClick={() => setActiveTab(item.id)}
                             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all group ${activeTab === item.id
-                                    ? 'bg-blue-50 text-blue-600 shadow-sm'
-                                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                                ? 'bg-blue-50 text-blue-600 shadow-sm'
+                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
                                 }`}
                         >
                             <item.icon className={`w-5 h-5 ${activeTab === item.id ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
@@ -119,21 +126,15 @@ function App() {
             {/* MAIN CONTENT */}
             <main className="lg:pl-64 pt-8 pb-12">
                 <div className="px-8 max-w-7xl mx-auto">
-                    {activeTab === 'DASHBOARD' && <Dashboard />}
-                    {activeTab === 'FINANCIALS' && <Financials />}
-                    {activeTab === 'CUSTOMERS' && <Customers />}
-                    {activeTab === 'INVENTORY' && <Inventory />}
-                    {activeTab === 'REPORTS' && <Reports />}
+                    {activeTab === 'dashboard' && <Dashboard />}
+                    {activeTab === 'financials' && <Financials />}
+                    {activeTab === 'customers' && <Customers />}
+                    {activeTab === 'reports' && <Reports />}
+                    {activeTab === 'technicians' && <Technicians />}
                 </div>
             </main>
         </div>
     );
 }
-
-const ChevronRight = ({ className }: { className: string }) => (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-    </svg>
-);
 
 export default App;

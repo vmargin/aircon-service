@@ -8,7 +8,7 @@ const publicBookingSchema = z.object({
     address: z.string().optional(),
     serviceType: z.string().min(1),
     scheduledAt: z.string().datetime(),
-    branchId: z.string().uuid(),
+    branchId: z.string().min(1),
 });
 
 export const getPublicBranches = async (_req: Request, res: Response) => {

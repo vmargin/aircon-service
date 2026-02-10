@@ -43,7 +43,6 @@ model Branch {
   users          User[]
   technicians    Technician[]
   bookings       Booking[]
-  inventoryItems InventoryItem[]
 }
 
 model User {
@@ -93,7 +92,6 @@ model Booking {
   technicianId String?
 
   invoice       Invoice?
-  inventoryUses InventoryTransaction[]
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
 }
@@ -111,30 +109,3 @@ model Invoice {
   paidAt   DateTime?
 }
 
-/// Basic inventory item at a branch (parts, supplies, etc.)
-model InventoryItem {
-  id       String  @id @default(uuid())
-  name     String
-  sku      String? @unique
-  branch   Branch  @relation(fields: [branchId], references: [id])
-  branchId String
-  quantity Int     @default(0)
-  unitCost Float? // Optional estimated cost per unit for reporting
-
-  transactions InventoryTransaction[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-/// Transaction log for inventory movements (usage, restock, adjustments)
-model InventoryTransaction {
-  id          String        @id @default(uuid())
-  item        InventoryItem @relation(fields: [itemId], references: [id])
-  itemId      String
-  booking     Booking?      @relation(fields: [bookingId], references: [id])
-  bookingId   String?
-  change      Int // positive = stock in, negative = stock out
-  description String?
-  createdAt   DateTime      @default(now())
-}

@@ -12,7 +12,10 @@ interface BookingModalProps {
 
 const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, booking }) => {
     const queryClient = useQueryClient();
-    const currentUser: UserType | null = JSON.parse(localStorage.getItem('user') || 'null');
+    const currentUser: UserType | null = (() => {
+        try { return JSON.parse(localStorage.getItem('user') || 'null'); }
+        catch { return null; }
+    })();
 
     // Form State
     const [serviceType, setServiceType] = useState(booking?.serviceType || '');
@@ -32,9 +35,9 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, booking })
     const { data: technicians = [] } = useQuery<Technician[]>({ queryKey: ['technicians'], queryFn: async () => (await api.get('/technicians')).data });
 
     // Filtered Customers
-    const filteredCustomers = customers.filter(c =>
-        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.phone.includes(searchTerm)
+    const filteredCustomers = (Array.isArray(customers) ? customers : []).filter(c =>
+        c && (c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            c.phone.includes(searchTerm))
     );
 
     const createCustomerMutation = useMutation({
@@ -73,7 +76,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, booking })
 
     if (!isOpen) return null;
 
-    const selectedCustomer = customers.find(c => c.id === customerId);
+    const selectedCustomer = (Array.isArray(customers) ? customers : []).find(c => c && c.id === customerId);
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -215,7 +218,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, booking })
                             onChange={e => setBranchId(e.target.value)}
                         >
                             <option value="">Select Branch</option>
-                            {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                            {(Array.isArray(branches) ? branches : []).map(b => b && <option key={b.id} value={b.id}>{b.name}</option>)}
                         </select>
                     </div>
 
@@ -227,7 +230,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, booking })
                             onChange={e => setTechnicianId(e.target.value)}
                         >
                             <option value="">Assign Later (Default)</option>
-                            {technicians.filter(t => t.branchId === branchId).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                            {(Array.isArray(technicians) ? technicians : []).filter(t => t && t.branchId === branchId).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                         </select>
                         <p className="text-[10px] text-slate-400 ml-1 italic">* You can leave this blank to assign later from the dispatch list.</p>
                     </div>

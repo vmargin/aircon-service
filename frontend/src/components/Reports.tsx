@@ -62,29 +62,33 @@ const Reports = () => {
 
     const rangeStart = getRangeStart(range);
 
+    const safeBookings = Array.isArray(bookings) ? bookings : [];
+    const safeInvoices = Array.isArray(invoices) ? invoices : [];
+
     const inRangeBookings = rangeStart
-        ? bookings.filter(b => new Date(b.scheduledAt) >= rangeStart)
-        : bookings;
+        ? safeBookings.filter(b => b && b.scheduledAt && new Date(b.scheduledAt) >= rangeStart)
+        : safeBookings;
 
     const inRangeInvoices = rangeStart
-        ? invoices.filter(i => new Date(i.issuedAt) >= rangeStart)
-        : invoices;
+        ? safeInvoices.filter(i => i && i.issuedAt && new Date(i.issuedAt) >= rangeStart)
+        : safeInvoices;
 
     const totalBookings = inRangeBookings.length;
-    const completedBookings = inRangeBookings.filter(b => b.status === 'COMPLETED').length;
+    const completedBookings = inRangeBookings.filter(b => b && b.status === 'COMPLETED').length;
     const completionRate = totalBookings === 0 ? 0 : Math.round((completedBookings / totalBookings) * 100);
 
     const collectedRevenue = inRangeInvoices
-        .filter(i => i.paymentStatus === 'PAID')
-        .reduce((acc, curr) => acc + Number(curr.amount), 0);
+        .filter(i => i && i.paymentStatus === 'PAID')
+        .reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
 
     const outstandingRevenue = inRangeInvoices
-        .filter(i => i.paymentStatus !== 'PAID')
-        .reduce((acc, curr) => acc + Number(curr.amount), 0);
+        .filter(i => i && i.paymentStatus !== 'PAID')
+        .reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
 
     const branchSummary = inRangeBookings.reduce<Record<string, { name: string; total: number; completed: number }>>(
         (acc, booking) => {
-            const key = booking.branch?.id ?? booking.branchId;
+            if (!booking) return acc;
+            const key = booking.branch?.id ?? booking.branchId ?? 'unassigned';
             const name = booking.branch?.name ?? 'Unassigned';
             if (!acc[key]) {
                 acc[key] = { name, total: 0, completed: 0 };
@@ -114,11 +118,10 @@ const Reports = () => {
                         <button
                             key={opt.key}
                             onClick={() => setRange(opt.key)}
-                            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
-                                range === opt.key
+                            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${range === opt.key
                                     ? 'bg-blue-600 text-white'
                                     : 'text-slate-500 hover:bg-slate-50'
-                            }`}
+                                }`}
                         >
                             {opt.label}
                         </button>

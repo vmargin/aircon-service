@@ -23,6 +23,7 @@ export interface Technician {
     name: string;
     phone?: string | null;
     branchId: string;
+    branch?: Branch;
     isActive: boolean;
 }
 
@@ -58,29 +59,6 @@ export interface Invoice {
     booking?: Booking;
     issuedAt: string;
     paidAt?: string | null;
-}
-
-export interface InventoryItem {
-    id: string;
-    name: string;
-    sku?: string | null;
-    branchId: string;
-    branch?: Branch;
-    quantity: number;
-    unitCost?: number | null;
-    createdAt: string;
-    updatedAt: string;
-}
-
-export interface InventoryTransaction {
-    id: string;
-    itemId: string;
-    item?: InventoryItem;
-    bookingId?: string | null;
-    booking?: Booking | null;
-    change: number;
-    description?: string | null;
-    createdAt: string;
 }
 
 export interface PublicBranch {

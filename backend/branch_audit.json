@@ -1,0 +1,30 @@
+[
+  {
+    "id": "br-north-001",
+    "name": "North",
+    "techs": 10,
+    "bookings": 4,
+    "users": 1
+  },
+  {
+    "id": "br-south-002",
+    "name": "South",
+    "techs": 10,
+    "bookings": 0,
+    "users": 0
+  },
+  {
+    "id": "br-east-003",
+    "name": "East",
+    "techs": 10,
+    "bookings": 0,
+    "users": 0
+  },
+  {
+    "id": "br-west-004",
+    "name": "West",
+    "techs": 10,
+    "bookings": 0,
+    "users": 0
+  }
+]

@@ -31,13 +31,15 @@ const Financials = () => {
         }
     });
 
-    const totalRevenue = invoices
-        .filter(i => i.paymentStatus === 'PAID')
-        .reduce((acc, curr) => acc + Number(curr.amount), 0);
+    const safeInvoices = Array.isArray(invoices) ? invoices : [];
 
-    const pendingRevenue = invoices
-        .filter(i => i.paymentStatus !== 'PAID')
-        .reduce((acc, curr) => acc + Number(curr.amount), 0);
+    const totalRevenue = safeInvoices
+        .filter(i => i && i.paymentStatus === 'PAID')
+        .reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+
+    const pendingRevenue = safeInvoices
+        .filter(i => i && i.paymentStatus !== 'PAID')
+        .reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
 
     if (isLoading) return <div className="p-10 text-center animate-pulse">Loading revenue streams...</div>;
 
@@ -84,7 +86,7 @@ const Financials = () => {
                         <CreditCard className="w-5 h-5 text-blue-500" />
                         Recent Invoices
                     </h3>
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{invoices.length} TOTAL</span>
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{safeInvoices.length} TOTAL</span>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
@@ -98,12 +100,12 @@ const Financials = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {invoices.length === 0 ? (
+                            {safeInvoices.length === 0 ? (
                                 <tr>
                                     <td colSpan={5} className="px-6 py-20 text-center text-slate-300 italic">No financial data available.</td>
                                 </tr>
                             ) : (
-                                invoices.map((inv) => (
+                                safeInvoices.map((inv) => (
                                     <tr key={inv.id} className="hover:bg-slate-50/50 transition-colors">
                                         <td className="px-6 py-5">
                                             <div className="flex flex-col">

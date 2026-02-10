@@ -15,6 +15,7 @@ import api from '../api/api';
 import { Booking, BookingStatus } from '../types';
 import BookingModal from './BookingModal';
 import InvoiceModal from './InvoiceModal';
+import AssignTechnicianModal from './AssignTechnicianModal';
 
 /**
  * DASHBOARD COMPONENT (Pivoted to Bookings)
@@ -28,6 +29,9 @@ const Dashboard = () => {
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
     const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
     const [activeBookingForInvoice, setActiveBookingForInvoice] = useState<Booking | null>(null);
+    const [activeBookingForAssign, setActiveBookingForAssign] = useState<Booking | null>(null);
+    const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+    const [dispatchOnly, setDispatchOnly] = useState(false);
 
     // FETCH BOOKINGS (TanStack Query)
     const { data: bookings = [], isLoading, isError, refetch } = useQuery<Booking[]>({
@@ -77,10 +81,11 @@ const Dashboard = () => {
     }
 
     // STATISTICS CALCULATION
+    const safeBookings = Array.isArray(bookings) ? bookings : [];
     const stats = [
-        { name: 'Active Bookings', value: bookings.filter(b => b.status !== 'COMPLETED' && b.status !== 'CANCELLED').length, icon: Clock, color: 'text-blue-600', bg: 'bg-blue-50' },
-        { name: 'Pending Dispatch', value: bookings.filter(b => !b.technicianId && b.status !== 'CANCELLED').length, icon: AlertCircle, color: 'text-rose-600', bg: 'bg-rose-50' },
-        { name: 'Completed Total', value: bookings.filter(b => b.status === 'COMPLETED').length, icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+        { name: 'Active Bookings', value: safeBookings.filter(b => b && b.status !== 'COMPLETED' && b.status !== 'CANCELLED').length, icon: Clock, color: 'text-blue-600', bg: 'bg-blue-50' },
+        { name: 'Pending Dispatch', value: safeBookings.filter(b => b && !b.technicianId && b.status !== 'CANCELLED').length, icon: AlertCircle, color: 'text-rose-600', bg: 'bg-rose-50' },
+        { name: 'Completed Total', value: safeBookings.filter(b => b && b.status === 'COMPLETED').length, icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
     ];
 
     const statusColors: Record<BookingStatus, string> = {
@@ -91,9 +96,9 @@ const Dashboard = () => {
         CANCELLED: 'bg-slate-100 text-slate-700 border-slate-200',
     };
 
-    const [dispatchOnly, setDispatchOnly] = useState(false);
 
-    const filteredBookings = bookings.filter(b => {
+    const filteredBookings = safeBookings.filter(b => {
+        if (!b) return false;
         if (dispatchOnly) return !b.technicianId && b.status !== 'CANCELLED';
         if (filterStatus === 'ALL') return true;
         return b.status === filterStatus;
@@ -231,6 +236,14 @@ const Dashboard = () => {
                                         </td>
                                         <td className="px-6 py-5 text-right">
                                             <div className="flex items-center justify-end gap-2">
+                                                {!booking.technicianId && booking.status !== 'CANCELLED' && (
+                                                    <button
+                                                        onClick={() => { setActiveBookingForAssign(booking); setIsAssignModalOpen(true); }}
+                                                        className="px-3 py-1 bg-rose-50 text-rose-600 text-[10px] font-bold rounded-lg border border-rose-100 hover:bg-rose-100 transition-colors"
+                                                    >
+                                                        ASSIGN TECH
+                                                    </button>
+                                                )}
                                                 {!booking.invoice && (
                                                     <button
                                                         onClick={() => { setActiveBookingForInvoice(booking); setIsInvoiceModalOpen(true); }}
@@ -256,7 +269,7 @@ const Dashboard = () => {
             </div>
 
             <div className="mt-6 flex items-center justify-between text-slate-400 text-xs px-2">
-                <p>Total {bookings.length} jobs synced</p>
+                <p>Total {safeBookings.length} jobs synced</p>
                 <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                     Live Connection
@@ -276,6 +289,11 @@ const Dashboard = () => {
                     booking={activeBookingForInvoice}
                 />
             )}
+            <AssignTechnicianModal
+                isOpen={isAssignModalOpen}
+                onClose={() => { setIsAssignModalOpen(false); setActiveBookingForAssign(null); }}
+                booking={activeBookingForAssign}
+            />
         </div>
     );
 };

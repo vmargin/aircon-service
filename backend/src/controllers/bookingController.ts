@@ -7,14 +7,14 @@ const createBookingSchema = z.object({
     customerId: z.string().uuid(),
     serviceType: z.string().min(1),
     scheduledAt: z.string().datetime(),
-    branchId: z.string().uuid(),
+    branchId: z.string().min(1),
     technicianId: z.string().uuid().optional(),
 });
 
 const updateBookingSchema = z.object({
     status: z.nativeEnum(BookingStatus).optional(),
     scheduledAt: z.string().datetime().optional(),
-    technicianId: z.string().uuid().optional(),
+    technicianId: z.string().uuid().nullable().optional().or(z.literal('')),
 });
 
 export const getBookings = async (req: Request, res: Response) => {
@@ -91,13 +91,24 @@ export const updateBooking = async (req: Request, res: Response) => {
             return res.status(400).json({ error: "Billing Guard: Invoice required for completion." });
         }
 
+        // Technician Branch Guard: Branch Leader can only assign local technicians
+        if (user.role === UserRole.BRANCH_LEADER && validation.data.technicianId) {
+            const tech = await prisma.technician.findUnique({
+                where: { id: validation.data.technicianId }
+            });
+            if (tech && tech.branchId !== user.branchId) {
+                return res.status(403).json({ error: "Forbidden: Cannot assign technician from another branch." });
+            }
+        }
+
         const updated = await prisma.booking.update({
             where: { id },
             data: {
                 status: validation.data.status,
-                technicianId: validation.data.technicianId,
+                technicianId: validation.data.technicianId === '' ? null : validation.data.technicianId,
                 scheduledAt: validation.data.scheduledAt ? new Date(validation.data.scheduledAt) : undefined,
-            }
+            },
+            include: { customer: true, branch: true, technician: true, invoice: true }
         });
 
         res.json(updated);

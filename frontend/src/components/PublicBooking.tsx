@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Calendar, MapPin, Phone, User, CheckCircle2 } from 'lucide-react';
 import api from '../api/api';
 import type { PublicBranch } from '../types';
@@ -17,7 +17,7 @@ const PublicBooking = () => {
         branchId: '',
     });
 
-    useState(() => {
+    useEffect(() => {
         const fetchBranches = async () => {
             try {
                 const { data } = await api.get<PublicBranch[]>('/public/branches');
@@ -29,7 +29,7 @@ const PublicBooking = () => {
             }
         };
         fetchBranches();
-    });
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

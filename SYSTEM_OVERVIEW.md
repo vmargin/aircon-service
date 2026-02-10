@@ -1,6 +1,6 @@
 # Aircon Service Manager: System Architecture & Process Overview
 
-This document provides a complete overview of the current system processes, from booking creation to inventory management and financial reporting.
+This document provides a complete overview of the current system processes, from booking creation to financial reporting.
 
 ---
 
@@ -53,22 +53,6 @@ The booking process focused on streamlined customer discovery and flexible assig
 
 ---
 
-## 📦 Inventory Management
-
-The system tracks supplies and parts (e.g., Freon, Copper Pipes) at the branch level.
-
-### 1. Inventory Items
-- Linked to a `Branch`.
-- Tracks `quantity`, `unitCost`, and `SKU`.
-
-### 2. Transactions
-- Every movement of stock is logged as an `InventoryTransaction`.
-- **Stock In**: Manual adjustment or restock.
-- **Stock Out**: Linked to a `Booking` when a technician uses parts on a job.
-- **Guard**: Inventory cannot go below zero.
-
----
-
 ## 👥 Customer Management
 - Customers are owned by the `Organization`.
 - Tracks `name`, `phone`, and `address`.
@@ -79,6 +63,16 @@ The system tracks supplies and parts (e.g., Freon, Copper Pipes) at the branch l
 ## 📊 Reporting & Analytics
 - **Dashboard**: High-level view of today's schedule and pending tasks.
 - **Reports**: Detailed breakdown of bookings and revenue, filtered by date and branch.
+
+---
+
+## 🛡️ Resilience & Reliability
+
+The system implements multiple layers of defense to prevent crashes and ensure data integrity.
+
+- **Universal Stabilization**: All frontend components use defensive coding (`Array.isArray`, `?.` optional chaining, and `try-catch` for JSON) to gracefully handle malformed API responses or missing data.
+- **Global Error Boundary**: A top-level catch-all that prevents application crashes. It includes a **"Clear Cache & Reset"** feature to resolve issues caused by corrupted browser state or mismatched versions.
+- **Billing Guard**: Backend enforcement ensures a `Booking` cannot be marked as `COMPLETED` without an associated `Invoice`.
 
 ---
 
@@ -94,6 +88,5 @@ graph TD
     CONF -->|Technician Start| SITE[ON_SITE]
     SITE -->|Finish Job| INV[Create Invoice]
     INV -->|Billing Guard| COMP[COMPLETED]
-    Tech -->|Parts Used| INV_SYS[Deduct Inventory]
     INV -->|Customer Pays| PAID[Payment: PAID]
 ```
