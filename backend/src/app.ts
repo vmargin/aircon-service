@@ -5,12 +5,6 @@ import { getBookings, createBooking, updateBooking } from './controllers/booking
 import { getInvoices, createInvoice, updatePaymentStatus } from './controllers/invoiceController';
 import { getCustomers, createCustomer } from './controllers/customerController';
 import { getTechnicians, getBranches } from './controllers/technicianController';
-import {
-    getInventory,
-    createInventoryItem,
-    getInventoryTransactions,
-    createInventoryTransaction,
-} from './controllers/inventoryController';
 import { getPublicBranches, createPublicBooking } from './controllers/publicController';
 import authenticate from './middleware/auth';
 
@@ -48,11 +42,5 @@ export function createApp() {
     app.get('/api/technicians', authenticate, getTechnicians);
     app.get('/api/branches', authenticate, getBranches);
 
-    app.get('/api/inventory', authenticate, getInventory);
-    app.post('/api/inventory', authenticate, createInventoryItem);
-    app.get('/api/inventory/transactions', authenticate, getInventoryTransactions);
-    app.post('/api/inventory/transactions', authenticate, createInventoryTransaction);
-
     return app;
 }
-
