@@ -19,7 +19,6 @@ This project will replace manual methods with a centralized online system access
 - Reduce billing errors and improve payment monitoring.
 - Store and manage customer information digitally.
 - Generate real-time sales, service, and performance reports.
-- Maintain inventory records for aircon parts and supplies.
 
 ---
 
@@ -52,10 +51,6 @@ This project will replace manual methods with a centralized online system access
 - Daily, weekly, and monthly service summaries.
 - Sales performance reports per branch.
 - Technician performance tracking.
-
-### F. Inventory Management
-- Record and track available parts, materials, and tools per branch.
-- Monitor usage and restock alerts.
 
 ---
 

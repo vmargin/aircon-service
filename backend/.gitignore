@@ -17,3 +17,11 @@ Thumbs.db
 # IDE files
 .vscode/
 .idea/
+
+# Audit and Diagnostic files
+branch_audit.json
+audit_dup.txt
+audit_output.txt
+diag_output.txt
+last_audit.log
+build_log.txt
