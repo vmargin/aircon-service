@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "private": true,
     "scripts": {
-        "build": "npm run build --prefix frontend",
+        "build": "npm run build --prefix frontend && mkdir -p dist && cp -rv frontend/dist/* dist/",
         "postinstall": "npm install --prefix backend && npm install --prefix frontend"
     },
     "dependencies": {
