@@ -34,6 +34,15 @@ app.post('/api/auth/login', login);
 app.get('/api/public/branches', getPublicBranches);
 app.post('/api/public/bookings', createPublicBooking);
 
+// Health & Root
+app.get('/', (req, res) => {
+    res.json({ message: "Aircon Service API - Running" });
+});
+
+app.get('/api/health', (req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
 // Protected Routes (RBAC enforced in controllers)
 app.get('/api/bookings', authenticate, getBookings);
 app.post('/api/bookings', authenticate, createBooking);
