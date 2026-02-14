@@ -22,7 +22,9 @@ const app = express();
 // MIDDLEWARE
 app.use(cors({
     origin: process.env.FRONTEND_URL || '*',
-    credentials: false
+    credentials: false,
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']  // ← This fixes it!
 }));
 
 app.use(express.json());
