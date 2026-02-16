@@ -130,8 +130,12 @@ export const getBranches = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ error: "Unauthorized" });
 
     try {
+        const where: { organizationId: string; id?: string } = { organizationId: user.orgId };
+        if (user.role === UserRole.BRANCH_LEADER && user.branchId) {
+            where.id = user.branchId;
+        }
         const branches = await prisma.branch.findMany({
-            where: { organizationId: user.orgId },
+            where,
             orderBy: { name: 'asc' }
         });
         res.json(branches);

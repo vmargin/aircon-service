@@ -22,8 +22,14 @@ export const getBookings = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ error: "Unauthorized" });
 
     try {
+        const baseWhere: { branch: { organizationId: string }; branchId?: string } = {
+            branch: { organizationId: user.orgId },
+        };
+        if (user.role === UserRole.BRANCH_LEADER && user.branchId) {
+            baseWhere.branchId = user.branchId;
+        }
         const bookings = await prisma.booking.findMany({
-            where: { branch: { organizationId: user.orgId } },
+            where: baseWhere,
             include: { customer: true, branch: true, technician: true, invoice: true },
             orderBy: { scheduledAt: 'asc' },
         });
@@ -40,6 +46,10 @@ export const createBooking = async (req: Request, res: Response) => {
     const validation = createBookingSchema.safeParse(req.body);
     if (!validation.success) {
         return res.status(400).json({ error: validation.error.issues[0].message });
+    }
+
+    if (user.role === UserRole.BRANCH_LEADER && validation.data.branchId !== user.branchId) {
+        return res.status(403).json({ error: "Cannot create booking for another branch" });
     }
 
     try {

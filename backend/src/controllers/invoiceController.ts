@@ -31,10 +31,15 @@ export const createInvoice = async (req: Request, res: Response) => {
             where: {
                 id: bookingId,
                 branch: { organizationId: user.orgId }
-            }
+            },
+            include: { branch: true }
         });
 
         if (!booking) return res.status(404).json({ error: "Booking not found" });
+
+        if (user.role === UserRole.BRANCH_LEADER && user.branchId && booking.branchId !== user.branchId) {
+            return res.status(403).json({ error: "Cannot create invoice for another branch's booking" });
+        }
 
         const invoice = await prisma.invoice.create({
             data: {
@@ -106,10 +111,15 @@ export const updatePaymentStatus = async (req: Request, res: Response) => {
             where: {
                 id,
                 booking: { branch: { organizationId: user.orgId } }
-            }
+            },
+            include: { booking: { select: { branchId: true } } }
         });
 
         if (!invoice) return res.status(404).json({ error: "Invoice not found" });
+
+        if (user.role === UserRole.BRANCH_LEADER && user.branchId && invoice.booking.branchId !== user.branchId) {
+            return res.status(403).json({ error: "Cannot update payment for another branch's invoice" });
+        }
 
         const updated = await prisma.invoice.update({
             where: { id },
