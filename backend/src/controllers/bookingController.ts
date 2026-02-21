@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import prisma from '../db/prisma';
 import { BookingStatus, UserRole } from '@prisma/client';
+import { logAudit } from '../lib/auditLog';
 
 const createBookingSchema = z.object({
     customerId: z.string().uuid(),
@@ -60,6 +61,7 @@ export const createBooking = async (req: Request, res: Response) => {
             },
             include: { branch: true }
         });
+        await logAudit(req, 'BOOKING_CREATE', 'booking', booking.id, booking.branchId);
         res.status(201).json(booking);
     } catch (error) {
         console.error("Create booking error:", error);
@@ -120,7 +122,7 @@ export const updateBooking = async (req: Request, res: Response) => {
             },
             include: { customer: true, branch: true, technician: true, invoice: true }
         });
-
+        await logAudit(req, 'BOOKING_UPDATE', 'booking', updated.id, updated.branchId);
         res.json(updated);
     } catch (error) {
         res.status(500).json({ error: "Failed to update booking" });

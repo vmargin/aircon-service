@@ -4,7 +4,8 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-    const hashedPassword = await bcrypt.hash('password123', 10);
+    const demoPassword = process.env.DEMO_ADMIN_PASSWORD || 'change-me-in-prod';
+    const hashedPassword = await bcrypt.hash(demoPassword, 10);
 
     // 1. Create Organization
     const org = await prisma.organization.upsert({

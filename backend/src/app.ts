@@ -1,46 +1,64 @@
 import express from 'express';
 import cors from 'cors';
-import { login } from './controllers/authController';
-import { getBookings, createBooking, updateBooking } from './controllers/bookingController';
-import { getInvoices, createInvoice, updatePaymentStatus } from './controllers/invoiceController';
-import { getCustomers, createCustomer } from './controllers/customerController';
-import { getTechnicians, getBranches } from './controllers/technicianController';
-import { getPublicBranches, createPublicBooking } from './controllers/publicController';
-import authenticate from './middleware/auth';
+import { errorHandler, ValidationError, NotFoundError } from './middleware/errorHandler';
+import { requestLogger, auditLogger, healthCheckLogger } from './middleware/requestLogger';
+import { sanitizeInput } from './lib/security';
+import rateLimiter from './middleware/rateLimiter';
+import router from './routes/index';
 
 export function createApp() {
-    const app = express();
+  const app = express();
 
-    // CORS: token-based auth (Authorization header) doesn't require credentials/cookies.
-    // If FRONTEND_URL is not set, allow all origins.
-    app.use(
-        cors({
-            origin: process.env.FRONTEND_URL || '*',
-            credentials: false,
-        }),
-    );
+  // Security middleware
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ extended: true }));
+  
+  // Sanitize all inputs
+  app.use(sanitizeInput);
 
-    app.use(express.json());
+  // CORS configuration
+  const allowedOrigin = process.env.FRONTEND_URL;
+  if (!allowedOrigin && process.env.NODE_ENV === 'production') {
+    throw new Error('FRONTEND_URL must be set in production');
+  }
 
-    // Public Routes
-    app.post('/api/auth/login', login);
-    app.get('/api/public/branches', getPublicBranches);
-    app.post('/api/public/bookings', createPublicBooking);
+  app.use(cors({
+    origin: allowedOrigin || 'http://localhost:5173',
+    credentials: false,
+  }));
 
-    // Protected Routes
-    app.get('/api/bookings', authenticate, getBookings);
-    app.post('/api/bookings', authenticate, createBooking);
-    app.patch('/api/bookings/:id', authenticate, updateBooking);
+  // Rate limiting
+  app.use('/api/v1/auth/login', rateLimiter.loginRateLimiter);
+  app.use('/api/v1/public/book', rateLimiter.publicBookingRateLimiter);
+  app.use('/api/v1/health', rateLimiter.healthCheckRateLimiter);
+  app.use(rateLimiter.generalRateLimiter);
 
-    app.get('/api/invoices', authenticate, getInvoices);
-    app.post('/api/invoices', authenticate, createInvoice);
-    app.patch('/api/invoices/:id/payment', authenticate, updatePaymentStatus);
+  // Request logging
+  app.use(requestLogger());
 
-    app.get('/api/customers', authenticate, getCustomers);
-    app.post('/api/customers', authenticate, createCustomer);
+  // Audit logging
+  app.use(auditLogger());
 
-    app.get('/api/technicians', authenticate, getTechnicians);
-    app.get('/api/branches', authenticate, getBranches);
+  // Health check endpoint
+  app.use('/health', healthCheckLogger(), (req, res) => {
+    res.json({
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+      version: '2.0.0',
+      environment: process.env.NODE_ENV || 'development',
+    });
+  });
 
-    return app;
+  // API routes
+  app.use('/', router);
+
+  // 404 handler
+  app.use('*', (req, res, next) => {
+    next(new NotFoundError(`Route ${req.method} ${req.url} not found`));
+  });
+
+  // Error handler
+  app.use(errorHandler);
+
+  return app;
 }

@@ -10,6 +10,7 @@ export interface User {
     orgName: string;
     role: UserRole;
     branchId?: string | null;
+    branchName?: string | null;
 }
 
 export interface Branch {

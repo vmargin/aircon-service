@@ -131,7 +131,7 @@ const AssignTechnicianModal: React.FC<AssignTechnicianModalProps> = ({ isOpen, o
                                 <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
                                 <div className="space-y-1">
                                     <p className="text-[10px] text-amber-800 leading-tight">
-                                        <b>Branch Mismatch:</b> This job belongs to <b>{booking.branch?.name}</b>, but you are assigned to another branch. You can only assign technicians to jobs at your branch.
+                                        <b>Branch Mismatch:</b> This job belongs to <b>{booking.branch?.name}</b>, but you are assigned to <b>{currentUser?.branchName || 'another branch'}</b>. You can only assign technicians to jobs at your branch.
                                     </p>
                                     <button
                                         type="button"

@@ -27,18 +27,18 @@ enum PaymentStatus {
 }
 
 model Organization {
-  id        String     @id @default(uuid())
-  name      String     @unique
+  id        String   @id @default(uuid())
+  name      String   @unique
   branches  Branch[]
   users     User[]
   customers Customer[]
 }
 
 model Branch {
-  id             String          @id @default(uuid())
+  id             String   @id @default(uuid())
   name           String
   location       String?
-  organization   Organization    @relation(fields: [organizationId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id])
   organizationId String
   users          User[]
   technicians    Technician[]
@@ -46,14 +46,15 @@ model Branch {
 }
 
 model User {
-  id             String       @id @default(uuid())
-  email          String       @unique
+  id             String        @id @default(uuid())
+  email          String        @unique
   password       String
-  role           UserRole     @default(BRANCH_LEADER)
-  organization   Organization @relation(fields: [organizationId], references: [id])
+  role           UserRole      @default(BRANCH_LEADER)
+  organization   Organization  @relation(fields: [organizationId], references: [id])
   organizationId String
-  branch         Branch?      @relation(fields: [branchId], references: [id])
+  branch         Branch?       @relation(fields: [branchId], references: [id])
   branchId       String?
+  auditLogs      AuditLog[]
 }
 
 model Technician {
@@ -67,7 +68,7 @@ model Technician {
 }
 
 model Customer {
-  id             String       @id @default(uuid())
+  id             String   @id @default(uuid())
   name           String
   phone          String
   address        String?
@@ -77,23 +78,19 @@ model Customer {
 }
 
 model Booking {
-  id          String        @id @default(uuid())
-  serviceType String // e.g., "Cleaning", "Repair", "Installation"
-  status      BookingStatus @default(PENDING)
-  scheduledAt DateTime
-
-  customer   Customer @relation(fields: [customerId], references: [id])
-  customerId String
-
-  branch   Branch @relation(fields: [branchId], references: [id])
-  branchId String
-
-  technician   Technician? @relation(fields: [technicianId], references: [id])
-  technicianId String?
-
+  id            String        @id @default(uuid())
+  serviceType   String // e.g., "Cleaning", "Repair", "Installation"
+  status        BookingStatus @default(PENDING)
+  scheduledAt   DateTime
+  customer      Customer      @relation(fields: [customerId], references: [id])
+  customerId    String
+  branch        Branch        @relation(fields: [branchId], references: [id])
+  branchId      String
+  technician    Technician?   @relation(fields: [technicianId], references: [id])
+  technicianId  String?
   invoice       Invoice?
-  createdAt     DateTime               @default(now())
-  updatedAt     DateTime               @updatedAt
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }
 
 model Invoice {
@@ -101,11 +98,20 @@ model Invoice {
   amount        Float // SQLite doesn't support Decimal, Float is fine for demo
   paymentStatus PaymentStatus @default(UNPAID)
   paymentMethod String? // "CASH", "E_WALLET", "BANK", "CHEQUE"
-
-  booking   Booking @relation(fields: [bookingId], references: [id])
-  bookingId String  @unique
-
-  issuedAt DateTime  @default(now())
-  paidAt   DateTime?
+  booking       Booking       @relation(fields: [bookingId], references: [id])
+  bookingId     String        @unique
+  issuedAt      DateTime      @default(now())
+  paidAt        DateTime?
 }
 
+model AuditLog {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action       String // e.g. BOOKING_CREATE, BOOKING_UPDATE, INVOICE_CREATE, TECHNICIAN_DEACTIVATE
+  resourceType String // booking, invoice, technician
+  resourceId   String
+  branchId     String? // branch the resource belongs to (for branch-scoped views)
+  details      String? // optional JSON or short description
+  createdAt    DateTime @default(now())
+}

@@ -89,7 +89,9 @@ function App() {
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-xs font-bold text-slate-800 truncate">{user.email}</p>
-                            <p className="text-[9px] font-black text-blue-600 uppercase tracking-tighter">{user.role}</p>
+                            <p className="text-[9px] font-black text-blue-600 uppercase tracking-tighter">
+                                {user.role === 'ADMIN' ? 'Admin' : (user.branchName || user.role)}
+                            </p>
                         </div>
                         <button
                             onClick={handleLogout}

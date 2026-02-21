@@ -30,7 +30,7 @@ export const login = async (req: Request, res: Response) => {
 
         const user = await prisma.user.findUnique({
             where: { email },
-            include: { organization: true }
+            include: { organization: true, branch: true }
         });
 
         if (!user) {
@@ -58,7 +58,8 @@ export const login = async (req: Request, res: Response) => {
                 orgId: user.organizationId,
                 orgName: user.organization.name,
                 role: user.role,
-                branchId: user.branchId
+                branchId: user.branchId,
+                branchName: user.branch?.name ?? null
             }
         });
     } catch (error) {

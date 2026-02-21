@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import prisma from '../db/prisma';
 import { PaymentStatus, UserRole } from '@prisma/client';
+import { logAudit } from '../lib/auditLog';
 
 const createInvoiceSchema = z.object({
     bookingId: z.string().uuid(),
@@ -49,7 +50,7 @@ export const createInvoice = async (req: Request, res: Response) => {
                 paymentStatus: PaymentStatus.UNPAID,
             }
         });
-
+        await logAudit(req, 'INVOICE_CREATE', 'invoice', invoice.id, booking.branchId);
         res.status(201).json(invoice);
     } catch (error) {
         console.error("Create invoice error:", error);
@@ -129,7 +130,7 @@ export const updatePaymentStatus = async (req: Request, res: Response) => {
                 paidAt: validation.data.paymentStatus === PaymentStatus.PAID ? new Date() : undefined
             }
         });
-
+        await logAudit(req, 'INVOICE_PAYMENT_UPDATE', 'invoice', id, invoice.booking.branchId);
         res.json(updated);
     } catch (error) {
         res.status(500).json({ error: "Failed to update payment" });

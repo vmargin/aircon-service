@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../db/prisma';
 import { UserRole } from '@prisma/client';
+import { logAudit } from '../lib/auditLog';
 
 export const getTechnicians = async (req: Request, res: Response) => {
     const { user } = req;
@@ -55,6 +56,7 @@ export const createTechnician = async (req: Request, res: Response) => {
             },
             include: { branch: true }
         });
+        await logAudit(req, 'TECHNICIAN_CREATE', 'technician', technician.id, technician.branchId);
         res.status(201).json(technician);
     } catch (error) {
         console.error("Create technician error:", error);
@@ -91,6 +93,7 @@ export const updateTechnician = async (req: Request, res: Response) => {
             },
             include: { branch: true }
         });
+        await logAudit(req, 'TECHNICIAN_UPDATE', 'technician', updated.id, updated.branchId);
         res.json(updated);
     } catch (error) {
         console.error("Update technician error:", error);
@@ -117,6 +120,7 @@ export const deleteTechnician = async (req: Request, res: Response) => {
             where: { id },
             data: { isActive: false }
         });
+        await logAudit(req, 'TECHNICIAN_DEACTIVATE', 'technician', id, tech.branchId);
 
         res.json({ message: "Technician deactivated successfully" });
     } catch (error) {
