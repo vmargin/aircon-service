@@ -1,0 +1,338 @@
+/**
+ * Arctic Service Manager - Comprehensive Style System
+ * Professional UI/UX Improvements
+ */
+
+/* ============================================
+   1. CUSTOM COLOR VARIABLES
+   ============================================ */
+:root {
+  /* Primary Brand Colors */
+  --color-blue: #2563EB;
+  --color-blue-light: #3B82F6;
+  --color-blue-dark: #1D4ED8;
+  --color-blue-50: #EFF6FF;
+  --color-blue-100: #DBEAFE;
+  --color-blue-200: #BFDBFE;
+  
+  /* Success/Emerald Colors */
+  --color-emerald: #10B981;
+  --color-emerald-light: #34D399;
+  --color-emerald-dark: #059669;
+  --color-emerald-50: #ECFDF5;
+  --color-emerald-100: #D1FAE5;
+  --color-emerald-200: #A7F3D0;
+  
+  /* Warning/Amber Colors */
+  --color-amber: #F59E0B;
+  --color-amber-light: #FBBF24;
+  --color-amber-dark: #D97706;
+  --color-amber-50: #FFFBEB;
+  --color-amber-100: #FEF3C7;
+  --color-amber-200: #FDE68A;
+  
+  /* Danger/Rose Colors */
+  --color-rose: #F43F5E;
+  --color-rose-light: #FB7185;
+  --color-rose-dark: #E11D48;
+  --color-rose-50: #FFF1F2;
+  --color-rose-100: #FFE4E6;
+  --color-rose-200: #FECDD3;
+  
+  /* Accent/Violet Colors */
+  --color-violet: #8B5CF6;
+  --color-violet-light: #A78BFA;
+  --color-violet-dark: #7C3AED;
+  --color-violet-50: #F5F3FF;
+  --color-violet-100: #EDE9FE;
+  --color-violet-200: #DDD6FE;
+  
+  /* Neutral Colors */
+  --color-slate-50: #F8FAFC;
+  --color-slate-100: #F1F5F9;
+  --color-slate-200: #E2E8F0;
+  --color-slate-300: #CBD5E1;
+  --color-slate-400: #94A3B8;
+  --color-slate-500: #64748B;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1E293B;
+  --color-slate-900: #0F172A;
+  
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-bg-dark: rgba(15, 23, 42, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-blur: blur(20px) saturate(180%);
+  
+  /* Shadows */
+  --shadow-soft: 0 2px 8px rgba(15, 23, 42, 0.06);
+  --shadow-medium: 0 4px 16px rgba(15, 23, 42, 0.08);
+  --shadow-raised: 0 8px 32px rgba(15, 23, 42, 0.12);
+  --shadow-hover: 0 12px 48px rgba(15, 23, 42, 0.15);
+  --shadow-glow-blue: 0 0 30px rgba(37, 99, 235, 0.3);
+  --shadow-glow-emerald: 0 0 30px rgba(16, 185, 129, 0.3);
+  --shadow-glow-rose: 0 0 30px rgba(244, 63, 94, 0.3);
+  --shadow-inner: inset 0 2px 4px rgba(15, 23, 42, 0.04);
+  
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 500ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* ============================================
+   2. IMPORT TAILWIND
+   ============================================ */
+@import "tailwindcss";
+
+/* ============================================
+   3. GRADIENT BACKGROUNDS
+   ============================================ */
+
+/* Card Gradients */
+.bg-gradient-card {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(248, 250, 252, 1) 100%
+  );
+}
+
+.bg-gradient-card-blue {
+  background: linear-gradient(
+    135deg,
+    rgba(239, 246, 255, 1) 0%,
+    rgba(219, 234, 254, 1) 100%
+  );
+}
+
+.bg-gradient-card-emerald {
+  background: linear-gradient(
+    135deg,
+    rgba(236, 253, 245, 1) 0%,
+    rgba(209, 250, 229, 1) 100%
+  );
+}
+
+.bg-gradient-card-rose {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 241, 242, 1) 0%,
+    rgba(255, 228, 230, 1) 100%
+  );
+}
+
+.bg-gradient-card-amber {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 251, 235, 1) 0%,
+    rgba(254, 243, 199, 1) 100%
+  );
+}
+
+.bg-gradient-card-violet {
+  background: linear-gradient(
+    135deg,
+    rgba(245, 243, 255, 1) 0%,
+    rgba(237, 233, 254, 1) 100%
+  );
+}
+
+/* Background Patterns */
+.bg-pattern-dots {
+  background-image: radial-gradient(circle, var(--color-slate-200) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.bg-pattern-grid {
+  background-image: 
+    linear-gradient(var(--color-slate-200) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-slate-200) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.bg-pattern-subtle {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2394a3b8' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* ============================================
+   4. SHADOW UTILITIES
+   ============================================ */
+
+.shadow-soft {
+  box-shadow: var(--shadow-soft);
+}
+
+.shadow-medium {
+  box-shadow: var(--shadow-medium);
+}
+
+.shadow-raised {
+  box-shadow: var(--shadow-raised);
+}
+
+.shadow-hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.shadow-glow-blue {
+  box-shadow: var(--shadow-glow-blue);
+}
+
+.shadow-glow-emerald {
+  box-shadow: var(--shadow-glow-emerald);
+}
+
+.shadow-glow-rose {
+  box-shadow: var(--shadow-glow-rose);
+}
+
+.shadow-inner-subtle {
+  box-shadow: var(--shadow-inner);
+}
+
+/* Hover Shadow Effects */
+.shadow-hover-transition {
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.shadow-hover-transition:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+/* ============================================
+   5. GLASSMORPHISM EFFECTS
+   ============================================ */
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-dark {
+  background: var(--glass-bg-dark);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-card {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0.7) 100%
+  );
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 
+    0 8px 32px rgba(15, 23, 42, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* ============================================
+   6. ANIMATION KEYFRAMES
+   ============================================ */
+
+/* Fade In Up */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fade In */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Scale In */
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Scale In Center */
+@keyframes scale-in-center {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translate(-50%, -50%);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translate(-50%, -50%);
+  }
+}
+
+/* Slide In Right */
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Slide In Left */
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Slide In Bottom */
+@keyframes slide-in-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Bounce In */
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);

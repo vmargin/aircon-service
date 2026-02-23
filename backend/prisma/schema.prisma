@@ -35,14 +35,16 @@ model Organization {
 }
 
 model Branch {
-  id             String   @id @default(uuid())
+  id             String        @id @default(uuid())
   name           String
   location       String?
-  organization   Organization @relation(fields: [organizationId], references: [id])
+  organization   Organization  @relation(fields: [organizationId], references: [id])
   organizationId String
   users          User[]
   technicians    Technician[]
   bookings       Booking[]
+
+  @@index([organizationId])
 }
 
 model User {
@@ -55,6 +57,10 @@ model User {
   branch         Branch?       @relation(fields: [branchId], references: [id])
   branchId       String?
   auditLogs      AuditLog[]
+
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([role])
 }
 
 model Technician {
@@ -65,6 +71,9 @@ model Technician {
   branchId String
   bookings Booking[]
   isActive Boolean   @default(true)
+
+  @@index([branchId])
+  @@index([isActive])
 }
 
 model Customer {
@@ -75,6 +84,9 @@ model Customer {
   organization   Organization @relation(fields: [organizationId], references: [id])
   organizationId String
   bookings       Booking[]
+
+  @@index([organizationId])
+  @@index([phone])
 }
 
 model Booking {
@@ -91,6 +103,13 @@ model Booking {
   invoice       Invoice?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+
+  @@index([scheduledAt])
+  @@index([status])
+  @@index([branchId])
+  @@index([technicianId])
+  @@index([customerId])
+  @@index([scheduledAt, status])
 }
 
 model Invoice {
@@ -102,6 +121,9 @@ model Invoice {
   bookingId     String        @unique
   issuedAt      DateTime      @default(now())
   paidAt        DateTime?
+
+  @@index([paymentStatus])
+  @@index([issuedAt])
 }
 
 model AuditLog {
@@ -114,4 +136,9 @@ model AuditLog {
   branchId     String? // branch the resource belongs to (for branch-scoped views)
   details      String? // optional JSON or short description
   createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([resourceType, resourceId])
+  @@index([branchId])
+  @@index([createdAt])
 }
