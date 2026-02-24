@@ -18,10 +18,11 @@ import {
     Package,
     Zap
 } from 'lucide-react';
-import { Card, StatusBadge } from './components/ui';
+import Card from './components/ui/Card';
+import StatusBadge from './components/ui/StatusBadge';
 import Dashboard from './components/Dashboard';
 import Financials from './components/Financials';
-import Customers from './components/Customs';
+import Customers from './components/Customers';
 import Reports from './components/Reports';
 import Technicians from './components/Technicians';
 import Login from './components/Login';

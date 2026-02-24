@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LogIn, Loader2, Globe, Shield, Lock, Mail, Eye, EyeOff } from 'lucide-react';
+import { LogIn, Loader2, Globe, Shield, Lock, Mail, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import api from '../api/api';
 import type { User } from '../types';
 
@@ -47,7 +47,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       <div className="relative max-w-md w-full">
         {/* Animated Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-emerald-500/5 rounded-2xl blur-md" />
-        
+
         <div className="relative bg-white rounded-2xl shadow-2xl shadow-raised border border-slate-200 overflow-hidden animate-in slide-in-bottom-2 duration-1000">
           {/* Top Gradient Header */}
           <div className="h-32 bg-gradient-to-r from-blue-600 to-emerald-600 flex items-center justify-center relative overflow-hidden">

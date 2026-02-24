@@ -1,0 +1,5252 @@
+﻿
+> aircon-service-backend@2.0.0 test:integration
+> jest tests/integration --runInBand
+
+  console.log
+    prisma:info Starting a postgresql pool with 13 connections.
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    Created branch: North Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: north@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for North Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for North Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for North Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: South Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: south@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for South Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for South Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for South Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: East Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: east@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for East Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for East Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for East Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: West Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: west@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for West Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for West Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for West Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name" FROM "public"."Organization" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Branch"."id", "public"."Branch"."name", "public"."Branch"."location", "public"."Branch"."organizationId" FROM "public"."Branch" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."password", "public"."User"."role"::text, "public"."User"."organizationId", "public"."User"."branchId" FROM "public"."User" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Technician"."id", "public"."Technician"."name", "public"."Technician"."phone", "public"."Technician"."branchId", "public"."Technician"."isActive" FROM "public"."Technician" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Customer"."id", "public"."Customer"."name", "public"."Customer"."phone", "public"."Customer"."address", "public"."Customer"."organizationId" FROM "public"."Customer" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Booking"."id", "public"."Booking"."serviceType", "public"."Booking"."status"::text, "public"."Booking"."scheduledAt", "public"."Booking"."customerId", "public"."Booking"."branchId", "public"."Booking"."technicianId", "public"."Booking"."customerName", "public"."Booking"."phone", "public"."Booking"."address", "public"."Booking"."notes", "public"."Booking"."createdAt", "public"."Booking"."updatedAt" FROM "public"."Booking" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Invoice"."id", "public"."Invoice"."amount", "public"."Invoice"."paymentStatus"::text, "public"."Invoice"."paymentMethod", "public"."Invoice"."bookingId", "public"."Invoice"."issuedAt", "public"."Invoice"."paidAt" FROM "public"."Invoice" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."AuditLog"."id", "public"."AuditLog"."userId", "public"."AuditLog"."action", "public"."AuditLog"."resourceType", "public"."AuditLog"."resourceId", "public"."AuditLog"."branchId", "public"."AuditLog"."details", "public"."AuditLog"."createdAt" FROM "public"."AuditLog" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    Created branch: North Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: north@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for North Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for North Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for North Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: South Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: south@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for South Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for South Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for South Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: East Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: east@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for East Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for East Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for East Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: West Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: west@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for West Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for West Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for West Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name" FROM "public"."Organization" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Branch"."id", "public"."Branch"."name", "public"."Branch"."location", "public"."Branch"."organizationId" FROM "public"."Branch" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."password", "public"."User"."role"::text, "public"."User"."organizationId", "public"."User"."branchId" FROM "public"."User" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Technician"."id", "public"."Technician"."name", "public"."Technician"."phone", "public"."Technician"."branchId", "public"."Technician"."isActive" FROM "public"."Technician" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Customer"."id", "public"."Customer"."name", "public"."Customer"."phone", "public"."Customer"."address", "public"."Customer"."organizationId" FROM "public"."Customer" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Booking"."id", "public"."Booking"."serviceType", "public"."Booking"."status"::text, "public"."Booking"."scheduledAt", "public"."Booking"."customerId", "public"."Booking"."branchId", "public"."Booking"."technicianId", "public"."Booking"."customerName", "public"."Booking"."phone", "public"."Booking"."address", "public"."Booking"."notes", "public"."Booking"."createdAt", "public"."Booking"."updatedAt" FROM "public"."Booking" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Invoice"."id", "public"."Invoice"."amount", "public"."Invoice"."paymentStatus"::text, "public"."Invoice"."paymentMethod", "public"."Invoice"."bookingId", "public"."Invoice"."issuedAt", "public"."Invoice"."paidAt" FROM "public"."Invoice" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."AuditLog"."id", "public"."AuditLog"."userId", "public"."AuditLog"."action", "public"."AuditLog"."resourceType", "public"."AuditLog"."resourceId", "public"."AuditLog"."branchId", "public"."AuditLog"."details", "public"."AuditLog"."createdAt" FROM "public"."AuditLog" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+[0mPOST /api/v1/auth/login [32m200[0m 763.631 ms - 574[0m
+[0mPOST /api/v1/bookings [32m201[0m 477.838 ms - 587[0m
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    Created branch: North Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: north@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for North Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for North Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for North Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: South Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: south@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for South Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for South Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for South Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: East Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: east@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for East Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for East Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for East Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: West Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: west@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for West Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for West Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for West Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name" FROM "public"."Organization" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Branch"."id", "public"."Branch"."name", "public"."Branch"."location", "public"."Branch"."organizationId" FROM "public"."Branch" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."password", "public"."User"."role"::text, "public"."User"."organizationId", "public"."User"."branchId" FROM "public"."User" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Technician"."id", "public"."Technician"."name", "public"."Technician"."phone", "public"."Technician"."branchId", "public"."Technician"."isActive" FROM "public"."Technician" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Customer"."id", "public"."Customer"."name", "public"."Customer"."phone", "public"."Customer"."address", "public"."Customer"."organizationId" FROM "public"."Customer" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Booking"."id", "public"."Booking"."serviceType", "public"."Booking"."status"::text, "public"."Booking"."scheduledAt", "public"."Booking"."customerId", "public"."Booking"."branchId", "public"."Booking"."technicianId", "public"."Booking"."customerName", "public"."Booking"."phone", "public"."Booking"."address", "public"."Booking"."notes", "public"."Booking"."createdAt", "public"."Booking"."updatedAt" FROM "public"."Booking" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Invoice"."id", "public"."Invoice"."amount", "public"."Invoice"."paymentStatus"::text, "public"."Invoice"."paymentMethod", "public"."Invoice"."bookingId", "public"."Invoice"."issuedAt", "public"."Invoice"."paidAt" FROM "public"."Invoice" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."AuditLog"."id", "public"."AuditLog"."userId", "public"."AuditLog"."action", "public"."AuditLog"."resourceType", "public"."AuditLog"."resourceId", "public"."AuditLog"."branchId", "public"."AuditLog"."details", "public"."AuditLog"."createdAt" FROM "public"."AuditLog" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+[0mPOST /api/v1/auth/login [32m200[0m 172.343 ms - 466[0m
+  console.error
+    Error: {
+      method: 'POST',
+      url: '/api/v1/bookings',
+      error: 'Validation Error',
+      stack: undefined,
+      body: {
+        serviceType: '',
+        scheduledAt: 'invalid-date',
+        customerId: 'invalid-id',
+        branchId: 'invalid-id',
+        customerName: 'Test Customer',
+        phone: 'invalid-phone',
+        address: 'Test Address'
+      },
+      query: {},
+      params: {},
+      timestamp: '2026-02-24T02:36:07.894Z'
+    }
+
+    [0m [90m 2 |[39m
+     [90m 3 |[39m [36mexport[39m [36mfunction[39m errorHandler(err[33m:[39m any[33m,[39m req[33m:[39m [33mRequest[39m[33m,[39m res[33m:[39m [33mResponse[39m[33m,[39m next[33m:[39m [33mNextFunction[39m) {
+    [31m[1m>[22m[39m[90m 4 |[39m   console[33m.[39merror([32m'Error:'[39m[33m,[39m {
+     [90m   |[39m           [31m[1m^[22m[39m
+     [90m 5 |[39m     method[33m:[39m req[33m.[39mmethod[33m,[39m
+     [90m 6 |[39m     url[33m:[39m req[33m.[39murl[33m,[39m
+     [90m 7 |[39m     error[33m:[39m err[33m.[39mmessage[33m,[39m[0m
+
+      at errorHandler (src/middleware/errorHandler.ts:4:11)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:71:5)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at router.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:67:12)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at param (node_modules/express/lib/router/index.js:365:14)
+      at param (node_modules/express/lib/router/index.js:376:14)
+      at router.process_params (node_modules/express/lib/router/index.js:421:3)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at node_modules/express/lib/router/index.js:646:15
+      at next (node_modules/express/lib/router/index.js:265:14)
+      at next (node_modules/express/lib/router/route.js:141:14)
+
+[0mPOST /api/v1/bookings [33m400[0m 17.668 ms - 921[0m
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    Created branch: North Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: north@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for North Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for North Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for North Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: South Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: south@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for South Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for South Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for South Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: East Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: east@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for East Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for East Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for East Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: West Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: west@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for West Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for West Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for West Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name" FROM "public"."Organization" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Branch"."id", "public"."Branch"."name", "public"."Branch"."location", "public"."Branch"."organizationId" FROM "public"."Branch" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."password", "public"."User"."role"::text, "public"."User"."organizationId", "public"."User"."branchId" FROM "public"."User" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Technician"."id", "public"."Technician"."name", "public"."Technician"."phone", "public"."Technician"."branchId", "public"."Technician"."isActive" FROM "public"."Technician" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Customer"."id", "public"."Customer"."name", "public"."Customer"."phone", "public"."Customer"."address", "public"."Customer"."organizationId" FROM "public"."Customer" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Booking"."id", "public"."Booking"."serviceType", "public"."Booking"."status"::text, "public"."Booking"."scheduledAt", "public"."Booking"."customerId", "public"."Booking"."branchId", "public"."Booking"."technicianId", "public"."Booking"."customerName", "public"."Booking"."phone", "public"."Booking"."address", "public"."Booking"."notes", "public"."Booking"."createdAt", "public"."Booking"."updatedAt" FROM "public"."Booking" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Invoice"."id", "public"."Invoice"."amount", "public"."Invoice"."paymentStatus"::text, "public"."Invoice"."paymentMethod", "public"."Invoice"."bookingId", "public"."Invoice"."issuedAt", "public"."Invoice"."paidAt" FROM "public"."Invoice" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."AuditLog"."id", "public"."AuditLog"."userId", "public"."AuditLog"."action", "public"."AuditLog"."resourceType", "public"."AuditLog"."resourceId", "public"."AuditLog"."branchId", "public"."AuditLog"."details", "public"."AuditLog"."createdAt" FROM "public"."AuditLog" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+[0mPOST /api/v1/auth/login [32m200[0m 178.843 ms - 466[0m
+[0mGET /api/v1/bookings [32m200[0m 431.760 ms - 3343[0m
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    Created branch: North Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: north@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for North Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for North Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for North Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: South Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: south@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for South Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for South Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for South Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: East Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: east@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for East Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for East Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for East Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: West Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: west@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for West Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for West Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for West Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    prisma:query SELECT 1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name" FROM "public"."Organization" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Branch"."id", "public"."Branch"."name", "public"."Branch"."location", "public"."Branch"."organizationId" FROM "public"."Branch" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."password", "public"."User"."role"::text, "public"."User"."organizationId", "public"."User"."branchId" FROM "public"."User" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Technician"."id", "public"."Technician"."name", "public"."Technician"."phone", "public"."Technician"."branchId", "public"."Technician"."isActive" FROM "public"."Technician" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Customer"."id", "public"."Customer"."name", "public"."Customer"."phone", "public"."Customer"."address", "public"."Customer"."organizationId" FROM "public"."Customer" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Booking"."id", "public"."Booking"."serviceType", "public"."Booking"."status"::text, "public"."Booking"."scheduledAt", "public"."Booking"."customerId", "public"."Booking"."branchId", "public"."Booking"."technicianId", "public"."Booking"."customerName", "public"."Booking"."phone", "public"."Booking"."address", "public"."Booking"."notes", "public"."Booking"."createdAt", "public"."Booking"."updatedAt" FROM "public"."Booking" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Invoice"."id", "public"."Invoice"."amount", "public"."Invoice"."paymentStatus"::text, "public"."Invoice"."paymentMethod", "public"."Invoice"."bookingId", "public"."Invoice"."issuedAt", "public"."Invoice"."paidAt" FROM "public"."Invoice" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."AuditLog"."id", "public"."AuditLog"."userId", "public"."AuditLog"."action", "public"."AuditLog"."resourceType", "public"."AuditLog"."resourceId", "public"."AuditLog"."branchId", "public"."AuditLog"."details", "public"."AuditLog"."createdAt" FROM "public"."AuditLog" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+[0mPOST /api/v1/auth/login [32m200[0m 218.951 ms - 574[0m
+[0mGET /api/v1/bookings [32m200[0m 367.726 ms - 839[0m
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    Created branch: North Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: north@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for North Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for North Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for North Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: South Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: south@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for South Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for South Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for South Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: East Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: east@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for East Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for East Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for East Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: West Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: west@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for West Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for West Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for West Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name" FROM "public"."Organization" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Branch"."id", "public"."Branch"."name", "public"."Branch"."location", "public"."Branch"."organizationId" FROM "public"."Branch" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."password", "public"."User"."role"::text, "public"."User"."organizationId", "public"."User"."branchId" FROM "public"."User" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Technician"."id", "public"."Technician"."name", "public"."Technician"."phone", "public"."Technician"."branchId", "public"."Technician"."isActive" FROM "public"."Technician" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Customer"."id", "public"."Customer"."name", "public"."Customer"."phone", "public"."Customer"."address", "public"."Customer"."organizationId" FROM "public"."Customer" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Booking"."id", "public"."Booking"."serviceType", "public"."Booking"."status"::text, "public"."Booking"."scheduledAt", "public"."Booking"."customerId", "public"."Booking"."branchId", "public"."Booking"."technicianId", "public"."Booking"."customerName", "public"."Booking"."phone", "public"."Booking"."address", "public"."Booking"."notes", "public"."Booking"."createdAt", "public"."Booking"."updatedAt" FROM "public"."Booking" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Invoice"."id", "public"."Invoice"."amount", "public"."Invoice"."paymentStatus"::text, "public"."Invoice"."paymentMethod", "public"."Invoice"."bookingId", "public"."Invoice"."issuedAt", "public"."Invoice"."paidAt" FROM "public"."Invoice" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."AuditLog"."id", "public"."AuditLog"."userId", "public"."AuditLog"."action", "public"."AuditLog"."resourceType", "public"."AuditLog"."resourceId", "public"."AuditLog"."branchId", "public"."AuditLog"."details", "public"."AuditLog"."createdAt" FROM "public"."AuditLog" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+[0mPOST /api/v1/auth/login [32m200[0m 219.777 ms - 466[0m
+[0mGET /api/v1/bookings/ba54d2c3-93f9-4b12-83a0-78ff9e526d88 [32m200[0m 262.330 ms - 837[0m
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    Created branch: North Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: north@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for North Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for North Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for North Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: South Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: south@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for South Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for South Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for South Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: East Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: east@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for East Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for East Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for East Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: West Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: west@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for West Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for West Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for West Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name" FROM "public"."Organization" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Branch"."id", "public"."Branch"."name", "public"."Branch"."location", "public"."Branch"."organizationId" FROM "public"."Branch" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."password", "public"."User"."role"::text, "public"."User"."organizationId", "public"."User"."branchId" FROM "public"."User" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Technician"."id", "public"."Technician"."name", "public"."Technician"."phone", "public"."Technician"."branchId", "public"."Technician"."isActive" FROM "public"."Technician" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Customer"."id", "public"."Customer"."name", "public"."Customer"."phone", "public"."Customer"."address", "public"."Customer"."organizationId" FROM "public"."Customer" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Booking"."id", "public"."Booking"."serviceType", "public"."Booking"."status"::text, "public"."Booking"."scheduledAt", "public"."Booking"."customerId", "public"."Booking"."branchId", "public"."Booking"."technicianId", "public"."Booking"."customerName", "public"."Booking"."phone", "public"."Booking"."address", "public"."Booking"."notes", "public"."Booking"."createdAt", "public"."Booking"."updatedAt" FROM "public"."Booking" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Invoice"."id", "public"."Invoice"."amount", "public"."Invoice"."paymentStatus"::text, "public"."Invoice"."paymentMethod", "public"."Invoice"."bookingId", "public"."Invoice"."issuedAt", "public"."Invoice"."paidAt" FROM "public"."Invoice" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."AuditLog"."id", "public"."AuditLog"."userId", "public"."AuditLog"."action", "public"."AuditLog"."resourceType", "public"."AuditLog"."resourceId", "public"."AuditLog"."branchId", "public"."AuditLog"."details", "public"."AuditLog"."createdAt" FROM "public"."AuditLog" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+[0mGET /api/v1/bookings/invalid-id [33m403[0m 0.279 ms - 27[0m
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    Created branch: North Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: north@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for North Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for North Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for North Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: South Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: south@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for South Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for South Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for South Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: East Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: east@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for East Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for East Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for East Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: West Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: west@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for West Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for West Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for West Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name" FROM "public"."Organization" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Branch"."id", "public"."Branch"."name", "public"."Branch"."location", "public"."Branch"."organizationId" FROM "public"."Branch" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."password", "public"."User"."role"::text, "public"."User"."organizationId", "public"."User"."branchId" FROM "public"."User" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Technician"."id", "public"."Technician"."name", "public"."Technician"."phone", "public"."Technician"."branchId", "public"."Technician"."isActive" FROM "public"."Technician" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Customer"."id", "public"."Customer"."name", "public"."Customer"."phone", "public"."Customer"."address", "public"."Customer"."organizationId" FROM "public"."Customer" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Booking"."id", "public"."Booking"."serviceType", "public"."Booking"."status"::text, "public"."Booking"."scheduledAt", "public"."Booking"."customerId", "public"."Booking"."branchId", "public"."Booking"."technicianId", "public"."Booking"."customerName", "public"."Booking"."phone", "public"."Booking"."address", "public"."Booking"."notes", "public"."Booking"."createdAt", "public"."Booking"."updatedAt" FROM "public"."Booking" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Invoice"."id", "public"."Invoice"."amount", "public"."Invoice"."paymentStatus"::text, "public"."Invoice"."paymentMethod", "public"."Invoice"."bookingId", "public"."Invoice"."issuedAt", "public"."Invoice"."paidAt" FROM "public"."Invoice" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."AuditLog"."id", "public"."AuditLog"."userId", "public"."AuditLog"."action", "public"."AuditLog"."resourceType", "public"."AuditLog"."resourceId", "public"."AuditLog"."branchId", "public"."AuditLog"."details", "public"."AuditLog"."createdAt" FROM "public"."AuditLog" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+[0mPUT /api/v1/bookings/cf9a98e9-7cd8-4c2b-bae6-dfb457a950aa [33m403[0m 0.303 ms - 27[0m
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    Created branch: North Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: north@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for North Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for North Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for North Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: South Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: south@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for South Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for South Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for South Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: East Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: east@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for East Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for East Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for East Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: West Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: west@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for West Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for West Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for West Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    prisma:query SELECT 1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name" FROM "public"."Organization" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Branch"."id", "public"."Branch"."name", "public"."Branch"."location", "public"."Branch"."organizationId" FROM "public"."Branch" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."password", "public"."User"."role"::text, "public"."User"."organizationId", "public"."User"."branchId" FROM "public"."User" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Technician"."id", "public"."Technician"."name", "public"."Technician"."phone", "public"."Technician"."branchId", "public"."Technician"."isActive" FROM "public"."Technician" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Customer"."id", "public"."Customer"."name", "public"."Customer"."phone", "public"."Customer"."address", "public"."Customer"."organizationId" FROM "public"."Customer" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Booking"."id", "public"."Booking"."serviceType", "public"."Booking"."status"::text, "public"."Booking"."scheduledAt", "public"."Booking"."customerId", "public"."Booking"."branchId", "public"."Booking"."technicianId", "public"."Booking"."customerName", "public"."Booking"."phone", "public"."Booking"."address", "public"."Booking"."notes", "public"."Booking"."createdAt", "public"."Booking"."updatedAt" FROM "public"."Booking" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Invoice"."id", "public"."Invoice"."amount", "public"."Invoice"."paymentStatus"::text, "public"."Invoice"."paymentMethod", "public"."Invoice"."bookingId", "public"."Invoice"."issuedAt", "public"."Invoice"."paidAt" FROM "public"."Invoice" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."AuditLog"."id", "public"."AuditLog"."userId", "public"."AuditLog"."action", "public"."AuditLog"."resourceType", "public"."AuditLog"."resourceId", "public"."AuditLog"."branchId", "public"."AuditLog"."details", "public"."AuditLog"."createdAt" FROM "public"."AuditLog" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+[0mPUT /api/v1/bookings/3e027e5e-ba6e-42a4-97d2-51b3f28e41fb [33m403[0m 0.180 ms - 27[0m
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    Created branch: North Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: north@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for North Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for North Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for North Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: South Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: south@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for South Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for South Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for South Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: East Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: east@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for East Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for East Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for East Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: West Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: west@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for West Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for West Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for West Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name" FROM "public"."Organization" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Branch"."id", "public"."Branch"."name", "public"."Branch"."location", "public"."Branch"."organizationId" FROM "public"."Branch" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."password", "public"."User"."role"::text, "public"."User"."organizationId", "public"."User"."branchId" FROM "public"."User" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Technician"."id", "public"."Technician"."name", "public"."Technician"."phone", "public"."Technician"."branchId", "public"."Technician"."isActive" FROM "public"."Technician" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Customer"."id", "public"."Customer"."name", "public"."Customer"."phone", "public"."Customer"."address", "public"."Customer"."organizationId" FROM "public"."Customer" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Booking"."id", "public"."Booking"."serviceType", "public"."Booking"."status"::text, "public"."Booking"."scheduledAt", "public"."Booking"."customerId", "public"."Booking"."branchId", "public"."Booking"."technicianId", "public"."Booking"."customerName", "public"."Booking"."phone", "public"."Booking"."address", "public"."Booking"."notes", "public"."Booking"."createdAt", "public"."Booking"."updatedAt" FROM "public"."Booking" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Invoice"."id", "public"."Invoice"."amount", "public"."Invoice"."paymentStatus"::text, "public"."Invoice"."paymentMethod", "public"."Invoice"."bookingId", "public"."Invoice"."issuedAt", "public"."Invoice"."paidAt" FROM "public"."Invoice" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."AuditLog"."id", "public"."AuditLog"."userId", "public"."AuditLog"."action", "public"."AuditLog"."resourceType", "public"."AuditLog"."resourceId", "public"."AuditLog"."branchId", "public"."AuditLog"."details", "public"."AuditLog"."createdAt" FROM "public"."AuditLog" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+[0mPUT /api/v1/bookings/71e2f9eb-7788-4e73-9277-cf3e45c69ad2 [33m403[0m 0.242 ms - 27[0m
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    Created branch: North Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: north@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for North Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for North Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for North Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: South Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: south@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for South Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for South Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for South Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: East Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: east@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for East Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for East Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for East Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: West Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: west@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for West Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for West Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for West Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name" FROM "public"."Organization" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Branch"."id", "public"."Branch"."name", "public"."Branch"."location", "public"."Branch"."organizationId" FROM "public"."Branch" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."password", "public"."User"."role"::text, "public"."User"."organizationId", "public"."User"."branchId" FROM "public"."User" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Technician"."id", "public"."Technician"."name", "public"."Technician"."phone", "public"."Technician"."branchId", "public"."Technician"."isActive" FROM "public"."Technician" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Customer"."id", "public"."Customer"."name", "public"."Customer"."phone", "public"."Customer"."address", "public"."Customer"."organizationId" FROM "public"."Customer" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Booking"."id", "public"."Booking"."serviceType", "public"."Booking"."status"::text, "public"."Booking"."scheduledAt", "public"."Booking"."customerId", "public"."Booking"."branchId", "public"."Booking"."technicianId", "public"."Booking"."customerName", "public"."Booking"."phone", "public"."Booking"."address", "public"."Booking"."notes", "public"."Booking"."createdAt", "public"."Booking"."updatedAt" FROM "public"."Booking" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Invoice"."id", "public"."Invoice"."amount", "public"."Invoice"."paymentStatus"::text, "public"."Invoice"."paymentMethod", "public"."Invoice"."bookingId", "public"."Invoice"."issuedAt", "public"."Invoice"."paidAt" FROM "public"."Invoice" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."AuditLog"."id", "public"."AuditLog"."userId", "public"."AuditLog"."action", "public"."AuditLog"."resourceType", "public"."AuditLog"."resourceId", "public"."AuditLog"."branchId", "public"."AuditLog"."details", "public"."AuditLog"."createdAt" FROM "public"."AuditLog" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+[0mDELETE /api/v1/bookings/7ba7d6fa-c03d-43df-976a-542d62b983a3 [33m403[0m 0.202 ms - 27[0m
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    Created branch: North Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: north@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for North Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for North Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for North Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: South Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: south@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for South Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for South Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for South Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: East Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: east@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for East Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for East Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for East Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: West Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: west@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for West Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for West Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for West Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name" FROM "public"."Organization" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Branch"."id", "public"."Branch"."name", "public"."Branch"."location", "public"."Branch"."organizationId" FROM "public"."Branch" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."password", "public"."User"."role"::text, "public"."User"."organizationId", "public"."User"."branchId" FROM "public"."User" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Technician"."id", "public"."Technician"."name", "public"."Technician"."phone", "public"."Technician"."branchId", "public"."Technician"."isActive" FROM "public"."Technician" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Customer"."id", "public"."Customer"."name", "public"."Customer"."phone", "public"."Customer"."address", "public"."Customer"."organizationId" FROM "public"."Customer" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Booking"."id", "public"."Booking"."serviceType", "public"."Booking"."status"::text, "public"."Booking"."scheduledAt", "public"."Booking"."customerId", "public"."Booking"."branchId", "public"."Booking"."technicianId", "public"."Booking"."customerName", "public"."Booking"."phone", "public"."Booking"."address", "public"."Booking"."notes", "public"."Booking"."createdAt", "public"."Booking"."updatedAt" FROM "public"."Booking" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Invoice"."id", "public"."Invoice"."amount", "public"."Invoice"."paymentStatus"::text, "public"."Invoice"."paymentMethod", "public"."Invoice"."bookingId", "public"."Invoice"."issuedAt", "public"."Invoice"."paidAt" FROM "public"."Invoice" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."AuditLog"."id", "public"."AuditLog"."userId", "public"."AuditLog"."action", "public"."AuditLog"."resourceType", "public"."AuditLog"."resourceId", "public"."AuditLog"."branchId", "public"."AuditLog"."details", "public"."AuditLog"."createdAt" FROM "public"."AuditLog" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+[0mDELETE /api/v1/bookings/b8bdc049-3eb1-4188-98ff-09bf84ae4bec [33m403[0m 0.239 ms - 27[0m
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    Created branch: North Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: north@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for North Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for North Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for North Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: South Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: south@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for South Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for South Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for South Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: East Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: east@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for East Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for East Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for East Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: West Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: west@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for West Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for West Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for West Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name" FROM "public"."Organization" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Branch"."id", "public"."Branch"."name", "public"."Branch"."location", "public"."Branch"."organizationId" FROM "public"."Branch" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."password", "public"."User"."role"::text, "public"."User"."organizationId", "public"."User"."branchId" FROM "public"."User" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Technician"."id", "public"."Technician"."name", "public"."Technician"."phone", "public"."Technician"."branchId", "public"."Technician"."isActive" FROM "public"."Technician" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Customer"."id", "public"."Customer"."name", "public"."Customer"."phone", "public"."Customer"."address", "public"."Customer"."organizationId" FROM "public"."Customer" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Booking"."id", "public"."Booking"."serviceType", "public"."Booking"."status"::text, "public"."Booking"."scheduledAt", "public"."Booking"."customerId", "public"."Booking"."branchId", "public"."Booking"."technicianId", "public"."Booking"."customerName", "public"."Booking"."phone", "public"."Booking"."address", "public"."Booking"."notes", "public"."Booking"."createdAt", "public"."Booking"."updatedAt" FROM "public"."Booking" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Invoice"."id", "public"."Invoice"."amount", "public"."Invoice"."paymentStatus"::text, "public"."Invoice"."paymentMethod", "public"."Invoice"."bookingId", "public"."Invoice"."issuedAt", "public"."Invoice"."paidAt" FROM "public"."Invoice" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."AuditLog"."id", "public"."AuditLog"."userId", "public"."AuditLog"."action", "public"."AuditLog"."resourceType", "public"."AuditLog"."resourceId", "public"."AuditLog"."branchId", "public"."AuditLog"."details", "public"."AuditLog"."createdAt" FROM "public"."AuditLog" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+[0mGET /api/v1/bookings/d53b8c37-2ff5-464c-ac5c-d5281a0a7676 [33m403[0m 0.197 ms - 27[0m
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+node.exe : FAIL tests/integration/booking.test.ts 
+(65.1 s)
+At line:1 char:1
++ & "C:\/node.exe" "C:\Users\margi\AppData\Roaming
+\npm/node_modules/npm ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (FAIL 
+    tests/inte...est.ts (65.1 s):String) [], Rem  
+  oteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  Booking Integration Tests
+    Create Booking
+      ├ù should create a new booking (admin) 
+(6356 ms)
+      ΓêÜ should create a new booking (branch 
+leader) (5311 ms)
+      ΓêÜ should validate booking data (3684 ms)
+    Get Bookings
+      ΓêÜ should get all bookings (admin) (4151 
+ms)
+      ΓêÜ should get branch bookings (branch 
+leader) (4111 ms)
+      ΓêÜ should get booking by ID (3958 ms)
+      ├ù should return 404 for non-existent 
+booking (3659 ms)
+    Update Booking
+      ├ù should update booking status (admin) 
+(3525 ms)
+      ├ù should update booking technician (branch 
+leader) (3542 ms)
+      ├ù should validate update data (3478 ms)
+    Delete Booking
+      ├ù should delete booking (admin) (3475 ms)
+      ├ù should not allow non-admin to delete 
+(3517 ms)
+    Authorization
+      ├ù should enforce branch access (3478 ms)
+
+  ΓùÅ Booking Integration Tests ΓÇ║ Create 
+Booking ΓÇ║ should create a new booking (admin)
+
+    thrown: "Exceeded timeout of 5000 ms for a 
+hook.
+    Add a timeout value to this test to increase 
+the timeout, if this is a long-running test. See 
+https://jestjs.io/docs/api#testname-fn-timeout."
+
+    [0m [90m 12 |[39m   [36mlet[39m 
+testData[33m:[39m any[33m;[39m
+     [90m 13 |[39m
+    [31m[1m>[22m[39m[90m 14 |[39m   
+beforeEach([36masync[39m () [33m=>[39m {
+     [90m    |[39m   [31m[1m^[22m[39m
+     [90m 15 |[39m     [36mawait[39m 
+setupTestDatabase()[33m;[39m
+     [90m 16 |[39m     testData [33m=[39m 
+[36mawait[39m getTestData()[33m;[39m
+     [90m 17 |[39m     adminUser [33m=[39m tes
+tData[33m.[39musers[33m.[39mfind((u[33m:[39m
+ any) [33m=>[39m u[33m.[39mrole [33m===[39m 
+[32m'ADMIN'[39m)[33m;[39m[0m
+
+      at tests/integration/booking.test.ts:14:3
+      at Object.<anonymous> 
+(tests/integration/booking.test.ts:9:1)
+
+  ΓùÅ Booking Integration Tests ΓÇ║ Get Bookings 
+ΓÇ║ should return 404 for non-existent booking
+
+    expected 404 "Not Found", got 403 "Forbidden"
+
+    [0m [90m 198 |[39m         [33m.[39m[36m
+get[39m([32m'/api/v1/bookings/invalid-id'[39m)
+     [90m 199 |[39m         [33m.[39m[36mset
+[39m([32m'Authorization'[39m[33m,[39m 
+[32m`Bearer ${loginResponse.body.token}`[39m)
+    [31m[1m>[22m[39m[90m 200 |[39m         
+[33m.[39mexpect([35m404[39m)[33m;[39m
+     [90m     |[39m          
+[31m[1m^[22m[39m
+     [90m 201 |[39m
+     [90m 202 |[39m       expect(response[33m.
+[39mbody)[33m.[39mtoHaveProperty([32m'error'[3
+9m)[33m;[39m
+     [90m 203 |[39m       expect(response[33m.
+[39mbody[33m.[39merror)[33m.[39mtoBe([32m'Not
+ Found'[39m)[33m;[39m[0m
+
+      at Object.<anonymous> 
+(tests/integration/booking.test.ts:200:10)
+      ----
+      at Test._assertStatus 
+(node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction 
+(node_modules/supertest/lib/test.js:285:13)
+      at Test.assert 
+(node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert 
+(node_modules/supertest/lib/test.js:120:14)
+
+  ΓùÅ Booking Integration Tests ΓÇ║ Update 
+Booking ΓÇ║ should update booking status (admin)
+
+    expected 200 "OK", got 403 "Forbidden"
+
+    [0m [90m 225 |[39m         [33m.[39m[36m
+set[39m([32m'Authorization'[39m[33m,[39m 
+[32m`Bearer ${loginResponse.body.token}`[39m)
+     [90m 226 |[39m         
+[33m.[39msend(updateData)
+    [31m[1m>[22m[39m[90m 227 |[39m         
+[33m.[39mexpect([35m200[39m)[33m;[39m
+     [90m     |[39m          
+[31m[1m^[22m[39m
+     [90m 228 |[39m
+     [90m 229 |[39m       expect(response[33m.
+[39mbody)[33m.[39mtoHaveProperty([32m'id'[39m)
+[33m;[39m
+     [90m 230 |[39m       expect(response[33m.
+[39mbody[33m.[39mid)[33m.[39mtoBe(existingBook
+ing[33m.[39mid)[33m;[39m[0m
+
+      at Object.<anonymous> 
+(tests/integration/booking.test.ts:227:10)
+      ----
+      at Test._assertStatus 
+(node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction 
+(node_modules/supertest/lib/test.js:285:13)
+      at Test.assert 
+(node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert 
+(node_modules/supertest/lib/test.js:120:14)
+
+  ΓùÅ Booking Integration Tests ΓÇ║ Update 
+Booking ΓÇ║ should update booking technician 
+(branch leader)
+
+    expected 200 "OK", got 403 "Forbidden"
+
+    [0m [90m 252 |[39m         [33m.[39m[36m
+set[39m([32m'Authorization'[39m[33m,[39m 
+[32m`Bearer ${loginResponse.body.token}`[39m)
+     [90m 253 |[39m         
+[33m.[39msend(updateData)
+    [31m[1m>[22m[39m[90m 254 |[39m         
+[33m.[39mexpect([35m200[39m)[33m;[39m
+     [90m     |[39m          
+[31m[1m^[22m[39m
+     [90m 255 |[39m
+     [90m 256 |[39m       expect(response[33m.
+[39mbody)[33m.[39mtoHaveProperty([32m'id'[39m)
+[33m;[39m
+     [90m 257 |[39m       expect(response[33m.
+[39mbody[33m.[39mid)[33m.[39mtoBe(existingBook
+ing[33m.[39mid)[33m;[39m[0m
+
+      at Object.<anonymous> 
+(tests/integration/booking.test.ts:254:10)
+      ----
+      at Test._assertStatus 
+(node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction 
+(node_modules/supertest/lib/test.js:285:13)
+      at Test.assert 
+(node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert 
+(node_modules/supertest/lib/test.js:120:14)
+
+  ΓùÅ Booking Integration Tests ΓÇ║ Update 
+Booking ΓÇ║ should validate update data
+
+    expected 400 "Bad Request", got 403 
+"Forbidden"
+
+    [0m [90m 278 |[39m         [33m.[39m[36m
+set[39m([32m'Authorization'[39m[33m,[39m 
+[32m`Bearer ${loginResponse.body.token}`[39m)
+     [90m 279 |[39m         
+[33m.[39msend(invalidUpdate)
+    [31m[1m>[22m[39m[90m 280 |[39m         
+[33m.[39mexpect([35m400[39m)[33m;[39m
+     [90m     |[39m          
+[31m[1m^[22m[39m
+     [90m 281 |[39m
+     [90m 282 |[39m       expect(response[33m.
+[39mbody)[33m.[39mtoHaveProperty([32m'error'[3
+9m)[33m;[39m
+     [90m 283 |[39m       expect(response[33m.
+[39mbody[33m.[39merror)[33m.[39mtoBe([32m'Val
+idation Error'[39m)[33m;[39m[0m
+
+      at Object.<anonymous> 
+(tests/integration/booking.test.ts:280:10)
+      ----
+      at Test._assertStatus 
+(node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction 
+(node_modules/supertest/lib/test.js:285:13)
+      at Test.assert 
+(node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert 
+(node_modules/supertest/lib/test.js:120:14)
+
+  ΓùÅ Booking Integration Tests ΓÇ║ Delete 
+Booking ΓÇ║ should delete booking (admin)
+
+    expected 200 "OK", got 403 "Forbidden"
+
+    [0m [90m 299 |[39m         [33m.[39m[36m
+delete[39m([32m`/api/v1/bookings/${existingBooki
+ng.id}`[39m)
+     [90m 300 |[39m         [33m.[39m[36mset
+[39m([32m'Authorization'[39m[33m,[39m 
+[32m`Bearer ${loginResponse.body.token}`[39m)
+    [31m[1m>[22m[39m[90m 301 |[39m         
+[33m.[39mexpect([35m200[39m)[33m;[39m
+     [90m     |[39m          
+[31m[1m^[22m[39m
+     [90m 302 |[39m
+     [90m 303 |[39m       expect(response[33m.
+[39mbody)[33m.[39mtoHaveProperty([32m'message'
+[39m)[33m;[39m
+     [90m 304 |[39m       expect(response[33m.
+[39mbody[33m.[39mmessage)[33m.[39mtoBe([32m'B
+ooking deleted successfully'[39m)[33m;[39m[0m
+
+      at Object.<anonymous> 
+(tests/integration/booking.test.ts:301:10)
+      ----
+      at Test._assertStatus 
+(node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction 
+(node_modules/supertest/lib/test.js:285:13)
+      at Test.assert 
+(node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert 
+(node_modules/supertest/lib/test.js:120:14)
+
+  ΓùÅ Booking Integration Tests ΓÇ║ Delete 
+Booking ΓÇ║ should not allow non-admin to delete
+
+    expect(received).toBe(expected) // Object.is 
+equality
+
+    Expected: "Forbidden"
+    Received: "Invalid session"
+
+    [0m [90m 327 |[39m
+     [90m 328 |[39m       expect(response[33m.
+[39mbody)[33m.[39mtoHaveProperty([32m'error'[3
+9m)[33m;[39m
+    [31m[1m>[22m[39m[90m 329 |[39m       exp
+ect(response[33m.[39mbody[33m.[39merror)[33m.
+[39mtoBe([32m'Forbidden'[39m)[33m;[39m
+     [90m     |[39m                             
+      [31m[1m^[22m[39m
+     [90m 330 |[39m     })[33m;[39m
+     [90m 331 |[39m   })[33m;[39m
+     [90m 332 |[39m[0m
+
+      at Object.<anonymous> 
+(tests/integration/booking.test.ts:329:35)
+
+  ΓùÅ Booking Integration Tests ΓÇ║ Authorization 
+ΓÇ║ should enforce branch access
+
+    expect(received).toBe(expected) // Object.is 
+equality
+
+    Expected: "Forbidden"
+    Received: "Invalid session"
+
+    [0m [90m 350 |[39m
+     [90m 351 |[39m         expect(response[33m
+.[39mbody)[33m.[39mtoHaveProperty([32m'error'
+[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 352 |[39m         e
+xpect(response[33m.[39mbody[33m.[39merror)[33
+m.[39mtoBe([32m'Forbidden'[39m)[33m;[39m
+     [90m     |[39m                             
+        [31m[1m^[22m[39m
+     [90m 353 |[39m       }
+     [90m 354 |[39m     })[33m;[39m
+     [90m 355 |[39m   })[33m;[39m[0m
+
+      at Object.<anonymous> 
+(tests/integration/booking.test.ts:352:37)
+
+  console.log
+    prisma:info Starting a postgresql pool with 13 connections.
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    Created branch: North Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: north@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for North Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for North Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for North Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: South Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: south@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for South Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for South Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for South Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: East Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: east@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for East Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for East Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for East Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: West Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: west@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for West Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for West Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for West Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name" FROM "public"."Organization" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Branch"."id", "public"."Branch"."name", "public"."Branch"."location", "public"."Branch"."organizationId" FROM "public"."Branch" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."password", "public"."User"."role"::text, "public"."User"."organizationId", "public"."User"."branchId" FROM "public"."User" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Technician"."id", "public"."Technician"."name", "public"."Technician"."phone", "public"."Technician"."branchId", "public"."Technician"."isActive" FROM "public"."Technician" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Customer"."id", "public"."Customer"."name", "public"."Customer"."phone", "public"."Customer"."address", "public"."Customer"."organizationId" FROM "public"."Customer" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Booking"."id", "public"."Booking"."serviceType", "public"."Booking"."status"::text, "public"."Booking"."scheduledAt", "public"."Booking"."customerId", "public"."Booking"."branchId", "public"."Booking"."technicianId", "public"."Booking"."customerName", "public"."Booking"."phone", "public"."Booking"."address", "public"."Booking"."notes", "public"."Booking"."createdAt", "public"."Booking"."updatedAt" FROM "public"."Booking" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Invoice"."id", "public"."Invoice"."amount", "public"."Invoice"."paymentStatus"::text, "public"."Invoice"."paymentMethod", "public"."Invoice"."bookingId", "public"."Invoice"."issuedAt", "public"."Invoice"."paidAt" FROM "public"."Invoice" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."AuditLog"."id", "public"."AuditLog"."userId", "public"."AuditLog"."action", "public"."AuditLog"."resourceType", "public"."AuditLog"."resourceId", "public"."AuditLog"."branchId", "public"."AuditLog"."details", "public"."AuditLog"."createdAt" FROM "public"."AuditLog" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    Created branch: North Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: north@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for North Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for North Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for North Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: South Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: south@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for South Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for South Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for South Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: East Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: east@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for East Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for East Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for East Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: West Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: west@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for West Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for West Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for West Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name" FROM "public"."Organization" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Branch"."id", "public"."Branch"."name", "public"."Branch"."location", "public"."Branch"."organizationId" FROM "public"."Branch" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."password", "public"."User"."role"::text, "public"."User"."organizationId", "public"."User"."branchId" FROM "public"."User" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Technician"."id", "public"."Technician"."name", "public"."Technician"."phone", "public"."Technician"."branchId", "public"."Technician"."isActive" FROM "public"."Technician" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Customer"."id", "public"."Customer"."name", "public"."Customer"."phone", "public"."Customer"."address", "public"."Customer"."organizationId" FROM "public"."Customer" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Booking"."id", "public"."Booking"."serviceType", "public"."Booking"."status"::text, "public"."Booking"."scheduledAt", "public"."Booking"."customerId", "public"."Booking"."branchId", "public"."Booking"."technicianId", "public"."Booking"."customerName", "public"."Booking"."phone", "public"."Booking"."address", "public"."Booking"."notes", "public"."Booking"."createdAt", "public"."Booking"."updatedAt" FROM "public"."Booking" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Invoice"."id", "public"."Invoice"."amount", "public"."Invoice"."paymentStatus"::text, "public"."Invoice"."paymentMethod", "public"."Invoice"."bookingId", "public"."Invoice"."issuedAt", "public"."Invoice"."paidAt" FROM "public"."Invoice" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."AuditLog"."id", "public"."AuditLog"."userId", "public"."AuditLog"."action", "public"."AuditLog"."resourceType", "public"."AuditLog"."resourceId", "public"."AuditLog"."branchId", "public"."AuditLog"."details", "public"."AuditLog"."createdAt" FROM "public"."AuditLog" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+[0mPOST /api/v1/auth/login [32m200[0m 794.237 ms - 574[0m
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    Created branch: North Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: north@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for North Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for North Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for North Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: South Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: south@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for South Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for South Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for South Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: East Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: east@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for East Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for East Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for East Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: West Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: west@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for West Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for West Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for West Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name" FROM "public"."Organization" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Branch"."id", "public"."Branch"."name", "public"."Branch"."location", "public"."Branch"."organizationId" FROM "public"."Branch" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."password", "public"."User"."role"::text, "public"."User"."organizationId", "public"."User"."branchId" FROM "public"."User" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Technician"."id", "public"."Technician"."name", "public"."Technician"."phone", "public"."Technician"."branchId", "public"."Technician"."isActive" FROM "public"."Technician" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Customer"."id", "public"."Customer"."name", "public"."Customer"."phone", "public"."Customer"."address", "public"."Customer"."organizationId" FROM "public"."Customer" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Booking"."id", "public"."Booking"."serviceType", "public"."Booking"."status"::text, "public"."Booking"."scheduledAt", "public"."Booking"."customerId", "public"."Booking"."branchId", "public"."Booking"."technicianId", "public"."Booking"."customerName", "public"."Booking"."phone", "public"."Booking"."address", "public"."Booking"."notes", "public"."Booking"."createdAt", "public"."Booking"."updatedAt" FROM "public"."Booking" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Invoice"."id", "public"."Invoice"."amount", "public"."Invoice"."paymentStatus"::text, "public"."Invoice"."paymentMethod", "public"."Invoice"."bookingId", "public"."Invoice"."issuedAt", "public"."Invoice"."paidAt" FROM "public"."Invoice" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."AuditLog"."id", "public"."AuditLog"."userId", "public"."AuditLog"."action", "public"."AuditLog"."resourceType", "public"."AuditLog"."resourceId", "public"."AuditLog"."branchId", "public"."AuditLog"."details", "public"."AuditLog"."createdAt" FROM "public"."AuditLog" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+[0mPOST /api/v1/auth/login [33m401[0m 166.187 ms - 31[0m
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    Created branch: North Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: north@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for North Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for North Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for North Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: South Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: south@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for South Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for South Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for South Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: East Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: east@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for East Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for East Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for East Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: West Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: west@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for West Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for West Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for West Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name" FROM "public"."Organization" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Branch"."id", "public"."Branch"."name", "public"."Branch"."location", "public"."Branch"."organizationId" FROM "public"."Branch" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."password", "public"."User"."role"::text, "public"."User"."organizationId", "public"."User"."branchId" FROM "public"."User" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Technician"."id", "public"."Technician"."name", "public"."Technician"."phone", "public"."Technician"."branchId", "public"."Technician"."isActive" FROM "public"."Technician" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Customer"."id", "public"."Customer"."name", "public"."Customer"."phone", "public"."Customer"."address", "public"."Customer"."organizationId" FROM "public"."Customer" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Booking"."id", "public"."Booking"."serviceType", "public"."Booking"."status"::text, "public"."Booking"."scheduledAt", "public"."Booking"."customerId", "public"."Booking"."branchId", "public"."Booking"."technicianId", "public"."Booking"."customerName", "public"."Booking"."phone", "public"."Booking"."address", "public"."Booking"."notes", "public"."Booking"."createdAt", "public"."Booking"."updatedAt" FROM "public"."Booking" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Invoice"."id", "public"."Invoice"."amount", "public"."Invoice"."paymentStatus"::text, "public"."Invoice"."paymentMethod", "public"."Invoice"."bookingId", "public"."Invoice"."issuedAt", "public"."Invoice"."paidAt" FROM "public"."Invoice" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."AuditLog"."id", "public"."AuditLog"."userId", "public"."AuditLog"."action", "public"."AuditLog"."resourceType", "public"."AuditLog"."resourceId", "public"."AuditLog"."branchId", "public"."AuditLog"."details", "public"."AuditLog"."createdAt" FROM "public"."AuditLog" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.error
+    Login error: ValidationError: Validation Error
+        at login (C:\Users\margi\Desktop\lockedIn\aircon-service\backend\src\controllers\authController.ts:21:19)
+        at C:\Users\margi\Desktop\lockedIn\aircon-service\backend\src\middleware\errorHandler.ts:95:5
+        at Layer.handle [as handle_request] (C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express\lib\router\layer.js:95:5)
+        at next (C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express\lib\router\route.js:149:13)
+        at Route.dispatch (C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express\lib\router\route.js:119:3)
+        at Layer.handle [as handle_request] (C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express\lib\router\layer.js:95:5)
+        at C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express\lib\router\index.js:284:15
+        at router.process_params (C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express\lib\router\index.js:346:12)
+        at next (C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express\lib\router\index.js:280:10)
+        at router.handle (C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express\lib\router\index.js:175:3)
+        at router (C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express\lib\router\index.js:47:12)
+        at Layer.handle [as handle_request] (C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express\lib\router\layer.js:95:5)
+        at trim_prefix (C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express\lib\router\index.js:328:13)
+        at C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express\lib\router\index.js:286:9
+        at router.process_params (C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express\lib\router\index.js:346:12)
+        at next (C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express\lib\router\index.js:280:10)
+        at C:\Users\margi\Desktop\lockedIn\aircon-service\backend\src\middleware\requestLogger.ts:56:5
+        at Layer.handle [as handle_request] (C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express\lib\router\layer.js:95:5)
+        at trim_prefix (C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express\lib\router\index.js:328:13)
+        at C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express\lib\router\index.js:286:9
+        at router.process_params (C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express\lib\router\index.js:346:12)
+        at next (C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express\lib\router\index.js:280:10)
+        at logger (C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\morgan\index.js:144:5)
+        at Layer.handle [as handle_request] (C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express\lib\router\layer.js:95:5)
+        at trim_prefix (C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express\lib\router\index.js:328:13)
+        at C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express\lib\router\index.js:286:9
+        at router.process_params (C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express\lib\router\index.js:346:12)
+        at next (C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express\lib\router\index.js:280:10)
+        at C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express-rate-limit\dist\index.cjs:942:7
+        at processTicksAndRejections (node:internal/process/task_queues:103:5)
+        at C:\Users\margi\Desktop\lockedIn\aircon-service\backend\node_modules\express-rate-limit\dist\index.cjs:825:5 {
+      errors: [
+        {
+          expected: 'string',
+          code: 'invalid_type',
+          path: [Array],
+          message: 'Invalid input: expected string, received undefined'
+        }
+      ]
+    }
+
+    [0m [90m 65 |[39m         })[33m;[39m
+     [90m 66 |[39m     } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 67 |[39m         console[33m.[39merror([32m"Login error:"[39m[33m,[39m error)[33m;[39m
+     [90m    |[39m                 [31m[1m^[22m[39m
+     [90m 68 |[39m         res[33m.[39mstatus([35m500[39m)[33m.[39mjson({ error[33m:[39m [32m"Server login error"[39m })[33m;[39m
+     [90m 69 |[39m     }
+     [90m 70 |[39m }[33m;[39m[0m
+
+      at login (src/controllers/authController.ts:67:17)
+      at src/middleware/errorHandler.ts:95:5
+      at Layer.handle [as handle_request] (node_modules/express/lib/router/layer.js:95:5)
+      at next (node_modules/express/lib/router/route.js:149:13)
+      at Route.dispatch (node_modules/express/lib/router/route.js:119:3)
+      at Layer.handle [as handle_request] (node_modules/express/lib/router/layer.js:95:5)
+      at node_modules/express/lib/router/index.js:284:15
+      at router.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at router.handle (node_modules/express/lib/router/index.js:175:3)
+      at router (node_modules/express/lib/router/index.js:47:12)
+      at Layer.handle [as handle_request] (node_modules/express/lib/router/layer.js:95:5)
+      at trim_prefix (node_modules/express/lib/router/index.js:328:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at router.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at src/middleware/requestLogger.ts:56:5
+      at Layer.handle [as handle_request] (node_modules/express/lib/router/layer.js:95:5)
+      at trim_prefix (node_modules/express/lib/router/index.js:328:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at router.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at logger (node_modules/morgan/index.js:144:5)
+      at Layer.handle [as handle_request] (node_modules/express/lib/router/layer.js:95:5)
+      at trim_prefix (node_modules/express/lib/router/index.js:328:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at router.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at node_modules/express-rate-limit/dist/index.cjs:942:7
+      at node_modules/express-rate-limit/dist/index.cjs:825:5
+
+[0mPOST /api/v1/auth/login [31m500[0m 28.592 ms - 30[0m
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    Created branch: North Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: north@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for North Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for North Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for North Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: South Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: south@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for South Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for South Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for South Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: East Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: east@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for East Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for East Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for East Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: West Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: west@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for West Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for West Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for West Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    prisma:query SELECT 1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name" FROM "public"."Organization" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Branch"."id", "public"."Branch"."name", "public"."Branch"."location", "public"."Branch"."organizationId" FROM "public"."Branch" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."password", "public"."User"."role"::text, "public"."User"."organizationId", "public"."User"."branchId" FROM "public"."User" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Technician"."id", "public"."Technician"."name", "public"."Technician"."phone", "public"."Technician"."branchId", "public"."Technician"."isActive" FROM "public"."Technician" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Customer"."id", "public"."Customer"."name", "public"."Customer"."phone", "public"."Customer"."address", "public"."Customer"."organizationId" FROM "public"."Customer" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Booking"."id", "public"."Booking"."serviceType", "public"."Booking"."status"::text, "public"."Booking"."scheduledAt", "public"."Booking"."customerId", "public"."Booking"."branchId", "public"."Booking"."technicianId", "public"."Booking"."customerName", "public"."Booking"."phone", "public"."Booking"."address", "public"."Booking"."notes", "public"."Booking"."createdAt", "public"."Booking"."updatedAt" FROM "public"."Booking" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Invoice"."id", "public"."Invoice"."amount", "public"."Invoice"."paymentStatus"::text, "public"."Invoice"."paymentMethod", "public"."Invoice"."bookingId", "public"."Invoice"."issuedAt", "public"."Invoice"."paidAt" FROM "public"."Invoice" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."AuditLog"."id", "public"."AuditLog"."userId", "public"."AuditLog"."action", "public"."AuditLog"."resourceType", "public"."AuditLog"."resourceId", "public"."AuditLog"."branchId", "public"."AuditLog"."details", "public"."AuditLog"."createdAt" FROM "public"."AuditLog" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+[0mGET /api/v1/bookings [33m401[0m 0.246 ms - 35[0m
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    Created branch: North Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: north@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for North Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for North Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for North Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: South Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: south@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for South Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for South Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for South Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: East Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: east@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for East Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for East Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for East Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: West Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: west@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for West Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for West Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for West Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name" FROM "public"."Organization" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Branch"."id", "public"."Branch"."name", "public"."Branch"."location", "public"."Branch"."organizationId" FROM "public"."Branch" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."password", "public"."User"."role"::text, "public"."User"."organizationId", "public"."User"."branchId" FROM "public"."User" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Technician"."id", "public"."Technician"."name", "public"."Technician"."phone", "public"."Technician"."branchId", "public"."Technician"."isActive" FROM "public"."Technician" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Customer"."id", "public"."Customer"."name", "public"."Customer"."phone", "public"."Customer"."address", "public"."Customer"."organizationId" FROM "public"."Customer" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Booking"."id", "public"."Booking"."serviceType", "public"."Booking"."status"::text, "public"."Booking"."scheduledAt", "public"."Booking"."customerId", "public"."Booking"."branchId", "public"."Booking"."technicianId", "public"."Booking"."customerName", "public"."Booking"."phone", "public"."Booking"."address", "public"."Booking"."notes", "public"."Booking"."createdAt", "public"."Booking"."updatedAt" FROM "public"."Booking" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Invoice"."id", "public"."Invoice"."amount", "public"."Invoice"."paymentStatus"::text, "public"."Invoice"."paymentMethod", "public"."Invoice"."bookingId", "public"."Invoice"."issuedAt", "public"."Invoice"."paidAt" FROM "public"."Invoice" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."AuditLog"."id", "public"."AuditLog"."userId", "public"."AuditLog"."action", "public"."AuditLog"."resourceType", "public"."AuditLog"."resourceId", "public"."AuditLog"."branchId", "public"."AuditLog"."details", "public"."AuditLog"."createdAt" FROM "public"."AuditLog" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+[0mPOST /api/v1/auth/login [32m200[0m 219.627 ms - 466[0m
+[0mGET /api/v1/bookings [32m200[0m 424.551 ms - 3343[0m
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    Created branch: North Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: north@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for North Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for North Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for North Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: South Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: south@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for South Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for South Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for South Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: East Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: east@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for East Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for East Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for East Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    Created branch: West Branch
+
+      at seed (prisma/seed.ts:48:17)
+
+  console.log
+    Created manager: west@arctic.com
+
+      at seed (prisma/seed.ts:62:17)
+
+  console.log
+    Created 3 technicians for West Branch
+
+      at seed (prisma/seed.ts:76:17)
+
+  console.log
+    Created customer for West Branch
+
+      at seed (prisma/seed.ts:86:17)
+
+  console.log
+    Created booking for West Branch
+
+      at seed (prisma/seed.ts:101:17)
+
+  console.log
+    prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name" FROM "public"."Organization" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Branch"."id", "public"."Branch"."name", "public"."Branch"."location", "public"."Branch"."organizationId" FROM "public"."Branch" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."password", "public"."User"."role"::text, "public"."User"."organizationId", "public"."User"."branchId" FROM "public"."User" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Technician"."id", "public"."Technician"."name", "public"."Technician"."phone", "public"."Technician"."branchId", "public"."Technician"."isActive" FROM "public"."Technician" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Customer"."id", "public"."Customer"."name", "public"."Customer"."phone", "public"."Customer"."address", "public"."Customer"."organizationId" FROM "public"."Customer" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Booking"."id", "public"."Booking"."serviceType", "public"."Booking"."status"::text, "public"."Booking"."scheduledAt", "public"."Booking"."customerId", "public"."Booking"."branchId", "public"."Booking"."technicianId", "public"."Booking"."customerName", "public"."Booking"."phone", "public"."Booking"."address", "public"."Booking"."notes", "public"."Booking"."createdAt", "public"."Booking"."updatedAt" FROM "public"."Booking" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."Invoice"."id", "public"."Invoice"."amount", "public"."Invoice"."paymentStatus"::text, "public"."Invoice"."paymentMethod", "public"."Invoice"."bookingId", "public"."Invoice"."issuedAt", "public"."Invoice"."paidAt" FROM "public"."Invoice" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query SELECT "public"."AuditLog"."id", "public"."AuditLog"."userId", "public"."AuditLog"."action", "public"."AuditLog"."resourceType", "public"."AuditLog"."resourceId", "public"."AuditLog"."branchId", "public"."AuditLog"."details", "public"."AuditLog"."createdAt" FROM "public"."AuditLog" WHERE 1=1 OFFSET $1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+[0mPOST /api/v1/auth/login [33m401[0m 170.654 ms - 31[0m
+  console.log
+    prisma:query DELETE FROM "public"."AuditLog" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."InventoryUsage" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Invoice" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Booking" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Technician" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Customer" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."User" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Branch" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+  console.log
+    prisma:query DELETE FROM "public"."Organization" WHERE 1=1
+
+      at Object.zc (node_modules/@prisma/internals/src/logger.ts:13:11)
+
+FAIL tests/integration/auth.test.ts (32.699 s)
+  Auth Integration Tests
+    Login
+      ├ù should allow admin login (6512 ms)
+      ΓêÜ should allow branch leader login (5195 
+ms)
+      ├ù should reject invalid credentials (4084 
+ms)
+      ├ù should reject missing credentials (4016 
+ms)
+    Authorization
+      ├ù should require authentication for 
+protected routes (3980 ms)
+      ΓêÜ should allow authorized access (4572 ms)
+    Rate Limiting
+      ├ù should limit login attempts (4091 ms)
+
+  ΓùÅ Auth Integration Tests ΓÇ║ Login ΓÇ║ should 
+allow admin login
+
+    thrown: "Exceeded timeout of 5000 ms for a 
+hook.
+    Add a timeout value to this test to increase 
+the timeout, if this is a long-running test. See 
+https://jestjs.io/docs/api#testname-fn-timeout."
+
+    [0m [90m 11 |[39m   [36mlet[39m 
+branchLeaderUser[33m:[39m any[33m;[39m
+     [90m 12 |[39m
+    [31m[1m>[22m[39m[90m 13 |[39m   
+beforeEach([36masync[39m () [33m=>[39m {
+     [90m    |[39m   [31m[1m^[22m[39m
+     [90m 14 |[39m     [36mawait[39m 
+setupTestDatabase()[33m;[39m
+     [90m 15 |[39m     [36mconst[39m testData 
+[33m=[39m [36mawait[39m 
+getTestData()[33m;[39m
+     [90m 16 |[39m     adminUser [33m=[39m tes
+tData[33m.[39musers[33m.[39mfind((u[33m:[39m
+ any) [33m=>[39m u[33m.[39mrole [33m===[39m 
+[32m'ADMIN'[39m)[33m;[39m[0m
+
+      at tests/integration/auth.test.ts:13:3
+      at Object.<anonymous> 
+(tests/integration/auth.test.ts:9:1)
+
+  ΓùÅ Auth Integration Tests ΓÇ║ Login ΓÇ║ should 
+reject invalid credentials
+
+    expect(received).toBe(expected) // Object.is 
+equality
+
+    Expected: "Unauthorized"
+    Received: "Invalid credentials"
+
+    [0m [90m 63 |[39m
+     [90m 64 |[39m       expect(response[33m.[
+39mbody)[33m.[39mtoHaveProperty([32m'error'[39
+m)[33m;[39m
+    [31m[1m>[22m[39m[90m 65 |[39m       expe
+ct(response[33m.[39mbody[33m.[39merror)[33m.
+[39mtoBe([32m'Unauthorized'[39m)[33m;[39m
+     [90m    |[39m                              
+     [31m[1m^[22m[39m
+     [90m 66 |[39m     })[33m;[39m
+     [90m 67 |[39m
+     [90m 68 |[39m     it([32m'should reject 
+missing credentials'[39m[33m,[39m 
+[36masync[39m () [33m=>[39m {[0m
+
+      at Object.<anonymous> 
+(tests/integration/auth.test.ts:65:35)
+
+  ΓùÅ Auth Integration Tests ΓÇ║ Login ΓÇ║ should 
+reject missing credentials
+
+    expected 400 "Bad Request", got 500 "Internal 
+Server Error"
+
+    [0m [90m 72 |[39m           
+email[33m:[39m 
+[32m'admin@arctic.com'[39m[33m,[39m
+     [90m 73 |[39m         })
+    [31m[1m>[22m[39m[90m 74 |[39m         
+[33m.[39mexpect([35m400[39m)[33m;[39m
+     [90m    |[39m          [31m[1m^[22m[39m
+     [90m 75 |[39m
+     [90m 76 |[39m       expect(response[33m.[
+39mbody)[33m.[39mtoHaveProperty([32m'error'[39
+m)[33m;[39m
+     [90m 77 |[39m       expect(response[33m.[
+39mbody[33m.[39merror)[33m.[39mtoBe([32m'Vali
+dation Error'[39m)[33m;[39m[0m
+
+      at Object.<anonymous> 
+(tests/integration/auth.test.ts:74:10)
+      ----
+      at Test._assertStatus 
+(node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction 
+(node_modules/supertest/lib/test.js:285:13)
+      at Test.assert 
+(node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert 
+(node_modules/supertest/lib/test.js:120:14)
+
+  ΓùÅ Auth Integration Tests ΓÇ║ Authorization 
+ΓÇ║ should require authentication for protected 
+routes
+
+    expect(received).toBe(expected) // Object.is 
+equality
+
+    Expected: "Unauthorized"
+    Received: "Access denied: No token"
+
+    [0m [90m 86 |[39m
+     [90m 87 |[39m       expect(response[33m.[
+39mbody)[33m.[39mtoHaveProperty([32m'error'[39
+m)[33m;[39m
+    [31m[1m>[22m[39m[90m 88 |[39m       expe
+ct(response[33m.[39mbody[33m.[39merror)[33m.
+[39mtoBe([32m'Unauthorized'[39m)[33m;[39m
+     [90m    |[39m                              
+     [31m[1m^[22m[39m
+     [90m 89 |[39m     })[33m;[39m
+     [90m 90 |[39m
+     [90m 91 |[39m     it([32m'should allow 
+authorized access'[39m[33m,[39m 
+[36masync[39m () [33m=>[39m {[0m
+
+      at Object.<anonymous> 
+(tests/integration/auth.test.ts:88:35)
+
+  ΓùÅ Auth Integration Tests ΓÇ║ Rate Limiting 
+ΓÇ║ should limit login attempts
+
+    expected 401 "Unauthorized", got 429 "Too 
+Many Requests"
+
+    [0m [90m 116 |[39m             
+password[33m:[39m 
+[32m'wrong-password'[39m[33m,[39m
+     [90m 117 |[39m           })
+    [31m[1m>[22m[39m[90m 118 |[39m          
+ [33m.[39mexpect([35m401[39m)[33m;[39m
+     [90m     |[39m            
+[31m[1m^[22m[39m
+     [90m 119 |[39m       }
+     [90m 120 |[39m
+     [90m 121 |[39m       [90m// 6th attempt 
+should be rate limited[39m[0m
+
+      at Object.<anonymous> 
+(tests/integration/auth.test.ts:118:12)
+      ----
+      at Test._assertStatus 
+(node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction 
+(node_modules/supertest/lib/test.js:285:13)
+      at Test.assert 
+(node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert 
+(node_modules/supertest/lib/test.js:120:14)
+
+Test Suites: 2 failed, 2 total
+Tests:       13 failed, 7 passed, 20 total
+Snapshots:   0 total
+Time:        99.458 s
+Ran all test suites matching 
+/tests\\integration/i.
+Force exiting Jest: Have you considered using 
+`--detectOpenHandles` to detect async operations 
+that kept running after all tests finished?

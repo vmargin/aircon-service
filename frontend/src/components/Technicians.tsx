@@ -15,7 +15,11 @@ import api from '../api/api';
 import { Technician, User as UserType } from '../types';
 import TechnicianModal from './TechnicianModal';
 
-const Technicians = () => {
+interface Props {
+    showNotification: (message: string, type: 'success' | 'error' | 'warning' | 'info') => void;
+}
+
+const Technicians: React.FC<Props> = ({ showNotification }) => {
     const [selectedTech, setSelectedTech] = useState<Technician | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [showInactive, setShowInactive] = useState(false);

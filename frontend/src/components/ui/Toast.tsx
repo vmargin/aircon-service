@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle, AlertCircle, Info, Loader2 } from 'lucide-react';
-import { cn } from '../utils/cn';
+import { cn } from './cn';
 
 interface ToastProps {
   id: string;

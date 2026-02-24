@@ -12,7 +12,11 @@ import {
 import api from '../api/api';
 import { Invoice, PaymentStatus } from '../types';
 
-const Financials = () => {
+interface Props {
+    showNotification: (message: string, type: 'success' | 'error' | 'warning' | 'info') => void;
+}
+
+const Financials: React.FC<Props> = ({ showNotification }) => {
     const queryClient = useQueryClient();
 
     const { data: invoices = [], isLoading } = useQuery<Invoice[]>({

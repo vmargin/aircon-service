@@ -39,7 +39,11 @@ const getRangeStart = (key: RangeKey) => {
     }
 };
 
-const Reports = () => {
+interface Props {
+    showNotification: (message: string, type: 'success' | 'error' | 'warning' | 'info') => void;
+}
+
+const Reports: React.FC<Props> = ({ showNotification }) => {
     const [range, setRange] = useState<RangeKey>('LAST_30_DAYS');
 
     const { data: bookings = [], isLoading: bookingsLoading } = useQuery<Booking[]>({
@@ -119,8 +123,8 @@ const Reports = () => {
                             key={opt.key}
                             onClick={() => setRange(opt.key)}
                             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${range === opt.key
-                                    ? 'bg-blue-600 text-white'
-                                    : 'text-slate-500 hover:bg-slate-50'
+                                ? 'bg-blue-600 text-white'
+                                : 'text-slate-500 hover:bg-slate-50'
                                 }`}
                         >
                             {opt.label}

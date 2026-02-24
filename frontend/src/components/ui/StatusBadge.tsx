@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '../utils/cn';
+import { cn } from './cn';
 
 interface StatusBadgeProps {
   status: 'PENDING' | 'CONFIRMED' | 'ON_SITE' | 'COMPLETED' | 'CANCELLED' | 'UNPAID' | 'PARTIAL' | 'PAID';

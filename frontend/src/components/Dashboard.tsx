@@ -23,8 +23,7 @@ import { Booking, BookingStatus, User } from '../types';
 import BookingModal from './BookingModal';
 import InvoiceModal from './InvoiceModal';
 import AssignTechnicianModal from './AssignTechnicianModal';
-import { StatusBadge } from './components/ui';
-import { showNotification } from '../App';
+import StatusBadge from './ui/StatusBadge';
 
 interface DashboardProps {
   showNotification: (message: string, type: 'success' | 'error' | 'warning' | 'info') => void;
@@ -40,22 +39,17 @@ const Dashboard: React.FC<DashboardProps> = ({ showNotification }) => {
   const [activeBookingForAssign, setActiveBookingForAssign] = useState<Booking | null>(null);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [dispatchOnly, setDispatchOnly] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   // FETCH BOOKINGS (TanStack Query)
-  const { data: bookings = [], refetch } = useQuery<Booking[]>({
+  const { data: bookings = [], refetch, isLoading: isQueryLoading, error: queryError } = useQuery<Booking[]>({
     queryKey: ['bookings'],
     queryFn: async () => {
       const { data } = await api.get('/bookings');
       return data;
     },
-    onSuccess: () => setIsLoading(false),
-    onError: (err: any) => {
-      setIsLoading(false);
-      setError(err.response?.data?.error || "Failed to load bookings");
-    }
   });
+
+  const isLoading = isQueryLoading;
+  const error = queryError ? ((queryError as any).response?.data?.error || "Failed to load bookings") : null;
 
   // UPDATE STATUS (Mutation)
   const statusMutation = useMutation({
@@ -99,8 +93,6 @@ const Dashboard: React.FC<DashboardProps> = ({ showNotification }) => {
         <div className="flex gap-2 justify-center">
           <button
             onClick={() => {
-              setIsLoading(true);
-              setError(null);
               refetch();
             }}
             className="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors"
@@ -119,7 +111,7 @@ const Dashboard: React.FC<DashboardProps> = ({ showNotification }) => {
   }
 
   // STATISTICS CALCULATION
-  const safeBookings = Array.isArray(bookings) ? bookings : [];
+  const safeBookings: Booking[] = Array.isArray(bookings) ? bookings : [];
   const stats = [
     {
       name: 'Active Bookings',

@@ -12,7 +12,11 @@ import {
 import api from '../api/api';
 import { Customer } from '../types';
 
-const Customers = () => {
+interface Props {
+    showNotification: (message: string, type: 'success' | 'error' | 'warning' | 'info') => void;
+}
+
+const Customers: React.FC<Props> = ({ showNotification }) => {
     const [searchTerm, setSearchTerm] = useState('');
 
     const { data: customers = [], isLoading } = useQuery<Customer[]>({
