@@ -1,20 +1,21 @@
 import { useState, useEffect } from 'react';
 import {
-    Plus,
-    Calendar,
-    CheckCircle2,
-    Clock,
-    AlertCircle,
-    ChevronRight,
-    Users,
-    Building2,
-    RefreshCcw,
-    TrendingUp,
-    BarChart3,
-    Globe,
-    Zap,
-    Shield,
-    Package
+  Plus,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  ChevronRight,
+  Users,
+  Building2,
+  RefreshCcw,
+  TrendingUp,
+  BarChart3,
+  Globe,
+  Zap,
+  Shield,
+  Package,
+  UserPlus
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/api';
@@ -138,9 +139,9 @@ const Dashboard: React.FC<DashboardProps> = ({ showNotification }) => {
     },
     {
       name: 'Completed Today',
-      value: safeBookings.filter(b => 
-        b && 
-        b.status === 'COMPLETED' && 
+      value: safeBookings.filter(b =>
+        b &&
+        b.status === 'COMPLETED' &&
         new Date(b.updatedAt).toDateString() === new Date().toDateString()
       ).length,
       icon: CheckCircle2,
@@ -191,7 +192,7 @@ const Dashboard: React.FC<DashboardProps> = ({ showNotification }) => {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setDispatchOnly(!dispatchOnly)}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-black uppercase tracking-tighter rounded-xl border transition-all group hover:shadow-sm ${dispatchOnly 
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-black uppercase tracking-tighter rounded-xl border transition-all group hover:shadow-sm ${dispatchOnly
               ? 'bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100'
               : 'bg-white text-slate-400 border-slate-100 hover:border-slate-300 hover:text-slate-600'
               }`}
@@ -272,7 +273,7 @@ const Dashboard: React.FC<DashboardProps> = ({ showNotification }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredBookings.length === 0 ? (
+              {filteredBookings.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-6 py-20 text-center">
                     <div className="flex flex-col items-center gap-4">
@@ -281,7 +282,7 @@ const Dashboard: React.FC<DashboardProps> = ({ showNotification }) => {
                         {dispatchOnly ? 'No unassigned bookings' : 'No bookings found'}
                       </p>
                       <p className="text-slate-400 text-sm">
-                        {dispatchOnly 
+                        {dispatchOnly
                           ? 'All bookings have been assigned to technicians'
                           : 'No bookings match your filter criteria'
                         }
@@ -300,89 +301,88 @@ const Dashboard: React.FC<DashboardProps> = ({ showNotification }) => {
                     </div>
                   </td>
                 </tr>
-              ) : (
-                filteredBookings.map((booking) => (
-                  <tr key={booking.id} className="group hover:bg-blue-50/20 transition-colors">
-                    <td className="px-6 py-5">
-                      <div className="flex flex-col">
-                        <span className="text-sm font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
-                          {booking.customer?.name || 'Walk-in'}
-                        </span>
-                        <span className="text-xs text-slate-400 mt-0.5">{booking.serviceType}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <select
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase border leading-none outline-none cursor-pointer ${statusColors[booking.status]}`}
-                        value={booking.status}
-                        onChange={(e) => {
-                          const newStatus = e.target.value as BookingStatus;
-                          if (newStatus === 'COMPLETED') {
-                            handleCompletedBooking(booking);
-                          } else {
-                            statusMutation.mutate({ id: booking.id, status: newStatus });
-                          }
-                        }}
-                      >
-                        {Object.keys(statusColors).map(s => (
-                          <option key={s} value={s} className="text-slate-700">
-                            {s.replace('_', ' ')}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-1.5 text-xs text-slate-600 font-medium">
-                          <Users className="w-3 h-3 text-slate-300" />
-                          {booking.technician?.name || 'Unassigned'}
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[10px] text-slate-400 uppercase font-bold tracking-tight">
-                          <Building2 className="w-3 h-3 text-slate-300" />
-                          {booking.branch?.name || 'Main Office'}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
-                        <Calendar className="w-4 h-4 text-slate-300" />
-                        {new Date(booking.scheduledAt).toLocaleDateString()}
-                        {new Date(booking.scheduledAt).toLocaleDateString() !== new Date(booking.createdAt).toLocaleDateString() && (
-                          <span className="text-xs text-slate-400 ml-2">NEW</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-5 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {!booking.technicianId && booking.status !== 'CANCELLED' && (
-                          <button
-                            onClick={() => { setActiveBookingForAssign(booking); setIsAssignModalOpen(true); }}
-                            className="px-3 py-1.5 bg-rose-50 text-rose-600 text-[10px] font-black rounded-lg border border-rose-100 hover:bg-rose-100 transition-all hover:shadow-sm"
-                          >
-                            <UserPlus className="w-3 h-3 mr-1" />
-                            ASSIGN
-                          </button>
-                        )}
-                        {!booking.invoice && (
-                          <button
-                            onClick={() => { setActiveBookingForInvoice(booking); setIsInvoiceModalOpen(true); }}
-                            className="px-3 py-1.5 bg-emerald-50 text-emerald-600 text-[10px] font-black rounded-lg border border-emerald-100 hover:bg-emerald-100 transition-all hover:shadow-sm"
-                          >
-                            <Package className="w-3 h-3 mr-1" />
-                            BILL
-                          </button>
-                        )}
-                        <button
-                          onClick={() => { setSelectedBooking(booking); setIsBookingModalOpen(true); }}
-                          className="p-2 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all group"
-                        >
-                          <ChevronRight className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
               )}
+              {filteredBookings.length > 0 && filteredBookings.map((booking) => (
+                <tr key={booking.id} className="group hover:bg-blue-50/20 transition-colors">
+                  <td className="px-6 py-5">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
+                        {booking.customer?.name || 'Walk-in'}
+                      </span>
+                      <span className="text-xs text-slate-400 mt-0.5">{booking.serviceType}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-5">
+                    <select
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase border leading-none outline-none cursor-pointer ${statusColors[booking.status]}`}
+                      value={booking.status}
+                      onChange={(e) => {
+                        const newStatus = e.target.value as BookingStatus;
+                        if (newStatus === 'COMPLETED') {
+                          handleCompletedBooking(booking);
+                        } else {
+                          statusMutation.mutate({ id: booking.id, status: newStatus });
+                        }
+                      }}
+                    >
+                      {Object.keys(statusColors).map(s => (
+                        <option key={s} value={s} className="text-slate-700">
+                          {s.replace('_', ' ')}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-6 py-5">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-600 font-medium">
+                        <Users className="w-3 h-3 text-slate-300" />
+                        {booking.technician?.name || 'Unassigned'}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[10px] text-slate-400 uppercase font-bold tracking-tight">
+                        <Building2 className="w-3 h-3 text-slate-300" />
+                        {booking.branch?.name || 'Main Office'}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-5">
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <Calendar className="w-4 h-4 text-slate-300" />
+                      {new Date(booking.scheduledAt).toLocaleDateString()}
+                      {new Date(booking.scheduledAt).toLocaleDateString() !== new Date(booking.createdAt).toLocaleDateString() && (
+                        <span className="text-xs text-slate-400 ml-2">NEW</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-5 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      {!booking.technicianId && booking.status !== 'CANCELLED' && (
+                        <button
+                          onClick={() => { setActiveBookingForAssign(booking); setIsAssignModalOpen(true); }}
+                          className="px-3 py-1.5 bg-rose-50 text-rose-600 text-[10px] font-black rounded-lg border border-rose-100 hover:bg-rose-100 transition-all hover:shadow-sm"
+                        >
+                          <UserPlus className="w-3 h-3 mr-1" />
+                          ASSIGN
+                        </button>
+                      )}
+                      {!booking.invoice && (
+                        <button
+                          onClick={() => { setActiveBookingForInvoice(booking); setIsInvoiceModalOpen(true); }}
+                          className="px-3 py-1.5 bg-emerald-50 text-emerald-600 text-[10px] font-black rounded-lg border border-emerald-100 hover:bg-emerald-100 transition-all hover:shadow-sm"
+                        >
+                          <Package className="w-3 h-3 mr-1" />
+                          BILL
+                        </button>
+                      )}
+                      <button
+                        onClick={() => { setSelectedBooking(booking); setIsBookingModalOpen(true); }}
+                        className="p-2 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all group"
+                      >
+                        <ChevronRight className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -391,8 +391,8 @@ const Dashboard: React.FC<DashboardProps> = ({ showNotification }) => {
       {/* STATUS INFO */}
       <div className="mt-6 flex items-center justify-between text-slate-400 text-xs px-2">
         <p>
-          Total {safeBookings.length} jobs synced • 
-          {safeBookings.filter(b => b && b.status === 'PENDING').length} pending • 
+          Total {safeBookings.length} jobs synced •
+          {safeBookings.filter(b => b && b.status === 'PENDING').length} pending •
           {safeBookings.filter(b => b && b.status === 'COMPLETED').length} completed
         </p>
         <div className="flex items-center gap-2">
