@@ -1,9 +1,9 @@
 import express from 'express';
 import cors from 'cors';
-import { errorHandler, ValidationError, NotFoundError } from './middleware/errorHandler';
+import { errorHandler, NotFoundError } from './middleware/errorHandler';
 import { requestLogger, auditLogger, healthCheckLogger } from './middleware/requestLogger';
 import { sanitizeInput } from './lib/security';
-import rateLimiter from './middleware/rateLimiter';
+import { loginRateLimiter, publicBookingRateLimiter, healthCheckRateLimiter, generalRateLimiter } from './middleware/rateLimiter';
 import router from './routes/index';
 
 export function createApp() {
@@ -12,7 +12,7 @@ export function createApp() {
   // Security middleware
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true }));
-  
+
   // Sanitize all inputs
   app.use(sanitizeInput);
 
@@ -28,10 +28,10 @@ export function createApp() {
   }));
 
   // Rate limiting
-  app.use('/api/v1/auth/login', rateLimiter.loginRateLimiter);
-  app.use('/api/v1/public/book', rateLimiter.publicBookingRateLimiter);
-  app.use('/api/v1/health', rateLimiter.healthCheckRateLimiter);
-  app.use(rateLimiter.generalRateLimiter);
+  app.use('/api/v1/auth/login', loginRateLimiter);
+  app.use('/api/v1/public/book', publicBookingRateLimiter);
+  app.use('/api/v1/health', healthCheckRateLimiter);
+  app.use(generalRateLimiter);
 
   // Request logging
   app.use(requestLogger());
@@ -40,7 +40,7 @@ export function createApp() {
   app.use(auditLogger());
 
   // Health check endpoint
-  app.use('/health', healthCheckLogger(), (req, res) => {
+  app.use('/health', healthCheckLogger(), (_req, res) => {
     res.json({
       status: 'OK',
       timestamp: new Date().toISOString(),
@@ -50,10 +50,10 @@ export function createApp() {
   });
 
   // API routes
-  app.use('/', router);
+  app.use('/api/v1', router);
 
   // 404 handler
-  app.use('*', (req, res, next) => {
+  app.use('*', (req, _res, next) => {
     next(new NotFoundError(`Route ${req.method} ${req.url} not found`));
   });
 
@@ -62,3 +62,6 @@ export function createApp() {
 
   return app;
 }
+
+const app = createApp();
+export default app;

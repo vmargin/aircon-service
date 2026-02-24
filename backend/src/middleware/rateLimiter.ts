@@ -1,13 +1,12 @@
 import rateLimit from 'express-rate-limit';
-import { Request, Response, NextFunction } from 'express';
 
-// Rate limiter for login and public booking endpoints
+// Rate limiter for login endpoint
 export const loginRateLimiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 5, // 5 attempts per window
+  windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
+  max: Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 5, // 5 attempts per window
   message: {
     error: 'Too many login attempts. Please try again later.',
-    retryAfter: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 900
+    retryAfter: Number(process.env.RATE_LIMIT_WINDOW_MS) || 900
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -15,11 +14,11 @@ export const loginRateLimiter = rateLimit({
 
 // Rate limiter for public booking endpoint
 export const publicBookingRateLimiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 3, // 3 attempts per window (more restrictive)
+  windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
+  max: Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 3, // 3 attempts per window (more restrictive)
   message: {
     error: 'Too many booking attempts. Please try again later.',
-    retryAfter: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 900
+    retryAfter: Number(process.env.RATE_LIMIT_WINDOW_MS) || 900
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -27,7 +26,7 @@ export const publicBookingRateLimiter = rateLimit({
 
 // Rate limiter for all other endpoints
 export const generalRateLimiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 60 * 60 * 1000, // 1 hour
+  windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 60 * 60 * 1000, // 1 hour
   max: 100, // 100 requests per hour
   standardHeaders: true,
   legacyHeaders: false,
@@ -35,7 +34,7 @@ export const generalRateLimiter = rateLimit({
 
 // Rate limiter for health check (more permissive)
 export const healthCheckRateLimiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 5 * 60 * 1000, // 5 minutes
+  windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 5 * 60 * 1000, // 5 minutes
   max: 60, // 60 requests per 5 minutes
   standardHeaders: true,
   legacyHeaders: false,

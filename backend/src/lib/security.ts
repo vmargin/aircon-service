@@ -1,29 +1,35 @@
 // Security middleware for XSS protection
 import xss from 'xss';
+import { Request, Response, NextFunction } from 'express';
 
-export function sanitizeInput(req: any, res: any, next: any) {
+export function sanitizeInput(req: Request, _res: Response, next: NextFunction) {
   // Sanitize query parameters
   if (req.query) {
-    req.query = Object.keys(req.query).reduce((acc, key) => {
-      acc[key] = typeof req.query[key] === 'string' ? xss(req.query[key]) : req.query[key];
-      return acc;
-    }, {});
+    const sanitizedQuery: Record<string, any> = {};
+    for (const key of Object.keys(req.query)) {
+      const val = req.query[key];
+      sanitizedQuery[key] = typeof val === 'string' ? xss(val) : val;
+    }
+    req.query = sanitizedQuery;
   }
 
   // Sanitize body parameters (for POST/PUT)
-  if (req.body) {
-    req.body = Object.keys(req.body).reduce((acc, key) => {
-      acc[key] = typeof req.body[key] === 'string' ? xss(req.body[key]) : req.body[key];
-      return acc;
-    }, {});
+  if (req.body && typeof req.body === 'object') {
+    const sanitizedBody: Record<string, any> = {};
+    for (const key of Object.keys(req.body)) {
+      const val = req.body[key];
+      sanitizedBody[key] = typeof val === 'string' ? xss(val) : val;
+    }
+    req.body = sanitizedBody;
   }
 
   // Sanitize params (route parameters)
   if (req.params) {
-    req.params = Object.keys(req.params).reduce((acc, key) => {
-      acc[key] = typeof req.params[key] === 'string' ? xss(req.params[key]) : req.params[key];
-      return acc;
-    }, {});
+    const sanitizedParams: Record<string, string> = {};
+    for (const key of Object.keys(req.params)) {
+      sanitizedParams[key] = typeof req.params[key] === 'string' ? xss(req.params[key]) : req.params[key];
+    }
+    req.params = sanitizedParams;
   }
 
   next();

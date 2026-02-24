@@ -43,6 +43,7 @@ model Branch {
   users          User[]
   technicians    Technician[]
   bookings       Booking[]
+  inventory      Inventory[]
 
   @@index([organizationId])
 }
@@ -100,6 +101,11 @@ model Booking {
   branchId      String
   technician    Technician?   @relation(fields: [technicianId], references: [id])
   technicianId  String?
+  customerName  String?
+  phone         String?
+  address       String?
+  notes         String?
+  inventoryUsage InventoryUsage[]
   invoice       Invoice?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
@@ -110,6 +116,41 @@ model Booking {
   @@index([technicianId])
   @@index([customerId])
   @@index([scheduledAt, status])
+}
+
+model Inventory {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  category    String
+  quantity    Int      @default(0)
+  minQuantity Int      @default(5)
+  unit        String
+  location    String?
+  branch      Branch   @relation(fields: [branchId], references: [id])
+  branchId    String
+  lastUpdated DateTime @default(now()) @updatedAt
+  createdBy   String?
+  updatedBy   String?
+  usage       InventoryUsage[]
+
+  @@index([branchId, category])
+  @@index([branchId, quantity])
+  @@index([branchId, lastUpdated])
+}
+
+model InventoryUsage {
+  id           String   @id @default(uuid())
+  inventory    Inventory @relation(fields: [inventoryId], references: [id])
+  inventoryId  String
+  booking      Booking   @relation(fields: [bookingId], references: [id])
+  bookingId    String
+  quantityUsed Int      @default(1)
+  notes        String?
+  usedAt       DateTime @default(now())
+
+  @@index([inventoryId])
+  @@index([bookingId])
 }
 
 model Invoice {

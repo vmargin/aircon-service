@@ -6,23 +6,24 @@ import app from '../../src/app';
 
 const request = supertest(app);
 
-beforeEach(async () => {
-  await setupTestDatabase();
-});
-
-afterEach(async () => {
-  await clearTestData();
-});
-
 describe('Booking Integration Tests', () => {
   let adminUser: any;
   let branchLeaderUser: any;
   let testData: any;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
+    await setupTestDatabase();
     testData = await getTestData();
     adminUser = testData.users.find((u: any) => u.role === 'ADMIN');
     branchLeaderUser = testData.users.find((u: any) => u.role === 'BRANCH_LEADER');
+  });
+
+  afterEach(async () => {
+    await clearTestData();
+  });
+
+  beforeAll(async () => {
+    // Initial data load if needed
   });
 
   describe('Create Booking', () => {
@@ -340,7 +341,7 @@ describe('Booking Integration Tests', () => {
 
       // Try to access south branch booking
       const southBooking = testData.bookings.find((b: any) => b.branchId !== testData.branches[0].id);
-      
+
       if (southBooking) {
         const response = await request
           .get(`/api/v1/bookings/${southBooking.id}`)

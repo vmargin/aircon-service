@@ -1,0 +1,30 @@
+﻿node.exe : FAIL tests/integration/auth.test.ts
+At line:1 char:1
++ & "C:\/node.exe" "C:\Users\margi\AppData\Roaming
+\npm/node_modules/npm ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (FAIL 
+    tests/integration/auth.test.ts:String) [], R  
+  emoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  ΓùÅ Test suite failed to run
+
+    [96mtests/integration/auth.test.ts[0m:[93m5
+[0m:[93m8[0m - [91merror[0m[90m TS1192: 
+[0mModule '"C:/Users/margi/Desktop/lockedIn/airco
+n-service/backend/src/app"' has no default export.
+
+    [7m5[0m import app from '../../src/app';
+    [7m [0m [91m       ~~~[0m
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        2.377 s
+Ran all test suites matching 
+/tests\\integration\\auth.test.ts/i.
+Force exiting Jest: Have you considered using 
+`--detectOpenHandles` to detect async operations 
+that kept running after all tests finished?

@@ -1,9 +1,15 @@
 import { PrismaClient } from '@prisma/client';
-import { seed } from '../prisma/seed';
+import { seed } from '../../prisma/seed';
 
 const prisma = new PrismaClient({
   log: ['query', 'error', 'warn', 'info'],
 });
+
+// Ensure consistent JWT secret for tests
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'arctic_secret_key_2024';
+
+// Set global timeout for all tests and hooks
+jest.setTimeout(30000);
 
 // Test database setup
 export async function setupTestDatabase() {
@@ -25,6 +31,7 @@ export async function setupTestDatabase() {
 export async function clearTestData() {
   // Clear all data
   await prisma.auditLog.deleteMany();
+  await prisma.inventoryUsage.deleteMany();
   await prisma.invoice.deleteMany();
   await prisma.booking.deleteMany();
   await prisma.technician.deleteMany();

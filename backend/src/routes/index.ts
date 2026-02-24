@@ -1,66 +1,53 @@
-// Update API routes to use /api/v1/ prefix
+// API routes with /api/v1/ prefix
 import { Router } from 'express';
-import { authController } from './controllers/authController';
-import { bookingController } from './controllers/bookingController';
-import { customerController } from './controllers/customerController';
-import { invoiceController } from './controllers/invoiceController';
-import { technicianController } from './controllers/technicianController';
-import { publicController } from './controllers/publicController';
+import { login } from '../controllers/authController';
+import { getBookings, createBooking, updateBooking, getBookingById, deleteBooking } from '../controllers/bookingController';
+import { getCustomers, createCustomer } from '../controllers/customerController';
+import { getInvoices, createInvoice, updatePaymentStatus } from '../controllers/invoiceController';
+import { getTechnicians, createTechnician, updateTechnician, deleteTechnician, getBranches } from '../controllers/technicianController';
+import { getPublicBranches, createPublicBooking } from '../controllers/publicController';
+import authenticate from '../middleware/auth';
+import { catchAsync } from '../middleware/errorHandler';
+import { Request, Response } from 'express';
 
 const router = Router();
 
-// API Version 1 routes
-router.use('/api/v1', (req, res, next) => {
-  // Log API version usage
-  console.log(`API Version 1 accessed by ${req.ip}`);
-  next();
-});
-
-// Auth routes
-router.post('/api/v1/auth/login', authController.login);
-router.post('/api/v1/auth/logout', authController.logout);
-router.post('/api/v1/auth/refresh', authController.refresh);
-
-// Booking routes
-router.get('/api/v1/bookings', bookingController.getAllBookings);
-router.post('/api/v1/bookings', bookingController.createBooking);
-router.get('/api/v1/bookings/:id', bookingController.getBookingById);
-router.put('/api/v1/bookings/:id', bookingController.updateBooking);
-router.delete('/api/v1/bookings/:id', bookingController.deleteBooking);
-
-// Customer routes
-router.get('/api/v1/customers', customerController.getAllCustomers);
-router.post('/api/v1/customers', customerController.createCustomer);
-router.get('/api/v1/customers/:id', customerController.getCustomerById);
-router.put('/api/v1/customers/:id', customerController.updateCustomer);
-router.delete('/api/v1/customers/:id', customerController.deleteCustomer);
-
-// Invoice routes
-router.get('/api/v1/invoices', invoiceController.getAllInvoices);
-router.post('/api/v1/invoices', invoiceController.createInvoice);
-router.get('/api/v1/invoices/:id', invoiceController.getInvoiceById);
-router.put('/api/v1/invoices/:id', invoiceController.updateInvoice);
-router.delete('/api/v1/invoices/:id', invoiceController.deleteInvoice);
-
-// Technician routes
-router.get('/api/v1/technicians', technicianController.getAllTechnicians);
-router.post('/api/v1/technicians', technicianController.createTechnician);
-router.get('/api/v1/technicians/:id', technicianController.getTechnicianById);
-router.put('/api/v1/technicians/:id', technicianController.updateTechnician);
-router.delete('/api/v1/technicians/:id', technicianController.deleteTechnician);
-
 // Public routes (no auth required)
-router.post('/api/v1/public/book', publicController.publicBooking);
-router.get('/api/v1/public/availability', publicController.checkAvailability);
+router.post('/auth/login', catchAsync(login));
+router.get('/public/branches', catchAsync(getPublicBranches));
+router.post('/public/bookings', catchAsync(createPublicBooking));
+
+// Booking routes (protected)
+router.get('/bookings', authenticate, catchAsync(getBookings));
+router.post('/bookings', authenticate, catchAsync(createBooking));
+router.get('/bookings/:id', authenticate, catchAsync(getBookingById));
+router.put('/bookings/:id', authenticate, catchAsync(updateBooking));
+router.delete('/bookings/:id', authenticate, catchAsync(deleteBooking));
+
+// Customer routes (protected)
+router.get('/customers', authenticate, catchAsync(getCustomers));
+router.post('/customers', authenticate, catchAsync(createCustomer));
+
+// Invoice routes (protected)
+router.get('/invoices', authenticate, catchAsync(getInvoices));
+router.post('/invoices', authenticate, catchAsync(createInvoice));
+router.patch('/invoices/:id/payment', authenticate, catchAsync(updatePaymentStatus));
+
+// Technician & Branch routes (protected)
+router.get('/technicians', authenticate, catchAsync(getTechnicians));
+router.post('/technicians', authenticate, catchAsync(createTechnician));
+router.patch('/technicians/:id', authenticate, catchAsync(updateTechnician));
+router.delete('/technicians/:id', authenticate, catchAsync(deleteTechnician));
+router.get('/branches', authenticate, catchAsync(getBranches));
 
 // Health check route
-router.get('/api/v1/health', (req, res) => {
+router.get('/health', catchAsync(async (_req: Request, res: Response) => {
   res.json({
     status: 'OK',
     timestamp: new Date().toISOString(),
     version: '2.0.0',
     environment: process.env.NODE_ENV || 'development',
   });
-});
+}));
 
 export default router;

@@ -6,22 +6,19 @@ import app from '../../src/app';
 
 const request = supertest(app);
 
-beforeEach(async () => {
-  await setupTestDatabase();
-});
-
-afterEach(async () => {
-  await clearTestData();
-});
-
 describe('Auth Integration Tests', () => {
   let adminUser: any;
   let branchLeaderUser: any;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
+    await setupTestDatabase();
     const testData = await getTestData();
     adminUser = testData.users.find((u: any) => u.role === 'ADMIN');
     branchLeaderUser = testData.users.find((u: any) => u.role === 'BRANCH_LEADER');
+  });
+
+  afterEach(async () => {
+    await clearTestData();
   });
 
   describe('Login', () => {

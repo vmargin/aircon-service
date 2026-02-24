@@ -3,8 +3,8 @@ import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
-async function main() {
-    const demoPassword = process.env.DEMO_ADMIN_PASSWORD || 'change-me-in-prod';
+export async function seed() {
+    const demoPassword = process.env.DEMO_ADMIN_PASSWORD || 'demo123';
     const hashedPassword = await bcrypt.hash(demoPassword, 10);
 
     // 1. Create Organization
@@ -74,14 +74,44 @@ async function main() {
             });
         }
         console.log(`Created 3 technicians for ${branch.name}`);
+        // 6. Create Customers
+        const customer = await prisma.customer.create({
+            data: {
+                name: `Test Customer (${branchData.name.split(' ')[0]})`,
+                phone: '88887777',
+                address: `Address in ${branchData.name}`,
+                organizationId: org.id,
+            },
+        });
+        console.log(`Created customer for ${branch.name}`);
+
+        // 7. Create a Booking
+        await prisma.booking.create({
+            data: {
+                serviceType: 'Maintenance',
+                status: 'PENDING',
+                scheduledAt: new Date(Date.now() + 86400000), // Tomorrow
+                customerId: customer.id,
+                branchId: branch.id,
+                customerName: customer.name,
+                phone: customer.phone,
+                address: customer.address,
+            },
+        });
+        console.log(`Created booking for ${branch.name}`);
     }
 }
 
-main()
-    .catch((e) => {
-        console.error(e);
-        process.exit(1);
-    })
-    .finally(async () => {
-        await prisma.$disconnect();
-    });
+// Check if this script is being run directly
+const isDirectRun = require.main === module;
+
+if (isDirectRun) {
+    seed()
+        .catch((e) => {
+            console.error(e);
+            process.exit(1);
+        })
+        .finally(async () => {
+            await prisma.$disconnect();
+        });
+}
