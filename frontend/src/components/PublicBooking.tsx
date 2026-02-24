@@ -155,19 +155,17 @@ const PublicBooking = () => {
             <div className="flex items-center justify-between mb-4">
               {[1, 2, 3].map((step) => (
                 <div key={step} className="flex items-center">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${
-                    step === currentStep
-                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
-                      : step < currentStep
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${step === currentStep
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
+                    : step < currentStep
                       ? 'bg-emerald-500 text-white'
                       : 'bg-slate-100 text-slate-400'
-                  }`}>
+                    }`}>
                     {step < currentStep ? <CheckCircle2 className="w-5 h-5" /> : step}
                   </div>
                   {step < 3 && (
-                    <div className={`w-20 h-1 mx-2 rounded-full transition-all duration-300 ${
-                      step < currentStep ? 'bg-emerald-500' : 'bg-slate-100'
-                    }`} />
+                    <div className={`w-20 h-1 mx-2 rounded-full transition-all duration-300 ${step < currentStep ? 'bg-emerald-500' : 'bg-slate-100'
+                      }`} />
                   )}
                 </div>
               ))}
@@ -194,5 +192,192 @@ const PublicBooking = () => {
             {/* Step 1: Customer Details */}
             {currentStep === 1 && (
               <div className="space-y-5 animate-in fade-in duration-300">
-                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                <div className="flex items-center gap-2 mb-2">
                   <User className="w-5 h-5 text-blue-600" />
+                  <h3 className="text-lg font-bold text-slate-800">Your Contact Details</h3>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                    placeholder="Enter your full name"
+                    value={form.customerName}
+                    onChange={(e) => setForm({ ...form, customerName: e.target.value })}
+                    onBlur={() => handleBlur('customerName')}
+                  />
+                  {getFieldError('customerName') && (
+                    <p className="text-xs text-rose-500 ml-1">{getFieldError('customerName')}</p>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Phone Number</label>
+                  <div className="relative">
+                    <Phone className="absolute left-4 top-3.5 w-5 h-5 text-slate-400" />
+                    <input
+                      type="tel"
+                      required
+                      className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                      placeholder="e.g. 012-345-6789"
+                      value={form.phone}
+                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                      onBlur={() => handleBlur('phone')}
+                    />
+                  </div>
+                  {getFieldError('phone') && (
+                    <p className="text-xs text-rose-500 ml-1">{getFieldError('phone')}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Service Selection */}
+            {currentStep === 2 && (
+              <div className="space-y-5 animate-in fade-in duration-300">
+                <div className="flex items-center gap-2 mb-2">
+                  <Wrench className="w-5 h-5 text-blue-600" />
+                  <h3 className="text-lg font-bold text-slate-800">Select Service</h3>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {serviceTypes.map((type) => (
+                    <button
+                      key={type.value}
+                      type="button"
+                      onClick={() => setForm({ ...form, serviceType: type.value })}
+                      className={`p-4 rounded-xl border-2 text-left transition-all flex items-center gap-3 ${form.serviceType === type.value
+                          ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-100'
+                          : 'border-slate-100 bg-slate-50 hover:border-slate-200'
+                        }`}
+                    >
+                      <span className="text-2xl">{type.icon}</span>
+                      <div>
+                        <p className="font-bold text-slate-800 text-sm">{type.label}</p>
+                        <p className="text-[10px] text-slate-500">Professional service</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="space-y-1 mt-6">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Nearest Branch</label>
+                  <div className="relative">
+                    <Building className="absolute left-4 top-3.5 w-5 h-5 text-slate-400" />
+                    <select
+                      required
+                      className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none appearance-none transition-all"
+                      value={form.branchId}
+                      onChange={(e) => setForm({ ...form, branchId: e.target.value })}
+                    >
+                      <option value="">Select a branch</option>
+                      {branches.map((branch) => (
+                        <option key={branch.id} value={branch.id}>
+                          {branch.name} {branch.location ? `(${branch.location})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Schedule & Address */}
+            {currentStep === 3 && (
+              <div className="space-y-5 animate-in fade-in duration-300">
+                <div className="flex items-center gap-2 mb-2">
+                  <Calendar className="w-5 h-5 text-blue-600" />
+                  <h3 className="text-lg font-bold text-slate-800">Schedule & Location</h3>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Preferred Date & Time</label>
+                  <div className="relative">
+                    <Clock className="absolute left-4 top-3.5 w-5 h-5 text-slate-400" />
+                    <input
+                      type="datetime-local"
+                      required
+                      className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                      value={form.scheduledAt}
+                      onChange={(e) => setForm({ ...form, scheduledAt: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Service Address</label>
+                  <div className="relative">
+                    <MapPin className="absolute left-4 top-3.5 w-5 h-5 text-slate-400" />
+                    <textarea
+                      required
+                      rows={3}
+                      className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"
+                      placeholder="Enter your full address for equipment servicing"
+                      value={form.address}
+                      onChange={(e) => setForm({ ...form, address: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Navigation Controls */}
+            <div className="flex items-center gap-3 pt-4">
+              {currentStep > 1 && (
+                <button
+                  type="button"
+                  onClick={prevStep}
+                  className="px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl transition-all flex items-center gap-2"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                  Back
+                </button>
+              )}
+
+              {currentStep < totalSteps ? (
+                <button
+                  type="button"
+                  onClick={nextStep}
+                  disabled={!getStepValidation()}
+                  className={`flex-1 py-4 font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${getStepValidation()
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-100'
+                      : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                    }`}
+                >
+                  Continue
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !getStepValidation()}
+                  className={`flex-1 py-4 font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${getStepValidation() && !isSubmitting
+                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-100'
+                      : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                    }`}
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <>
+                      Confirm Booking
+                      <CheckCircle2 className="w-5 h-5" />
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
+        <p className="text-center mt-6 text-slate-400 text-xs flex items-center justify-center gap-1">
+          <FileText className="w-3 h-3" />
+          By booking, you agree to our Terms of Service
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default PublicBooking;
