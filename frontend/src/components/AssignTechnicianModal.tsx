@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { X, Loader2, Save, User, Building2, AlertCircle, RefreshCw, LogOut } from 'lucide-react';
-import api from '../api/api';
+import api, { getList } from '../api/api';
 import { Booking, Technician } from '../types';
 
 interface AssignTechnicianModalProps {
@@ -29,8 +29,7 @@ const AssignTechnicianModal: React.FC<AssignTechnicianModalProps> = ({ isOpen, o
     const { data: technicians = [], isLoading, refetch, isFetching } = useQuery<Technician[]>({
         queryKey: ['technicians', 'active'],
         queryFn: async () => {
-            const { data } = await api.get('/technicians?includeInactive=false');
-            return data;
+            return getList<Technician>('/technicians', { includeInactive: false });
         },
         enabled: isOpen,
     });

@@ -62,7 +62,7 @@ export async function seed() {
         console.log(`Created manager: ${managerEmail}`);
 
         // 5. Create Technicians
-        const techs = ['Tech A', 'Tech B', 'Tech C'];
+        const techs = ['Tech A', 'Tech B', 'Tech C', 'Tech D', 'Tech E', 'Tech F'];
         for (const techName of techs) {
             await prisma.technician.create({
                 data: {

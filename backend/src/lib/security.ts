@@ -1,51 +1,26 @@
-// Security middleware for XSS protection
-import xss from 'xss';
-import { Request, Response, NextFunction } from 'express';
+/**
+ * Input validation helpers.
+ *
+ * NOTE: the previous `sanitizeInput` middleware (which ran every request body,
+ * query and param through an HTML escaper) has been removed deliberately:
+ *
+ *  - It only walked top-level keys, so nested objects were never covered.
+ *  - It mutated `req.query`, which is a getter in Express 5 and throws there.
+ *  - It corrupted legitimate data — a customer called "Smith & Sons" was
+ *    persisted as "Smith &amp; Sons".
+ *  - Escaping belongs at the point of rendering, not ingestion. React escapes
+ *    by default and the API never renders HTML, so there was nothing to defend.
+ *
+ * XSS protection now comes from `helmet`'s CSP plus React's own escaping, and
+ * injection protection comes from Prisma's parameterised queries.
+ */
 
-export function sanitizeInput(req: Request, _res: Response, next: NextFunction) {
-  // Sanitize query parameters
-  if (req.query) {
-    const sanitizedQuery: Record<string, any> = {};
-    for (const key of Object.keys(req.query)) {
-      const val = req.query[key];
-      sanitizedQuery[key] = typeof val === 'string' ? xss(val) : val;
-    }
-    req.query = sanitizedQuery;
-  }
-
-  // Sanitize body parameters (for POST/PUT)
-  if (req.body && typeof req.body === 'object') {
-    const sanitizedBody: Record<string, any> = {};
-    for (const key of Object.keys(req.body)) {
-      const val = req.body[key];
-      sanitizedBody[key] = typeof val === 'string' ? xss(val) : val;
-    }
-    req.body = sanitizedBody;
-  }
-
-  // Sanitize params (route parameters)
-  if (req.params) {
-    const sanitizedParams: Record<string, string> = {};
-    for (const key of Object.keys(req.params)) {
-      sanitizedParams[key] = typeof req.params[key] === 'string' ? xss(req.params[key]) : req.params[key];
-    }
-    req.params = sanitizedParams;
-  }
-
-  next();
-}
-
+/** RFC-5322-lite: good enough to reject typos, not a substitute for verification. */
 export function validateEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+/** Digits only, 8–15 characters (E.164 without the punctuation). */
 export function validatePhone(phone: string): boolean {
-  // Simple phone validation - digits only, 8-15 characters
-  const phoneRegex = /^[0-9]{8,15}$/;
-  return phoneRegex.test(phone);
-}
-
-export function sanitizeString(input: string): string {
-  return xss(input);
+  return /^[0-9]{8,15}$/.test(phone);
 }

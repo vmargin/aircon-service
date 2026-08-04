@@ -8,7 +8,7 @@ import {
     Clock,
     TrendingUp
 } from 'lucide-react';
-import api from '../api/api';
+import { getList } from '../api/api';
 import type { Booking, Invoice } from '../types';
 
 type RangeKey = 'LAST_7_DAYS' | 'LAST_30_DAYS' | 'THIS_MONTH' | 'ALL_TIME';
@@ -49,16 +49,14 @@ const Reports: React.FC<Props> = ({ showNotification }) => {
     const { data: bookings = [], isLoading: bookingsLoading } = useQuery<Booking[]>({
         queryKey: ['bookings', 'reports'],
         queryFn: async () => {
-            const { data } = await api.get('/bookings');
-            return data;
+            return getList<Booking>('/bookings', { limit: 200 });
         },
     });
 
     const { data: invoices = [], isLoading: invoicesLoading } = useQuery<Invoice[]>({
         queryKey: ['invoices', 'reports'],
         queryFn: async () => {
-            const { data } = await api.get('/invoices');
-            return data;
+            return getList<Invoice>('/invoices', { limit: 200 });
         },
     });
 

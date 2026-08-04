@@ -1,36 +1,55 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { UserRole } from '@prisma/client';
 import { AuthUser } from '../types';
+import { ForbiddenError, UnauthorizedError } from './errorHandler';
 
 /**
  * AUTHENTICATION MIDDLEWARE
- * 
- * Verifies JWT and attaches the typed user payload to the request.
- * Using TypeScript's declaration merging for 'req.user' is a pro-level signal.
+ *
+ * Verifies the JWT and attaches the typed payload to the request. Errors are
+ * thrown so the central error handler owns the response shape.
  */
-const authenticate = (req: Request, res: Response, next: NextFunction) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+export const authenticate = (req: Request, _res: Response, next: NextFunction): void => {
+    const [scheme, token] = (req.headers.authorization ?? '').split(' ');
 
-    if (!token) {
-        return res.status(401).json({ error: "Access denied: No token" });
+    if (scheme?.toLowerCase() !== 'bearer' || !token) {
+        throw new UnauthorizedError('Access denied: missing bearer token');
     }
 
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
-        console.error("JWT_SECRET environment variable is not set!");
-        return res.status(500).json({ error: "Server configuration error" });
+        // Configuration fault, not a client fault — surfaces as a 500.
+        throw new Error('JWT_SECRET environment variable is not set');
     }
 
-    jwt.verify(token, jwtSecret, (err, decoded) => {
-        if (err) {
-            return res.status(403).json({ error: "Invalid session" });
-        }
-
-        // Explicitly casting the decoded token to our AuthUser type
-        req.user = decoded as AuthUser;
+    try {
+        const decoded = jwt.verify(token, jwtSecret) as AuthUser;
+        req.user = decoded;
         next();
-    });
+    } catch {
+        throw new UnauthorizedError('Session expired or invalid');
+    }
 };
+
+/** Require the caller to hold one of the given roles. */
+export const requireRole =
+    (...roles: UserRole[]) =>
+    (req: Request, _res: Response, next: NextFunction): void => {
+        if (!req.user) throw new UnauthorizedError();
+        if (!roles.includes(req.user.role)) {
+            throw new ForbiddenError('You do not have permission to perform this action');
+        }
+        next();
+    };
+
+/**
+ * Narrow `req.user` to non-undefined. Routes behind `authenticate` always have
+ * it, but TypeScript cannot know that.
+ */
+export function requireUser(req: Request): AuthUser {
+    if (!req.user) throw new UnauthorizedError();
+    return req.user;
+}
 
 export default authenticate;

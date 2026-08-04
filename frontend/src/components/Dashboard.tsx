@@ -18,8 +18,8 @@ import {
   UserPlus
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../api/api';
-import { Booking, BookingStatus, User } from '../types';
+import api, { getList } from '../api/api';
+import { Booking, BookingStatus } from '../types';
 import BookingModal from './BookingModal';
 import InvoiceModal from './InvoiceModal';
 import AssignTechnicianModal from './AssignTechnicianModal';
@@ -43,8 +43,8 @@ const Dashboard: React.FC<DashboardProps> = ({ showNotification }) => {
   const { data: bookings = [], refetch, isLoading: isQueryLoading, error: queryError } = useQuery<Booking[]>({
     queryKey: ['bookings'],
     queryFn: async () => {
-      const { data } = await api.get('/bookings');
-      return data;
+      // List endpoints return { data, pagination }; getList unwraps to rows.
+      return getList<Booking>('/bookings', { limit: 200 });
     },
   });
 

@@ -1,150 +1,125 @@
 import { Request, Response } from 'express';
+import { z } from 'zod';
 import prisma from '../db/prisma';
-import { UserRole } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { logAudit } from '../lib/auditLog';
+import { requireUser } from '../middleware/auth';
+import { NotFoundError, ValidationError } from '../middleware/errorHandler';
+import { assertBranchInScope, branchScopedWhere, isBranchScoped } from '../lib/tenancy';
+
+const createTechnicianSchema = z.object({
+    name: z.string().trim().min(1).max(120),
+    phone: z.string().trim().min(8).max(20).optional(),
+    branchId: z.string().uuid(),
+});
+
+const updateTechnicianSchema = z.object({
+    name: z.string().trim().min(1).max(120).optional(),
+    phone: z.string().trim().min(8).max(20).nullable().optional(),
+    branchId: z.string().uuid().optional(),
+    isActive: z.boolean().optional(),
+});
+
+const listTechniciansSchema = z.object({
+    includeInactive: z
+        .enum(['true', 'false'])
+        .optional()
+        .transform((v) => v === 'true'),
+});
 
 export const getTechnicians = async (req: Request, res: Response) => {
-    const { user } = req;
-    if (!user) return res.status(401).json({ error: "Unauthorized" });
+    const user = requireUser(req);
+    const { includeInactive } = listTechniciansSchema.parse(req.query);
 
-    const { includeInactive } = req.query;
+    const where: Prisma.TechnicianWhereInput = { ...branchScopedWhere(user) };
+    if (!includeInactive) where.isActive = true;
 
-    try {
-        const baseWhere: any = { branch: { organizationId: user.orgId } };
+    const technicians = await prisma.technician.findMany({
+        where,
+        orderBy: { name: 'asc' },
+        include: { branch: true },
+    });
 
-        if (includeInactive !== 'true') {
-            baseWhere.isActive = true;
-        }
-
-        const where =
-            user.role === UserRole.BRANCH_LEADER && user.branchId
-                ? { ...baseWhere, branchId: user.branchId }
-                : baseWhere;
-
-        const technicians = await prisma.technician.findMany({
-            where,
-            orderBy: { name: 'asc' },
-            include: { branch: true }
-        });
-        res.json(technicians);
-    } catch (error) {
-        console.error("Get technicians error:", error);
-        res.status(500).json({ error: "Failed to fetch technicians" });
-    }
+    res.json(technicians);
 };
 
 export const createTechnician = async (req: Request, res: Response) => {
-    const { user } = req;
-    const { name, phone, branchId } = req.body;
-    if (!user) return res.status(401).json({ error: "Unauthorized" });
+    const user = requireUser(req);
 
-    if (!name || !branchId) {
-        return res.status(400).json({ error: "Name and Branch are required" });
+    const validation = createTechnicianSchema.safeParse(req.body);
+    if (!validation.success) {
+        throw new ValidationError('Validation Error', validation.error.issues);
     }
 
-    try {
-        // Enforce branch access for Branch Leaders
-        if (user.role === UserRole.BRANCH_LEADER && branchId !== user.branchId) {
-            return res.status(403).json({ error: "Cannot create technician for another branch" });
-        }
+    // Verifies the branch is in the caller's org AND their branch if scoped.
+    await assertBranchInScope(user, validation.data.branchId);
 
-        const technician = await prisma.technician.create({
-            data: {
-                name,
-                phone,
-                branchId
-            },
-            include: { branch: true }
-        });
-        await logAudit(req, 'TECHNICIAN_CREATE', 'technician', technician.id, technician.branchId);
-        res.status(201).json(technician);
-    } catch (error) {
-        console.error("Create technician error:", error);
-        res.status(500).json({ error: "Failed to create technician" });
-    }
+    const technician = await prisma.technician.create({
+        data: validation.data,
+        include: { branch: true },
+    });
+
+    await logAudit(req, 'TECHNICIAN_CREATE', 'technician', technician.id, technician.branchId);
+    res.status(201).json(technician);
 };
 
 export const updateTechnician = async (req: Request, res: Response) => {
-    const { user } = req;
-    const id = req.params.id as string;
-    const { name, phone, branchId, isActive } = req.body;
-    if (!user) return res.status(401).json({ error: "Unauthorized" });
+    const user = requireUser(req);
+    const { id } = req.params as { id: string };
 
-    try {
-        const tech = await prisma.technician.findUnique({
-            where: { id },
-            include: { branch: true }
-        });
-
-        if (!tech) return res.status(404).json({ error: "Technician not found" });
-
-        // Enforce branch access
-        if (user.role === UserRole.BRANCH_LEADER && tech.branchId !== user.branchId) {
-            return res.status(403).json({ error: "Access denied" });
-        }
-
-        const updated = await prisma.technician.update({
-            where: { id },
-            data: {
-                name,
-                phone,
-                branchId: branchId as string,
-                isActive: isActive as boolean
-            },
-            include: { branch: true }
-        });
-        await logAudit(req, 'TECHNICIAN_UPDATE', 'technician', updated.id, updated.branchId);
-        res.json(updated);
-    } catch (error) {
-        console.error("Update technician error:", error);
-        res.status(500).json({ error: "Failed to update technician" });
+    const validation = updateTechnicianSchema.safeParse(req.body);
+    if (!validation.success) {
+        throw new ValidationError('Validation Error', validation.error.issues);
     }
+
+    const technician = await prisma.technician.findFirst({
+        where: { id, ...branchScopedWhere(user) },
+    });
+
+    if (!technician) throw new NotFoundError('Technician not found');
+
+    // Moving a technician between branches must land inside the caller's scope.
+    if (validation.data.branchId && validation.data.branchId !== technician.branchId) {
+        await assertBranchInScope(user, validation.data.branchId);
+    }
+
+    const updated = await prisma.technician.update({
+        where: { id },
+        data: validation.data,
+        include: { branch: true },
+    });
+
+    await logAudit(req, 'TECHNICIAN_UPDATE', 'technician', updated.id, updated.branchId);
+    res.json(updated);
 };
 
 export const deleteTechnician = async (req: Request, res: Response) => {
-    const { user } = req;
-    const id = req.params.id as string;
-    if (!user) return res.status(401).json({ error: "Unauthorized" });
+    const user = requireUser(req);
+    const { id } = req.params as { id: string };
 
-    try {
-        const tech = await prisma.technician.findUnique({ where: { id } });
-        if (!tech) return res.status(404).json({ error: "Technician not found" });
+    const technician = await prisma.technician.findFirst({
+        where: { id, ...branchScopedWhere(user) },
+    });
 
-        // Enforce branch access
-        if (user.role === UserRole.BRANCH_LEADER && tech.branchId !== user.branchId) {
-            return res.status(403).json({ error: "Access denied" });
-        }
+    if (!technician) throw new NotFoundError('Technician not found');
 
-        // Soft delete: set isActive to false
-        await prisma.technician.update({
-            where: { id },
-            data: { isActive: false }
-        });
-        await logAudit(req, 'TECHNICIAN_DEACTIVATE', 'technician', id, tech.branchId);
+    // Soft delete — bookings reference technicians, and history must survive.
+    await prisma.technician.update({ where: { id }, data: { isActive: false } });
+    await logAudit(req, 'TECHNICIAN_DEACTIVATE', 'technician', id, technician.branchId);
 
-        res.json({ message: "Technician deactivated successfully" });
-    } catch (error) {
-        console.error("Delete technician error:", error);
-        res.status(500).json({ error: "Failed to deactivate technician" });
-    }
+    res.json({ message: 'Technician deactivated successfully' });
 };
 
 export const getBranches = async (req: Request, res: Response) => {
-    const { user } = req;
-    if (!user) return res.status(401).json({ error: "Unauthorized" });
+    const user = requireUser(req);
 
-    try {
-        const where: { organizationId: string; id?: string } = { organizationId: user.orgId };
-        if (user.role === UserRole.BRANCH_LEADER && user.branchId) {
-            where.id = user.branchId;
-        }
-        const branches = await prisma.branch.findMany({
-            where,
-            orderBy: { name: 'asc' }
-        });
-        res.json(branches);
-    } catch (error) {
-        console.error("Get branches error:", error);
-        res.status(500).json({ error: "Failed to fetch branches" });
-    }
+    const branches = await prisma.branch.findMany({
+        where: {
+            organizationId: user.orgId,
+            ...(isBranchScoped(user) ? { id: user.branchId } : {}),
+        },
+        orderBy: { name: 'asc' },
+    });
+
+    res.json(branches);
 };

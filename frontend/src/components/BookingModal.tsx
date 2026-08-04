@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { X, Loader2, Save, Calendar, User, MapPin, Wrench, Search, Plus } from 'lucide-react';
-import api from '../api/api';
+import api, { getList } from '../api/api';
 import { Booking, Branch, Customer, Technician, User as UserType } from '../types';
 
 interface BookingModalProps {
@@ -30,9 +30,18 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, booking })
     const [newCustomer, setNewCustomer] = useState({ name: '', phone: '', address: '' });
 
     // Fetch Options
-    const { data: customers = [] } = useQuery<Customer[]>({ queryKey: ['customers'], queryFn: async () => (await api.get('/customers')).data });
-    const { data: branches = [] } = useQuery<Branch[]>({ queryKey: ['branches'], queryFn: async () => (await api.get('/branches')).data });
-    const { data: technicians = [] } = useQuery<Technician[]>({ queryKey: ['technicians'], queryFn: async () => (await api.get('/technicians')).data });
+    const { data: customers = [] } = useQuery<Customer[]>({
+        queryKey: ['customers'],
+        queryFn: () => getList<Customer>('/customers', { limit: 200 }),
+    });
+    const { data: branches = [] } = useQuery<Branch[]>({
+        queryKey: ['branches'],
+        queryFn: () => getList<Branch>('/branches'),
+    });
+    const { data: technicians = [] } = useQuery<Technician[]>({
+        queryKey: ['technicians'],
+        queryFn: () => getList<Technician>('/technicians'),
+    });
 
     // Filtered Customers
     const filteredCustomers = (Array.isArray(customers) ? customers : []).filter(c =>

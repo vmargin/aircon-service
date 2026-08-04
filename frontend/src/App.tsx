@@ -27,6 +27,7 @@ import Reports from './components/Reports';
 import Technicians from './components/Technicians';
 import Login from './components/Login';
 import Toast from './components/ui/Toast';
+import { AUTH_EXPIRED_EVENT, TOKEN_KEY, USER_KEY } from './api/api';
 import type { User } from './types';
 
 const App: React.FC = () => {
@@ -36,20 +37,34 @@ const App: React.FC = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     useEffect(() => {
-        const savedUser = localStorage.getItem('user');
+        const savedUser = localStorage.getItem(USER_KEY);
         if (savedUser) {
             try {
                 setUser(JSON.parse(savedUser));
             } catch (e) {
                 console.error("Failed to parse user from localStorage", e);
-                localStorage.removeItem('user');
+                localStorage.removeItem(USER_KEY);
             }
         }
     }, []);
 
+    /**
+     * The API client fires this when any request comes back 401 (expired or
+     * revoked token). Without it the UI stayed mounted and hammered the API
+     * with requests that could never succeed.
+     */
+    useEffect(() => {
+        const onExpired = () => {
+            setUser(null);
+            showNotification('Your session expired. Please sign in again.', 'warning');
+        };
+        window.addEventListener(AUTH_EXPIRED_EVENT, onExpired);
+        return () => window.removeEventListener(AUTH_EXPIRED_EVENT, onExpired);
+    }, []);
+
     const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(USER_KEY);
         setUser(null);
         showNotification('Logged out successfully', 'success');
     };

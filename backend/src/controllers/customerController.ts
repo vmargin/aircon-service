@@ -1,41 +1,57 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import prisma from '../db/prisma';
+import { Prisma } from '@prisma/client';
+import { requireUser } from '../middleware/auth';
+import { ValidationError } from '../middleware/errorHandler';
+import { logAudit } from '../lib/auditLog';
+import { parsePagination, toPage } from '../lib/pagination';
 
 const customerSchema = z.object({
-    name: z.string().min(1),
-    phone: z.string().min(8),
-    address: z.string().optional(),
+    name: z.string().trim().min(1).max(120),
+    phone: z.string().trim().min(8).max(20),
+    address: z.string().trim().max(300).optional(),
+});
+
+const listCustomersSchema = z.object({
+    q: z.string().trim().min(1).max(100).optional(),
 });
 
 export const getCustomers = async (req: Request, res: Response) => {
-    const { user } = req;
-    if (!user) return res.status(401).json({ error: "Unauthorized" });
+    const user = requireUser(req);
+    const { page, limit, skip, take } = parsePagination(req.query);
+    const { q } = listCustomersSchema.parse(req.query);
 
-    try {
-        const customers = await prisma.customer.findMany({
-            where: { organizationId: user.orgId },
-            orderBy: { name: 'asc' }
-        });
-        res.json(customers);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch customers" });
+    const where: Prisma.CustomerWhereInput = { organizationId: user.orgId };
+    if (q) {
+        where.OR = [
+            { name: { contains: q, mode: 'insensitive' } },
+            { phone: { contains: q } },
+        ];
     }
+
+    const [customers, total] = await prisma.$transaction([
+        prisma.customer.findMany({ where, orderBy: { name: 'asc' }, skip, take }),
+        prisma.customer.count({ where }),
+    ]);
+
+    res.json(toPage(customers, total, page, limit));
 };
 
 export const createCustomer = async (req: Request, res: Response) => {
-    const { user } = req;
-    if (!user) return res.status(401).json({ error: "Unauthorized" });
+    const user = requireUser(req);
 
     const validation = customerSchema.safeParse(req.body);
-    if (!validation.success) return res.status(400).json({ error: validation.error.issues[0].message });
-
-    try {
-        const customer = await prisma.customer.create({
-            data: { ...validation.data, organizationId: user.orgId }
-        });
-        res.status(201).json(customer);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to create customer" });
+    if (!validation.success) {
+        throw new ValidationError('Validation Error', validation.error.issues);
     }
+
+    // (organizationId, phone) is unique — a duplicate surfaces as a 409 via the
+    // Prisma error mapping in the error handler.
+    const customer = await prisma.customer.create({
+        data: { ...validation.data, organizationId: user.orgId },
+    });
+
+    await logAudit(req, 'CUSTOMER_CREATE', 'customer', customer.id, user.branchId ?? null);
+    res.status(201).json(customer);
 };

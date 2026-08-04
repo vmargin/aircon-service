@@ -9,7 +9,7 @@ import {
     Building2,
     Calendar
 } from 'lucide-react';
-import api from '../api/api';
+import api, { getList } from '../api/api';
 import { Invoice, PaymentStatus } from '../types';
 
 interface Props {
@@ -22,8 +22,7 @@ const Financials: React.FC<Props> = ({ showNotification }) => {
     const { data: invoices = [], isLoading } = useQuery<Invoice[]>({
         queryKey: ['invoices'],
         queryFn: async () => {
-            const { data } = await api.get('/invoices');
-            return data;
+            return getList<Invoice>('/invoices', { limit: 200 });
         },
     });
 

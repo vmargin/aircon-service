@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { X, Loader2, Save, Phone, User, Building2 } from 'lucide-react';
-import api from '../api/api';
+import api, { getList } from '../api/api';
 import { Technician, Branch, User as UserType } from '../types';
 
 interface TechnicianModalProps {
@@ -38,7 +38,7 @@ const TechnicianModal: React.FC<TechnicianModalProps> = ({ isOpen, onClose, tech
 
     const { data: branches = [] } = useQuery<Branch[]>({
         queryKey: ['branches'],
-        queryFn: async () => (await api.get('/branches')).data
+        queryFn: () => getList<Branch>('/branches'),
     });
 
     const mutation = useMutation({

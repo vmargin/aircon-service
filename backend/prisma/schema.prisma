@@ -27,18 +27,18 @@ enum PaymentStatus {
 }
 
 model Organization {
-  id        String   @id @default(uuid())
-  name      String   @unique
+  id        String     @id @default(uuid())
+  name      String     @unique
   branches  Branch[]
   users     User[]
   customers Customer[]
 }
 
 model Branch {
-  id             String        @id @default(uuid())
+  id             String       @id @default(uuid())
   name           String
   location       String?
-  organization   Organization  @relation(fields: [organizationId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id])
   organizationId String
   users          User[]
   technicians    Technician[]
@@ -49,13 +49,13 @@ model Branch {
 }
 
 model User {
-  id             String        @id @default(uuid())
-  email          String        @unique
+  id             String       @id @default(uuid())
+  email          String       @unique
   password       String
-  role           UserRole      @default(BRANCH_LEADER)
-  organization   Organization  @relation(fields: [organizationId], references: [id])
+  role           UserRole     @default(BRANCH_LEADER)
+  organization   Organization @relation(fields: [organizationId], references: [id])
   organizationId String
-  branch         Branch?       @relation(fields: [branchId], references: [id])
+  branch         Branch?      @relation(fields: [branchId], references: [id])
   branchId       String?
   auditLogs      AuditLog[]
 
@@ -78,7 +78,7 @@ model Technician {
 }
 
 model Customer {
-  id             String   @id @default(uuid())
+  id             String       @id @default(uuid())
   name           String
   phone          String
   address        String?
@@ -86,29 +86,30 @@ model Customer {
   organizationId String
   bookings       Booking[]
 
+  @@unique([organizationId, phone])
   @@index([organizationId])
   @@index([phone])
 }
 
 model Booking {
-  id            String        @id @default(uuid())
-  serviceType   String // e.g., "Cleaning", "Repair", "Installation"
-  status        BookingStatus @default(PENDING)
-  scheduledAt   DateTime
-  customer      Customer      @relation(fields: [customerId], references: [id])
-  customerId    String
-  branch        Branch        @relation(fields: [branchId], references: [id])
-  branchId      String
-  technician    Technician?   @relation(fields: [technicianId], references: [id])
-  technicianId  String?
-  customerName  String?
-  phone         String?
-  address       String?
-  notes         String?
+  id             String           @id @default(uuid())
+  serviceType    String // e.g., "Cleaning", "Repair", "Installation"
+  status         BookingStatus    @default(PENDING)
+  scheduledAt    DateTime
+  customer       Customer         @relation(fields: [customerId], references: [id])
+  customerId     String
+  branch         Branch           @relation(fields: [branchId], references: [id])
+  branchId       String
+  technician     Technician?      @relation(fields: [technicianId], references: [id])
+  technicianId   String?
+  customerName   String?
+  phone          String?
+  address        String?
+  notes          String?
   inventoryUsage InventoryUsage[]
-  invoice       Invoice?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  invoice        Invoice?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
   @@index([scheduledAt])
   @@index([status])
@@ -119,17 +120,17 @@ model Booking {
 }
 
 model Inventory {
-  id          String   @id @default(uuid())
+  id          String           @id @default(uuid())
   name        String
   description String?
   category    String
-  quantity    Int      @default(0)
-  minQuantity Int      @default(5)
+  quantity    Int              @default(0)
+  minQuantity Int              @default(5)
   unit        String
   location    String?
-  branch      Branch   @relation(fields: [branchId], references: [id])
+  branch      Branch           @relation(fields: [branchId], references: [id])
   branchId    String
-  lastUpdated DateTime @default(now()) @updatedAt
+  lastUpdated DateTime         @default(now()) @updatedAt
   createdBy   String?
   updatedBy   String?
   usage       InventoryUsage[]
@@ -140,14 +141,14 @@ model Inventory {
 }
 
 model InventoryUsage {
-  id           String   @id @default(uuid())
+  id           String    @id @default(uuid())
   inventory    Inventory @relation(fields: [inventoryId], references: [id])
   inventoryId  String
   booking      Booking   @relation(fields: [bookingId], references: [id])
   bookingId    String
-  quantityUsed Int      @default(1)
+  quantityUsed Int       @default(1)
   notes        String?
-  usedAt       DateTime @default(now())
+  usedAt       DateTime  @default(now())
 
   @@index([inventoryId])
   @@index([bookingId])
@@ -155,7 +156,9 @@ model InventoryUsage {
 
 model Invoice {
   id            String        @id @default(uuid())
-  amount        Float // SQLite doesn't support Decimal, Float is fine for demo
+  /// Money must never be a float — Decimal(12,2) is exact to the cent.
+  /// Prisma serialises this to a JSON string; the frontend wraps reads in Number().
+  amount        Decimal       @db.Decimal(12, 2)
   paymentStatus PaymentStatus @default(UNPAID)
   paymentMethod String? // "CASH", "E_WALLET", "BANK", "CHEQUE"
   booking       Booking       @relation(fields: [bookingId], references: [id])

@@ -1,75 +1,51 @@
 import dotenv from 'dotenv';
-import express from 'express';
-import cors from 'cors';
-import { login } from './controllers/authController';
-import { getBookings, createBooking, updateBooking } from './controllers/bookingController';
-import { getInvoices, createInvoice, updatePaymentStatus } from './controllers/invoiceController';
-import { getCustomers, createCustomer } from './controllers/customerController';
-import { getTechnicians, createTechnician, updateTechnician, deleteTechnician, getBranches } from './controllers/technicianController';
-import { getPublicBranches, createPublicBooking } from './controllers/publicController';
-import authenticate from './middleware/auth';
 
-/**
- * EXPRESS SERVER SETUP (TypeScript Version)
- * 
- * Pivoted for Aircon Service Business.
- */
-
+// Load env before anything reads process.env at module scope.
 dotenv.config();
 
-const app = express();
+/* eslint-disable import/first */
+import app from './app';
+import prisma from './db/prisma';
 
-// MIDDLEWARE
-app.use(cors({
-    origin: process.env.FRONTEND_URL || '*',
-    credentials: false,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']  // ← This fixes it!
-}));
+/**
+ * SERVER BOOTSTRAP
+ *
+ * All routing and middleware live in app.ts. This file only owns the process:
+ * start listening, and shut down cleanly.
+ */
 
-app.use(express.json());
+const REQUIRED_ENV = ['DATABASE_URL', 'JWT_SECRET'] as const;
 
-// ROUTE DEFINITIONS
+const missing = REQUIRED_ENV.filter((key) => !process.env[key]);
+if (missing.length > 0) {
+    console.error(`Missing required environment variables: ${missing.join(', ')}`);
+    process.exit(1);
+}
 
-// Public Routes
-app.post('/api/auth/login', login);
-app.get('/api/public/branches', getPublicBranches);
-app.post('/api/public/bookings', createPublicBooking);
+if (process.env.NODE_ENV === 'production' && (process.env.JWT_SECRET ?? '').length < 32) {
+    console.error('JWT_SECRET must be at least 32 characters in production.');
+    process.exit(1);
+}
 
-// Health & Root
-app.get('/api/health', (req, res) => {
-    res.json({ status: "ok", timestamp: new Date().toISOString() });
+const PORT = Number(process.env.PORT) || 5000;
+
+const server = app.listen(PORT, () => {
+    console.log(`🚀 API listening on http://localhost:${PORT}`);
+    console.log(`   Health: http://localhost:${PORT}/health`);
 });
 
-// Protected Routes (RBAC enforced in controllers)
-app.get('/api/bookings', authenticate, getBookings);
-app.post('/api/bookings', authenticate, createBooking);
-app.patch('/api/bookings/:id', authenticate, updateBooking);
-
-// Invoice Routes
-app.get('/api/invoices', authenticate, getInvoices);
-app.post('/api/invoices', authenticate, createInvoice);
-app.patch('/api/invoices/:id/payment', authenticate, updatePaymentStatus);
-
-// Customer Routes
-app.get('/api/customers', authenticate, getCustomers);
-app.post('/api/customers', authenticate, createCustomer);
-
-// Technician & Branch Routes
-app.get('/api/technicians', authenticate, getTechnicians);
-app.post('/api/technicians', authenticate, createTechnician);
-app.patch('/api/technicians/:id', authenticate, updateTechnician);
-app.delete('/api/technicians/:id', authenticate, deleteTechnician);
-app.get('/api/branches', authenticate, getBranches);
-
-// SERVER INIT
-const PORT = process.env.PORT || 5000;
-
-if (process.env.NODE_ENV !== 'production') {
-    app.listen(PORT, () => {
-        console.log(`🚀 Server running on port ${PORT}`);
-        console.log(`   Local: http://localhost:${PORT}`);
+async function shutdown(signal: string) {
+    console.log(`${signal} received, shutting down...`);
+    server.close(async () => {
+        await prisma.$disconnect();
+        process.exit(0);
     });
+
+    // Don't hang forever on stuck connections.
+    setTimeout(() => process.exit(1), 10_000).unref();
 }
+
+process.on('SIGTERM', () => void shutdown('SIGTERM'));
+process.on('SIGINT', () => void shutdown('SIGINT'));
 
 export default app;

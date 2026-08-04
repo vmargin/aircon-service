@@ -11,7 +11,7 @@ import {
     ShieldAlert,
     Filter
 } from 'lucide-react';
-import api from '../api/api';
+import { getList } from '../api/api';
 import { Technician, User as UserType } from '../types';
 import TechnicianModal from './TechnicianModal';
 
@@ -32,8 +32,7 @@ const Technicians: React.FC<Props> = ({ showNotification }) => {
     const { data: technicians = [], isLoading, refetch } = useQuery<Technician[]>({
         queryKey: ['technicians', showInactive],
         queryFn: async () => {
-            const { data } = await api.get(`/technicians?includeInactive=${showInactive}`);
-            return data;
+            return getList<Technician>('/technicians', { includeInactive: showInactive });
         },
     });
 

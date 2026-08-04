@@ -1,53 +1,60 @@
-// API routes with /api/v1/ prefix
 import { Router } from 'express';
 import { login } from '../controllers/authController';
-import { getBookings, createBooking, updateBooking, getBookingById, deleteBooking } from '../controllers/bookingController';
+import {
+    getBookings,
+    createBooking,
+    updateBooking,
+    getBookingById,
+    deleteBooking,
+} from '../controllers/bookingController';
 import { getCustomers, createCustomer } from '../controllers/customerController';
 import { getInvoices, createInvoice, updatePaymentStatus } from '../controllers/invoiceController';
-import { getTechnicians, createTechnician, updateTechnician, deleteTechnician, getBranches } from '../controllers/technicianController';
+import {
+    getTechnicians,
+    createTechnician,
+    updateTechnician,
+    deleteTechnician,
+    getBranches,
+} from '../controllers/technicianController';
 import { getPublicBranches, createPublicBooking } from '../controllers/publicController';
 import authenticate from '../middleware/auth';
 import { catchAsync } from '../middleware/errorHandler';
-import { Request, Response } from 'express';
+import { loginRateLimiter, publicBookingRateLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
-// Public routes (no auth required)
-router.post('/auth/login', catchAsync(login));
+// --- Public routes (no auth) ------------------------------------------------
+router.post('/auth/login', loginRateLimiter, catchAsync(login));
 router.get('/public/branches', catchAsync(getPublicBranches));
-router.post('/public/bookings', catchAsync(createPublicBooking));
+router.post('/public/bookings', publicBookingRateLimiter, catchAsync(createPublicBooking));
 
-// Booking routes (protected)
-router.get('/bookings', authenticate, catchAsync(getBookings));
-router.post('/bookings', authenticate, catchAsync(createBooking));
-router.get('/bookings/:id', authenticate, catchAsync(getBookingById));
-router.put('/bookings/:id', authenticate, catchAsync(updateBooking));
-router.delete('/bookings/:id', authenticate, catchAsync(deleteBooking));
+// --- Everything below requires a valid token --------------------------------
+router.use(authenticate);
 
-// Customer routes (protected)
-router.get('/customers', authenticate, catchAsync(getCustomers));
-router.post('/customers', authenticate, catchAsync(createCustomer));
+// Bookings
+router.get('/bookings', catchAsync(getBookings));
+router.post('/bookings', catchAsync(createBooking));
+router.get('/bookings/:id', catchAsync(getBookingById));
+// PATCH is the canonical verb (partial update); PUT is kept as an alias so any
+// older client stays working.
+router.patch('/bookings/:id', catchAsync(updateBooking));
+router.put('/bookings/:id', catchAsync(updateBooking));
+router.delete('/bookings/:id', catchAsync(deleteBooking));
 
-// Invoice routes (protected)
-router.get('/invoices', authenticate, catchAsync(getInvoices));
-router.post('/invoices', authenticate, catchAsync(createInvoice));
-router.patch('/invoices/:id/payment', authenticate, catchAsync(updatePaymentStatus));
+// Customers
+router.get('/customers', catchAsync(getCustomers));
+router.post('/customers', catchAsync(createCustomer));
 
-// Technician & Branch routes (protected)
-router.get('/technicians', authenticate, catchAsync(getTechnicians));
-router.post('/technicians', authenticate, catchAsync(createTechnician));
-router.patch('/technicians/:id', authenticate, catchAsync(updateTechnician));
-router.delete('/technicians/:id', authenticate, catchAsync(deleteTechnician));
-router.get('/branches', authenticate, catchAsync(getBranches));
+// Invoices
+router.get('/invoices', catchAsync(getInvoices));
+router.post('/invoices', catchAsync(createInvoice));
+router.patch('/invoices/:id/payment', catchAsync(updatePaymentStatus));
 
-// Health check route
-router.get('/health', catchAsync(async (_req: Request, res: Response) => {
-  res.json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    version: '2.0.0',
-    environment: process.env.NODE_ENV || 'development',
-  });
-}));
+// Technicians & branches
+router.get('/technicians', catchAsync(getTechnicians));
+router.post('/technicians', catchAsync(createTechnician));
+router.patch('/technicians/:id', catchAsync(updateTechnician));
+router.delete('/technicians/:id', catchAsync(deleteTechnician));
+router.get('/branches', catchAsync(getBranches));
 
 export default router;

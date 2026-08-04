@@ -9,7 +9,7 @@ import {
     ChevronRight,
     UserPlus
 } from 'lucide-react';
-import api from '../api/api';
+import { getList } from '../api/api';
 import { Customer } from '../types';
 
 interface Props {
@@ -22,8 +22,7 @@ const Customers: React.FC<Props> = ({ showNotification }) => {
     const { data: customers = [], isLoading } = useQuery<Customer[]>({
         queryKey: ['customers'],
         queryFn: async () => {
-            const { data } = await api.get('/customers');
-            return data;
+            return getList<Customer>('/customers', { limit: 200 });
         },
     });
 

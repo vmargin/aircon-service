@@ -1,97 +1,156 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
+import { Prisma } from '@prisma/client';
 
-export function errorHandler(err: any, req: Request, res: Response, next: NextFunction) {
-  console.error('Error:', {
-    method: req.method,
-    url: req.url,
-    error: err.message,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
-    body: req.body,
-    query: req.query,
-    params: req.params,
-    timestamp: new Date().toISOString(),
-  });
+/** Keys whose values must never reach a log drain. */
+const REDACTED_KEYS = new Set([
+  'password',
+  'newpassword',
+  'currentpassword',
+  'token',
+  'accesstoken',
+  'refreshtoken',
+  'authorization',
+  'secret',
+  'jwt_secret',
+  'apikey',
+]);
 
-  // Log to audit log
-  if (process.env.AUDIT_LOG_ENABLED === 'true') {
-    // This would log to audit log - implementation depends on your audit system
-    console.log(`[AUDIT] Error occurred: ${err.message}`);
+/**
+ * Recursively replace sensitive values with '[REDACTED]'.
+ * The previous implementation logged `req.body` verbatim, which meant every
+ * failed login wrote the user's plaintext password to the server logs.
+ */
+export function redact(value: unknown, depth = 0): unknown {
+  if (depth > 4 || value === null || typeof value !== 'object') return value;
+  if (Array.isArray(value)) return value.map((v) => redact(v, depth + 1));
+
+  const out: Record<string, unknown> = {};
+  for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+    out[key] = REDACTED_KEYS.has(key.toLowerCase()) ? '[REDACTED]' : redact(val, depth + 1);
+  }
+  return out;
+}
+
+export class AppError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly details?: unknown
+  ) {
+    super(message);
+    this.name = new.target.name;
+    Error.captureStackTrace?.(this, new.target);
+  }
+}
+
+export class ValidationError extends AppError {
+  constructor(message: string, details?: unknown) {
+    super(message, 400, details);
+  }
+}
+
+export class UnauthorizedError extends AppError {
+  constructor(message = 'Unauthorized') {
+    super(message, 401);
+  }
+}
+
+export class ForbiddenError extends AppError {
+  constructor(message = 'Forbidden') {
+    super(message, 403);
+  }
+}
+
+export class NotFoundError extends AppError {
+  constructor(message = 'Not found') {
+    super(message, 404);
+  }
+}
+
+export class ConflictError extends AppError {
+  constructor(message = 'Conflict') {
+    super(message, 409);
+  }
+}
+
+/**
+ * Translate Prisma's error codes into HTTP semantics.
+ * Previously a duplicate invoice (unique violation on bookingId) surfaced as an
+ * opaque 500 instead of a 409.
+ */
+function fromPrisma(err: unknown): AppError | null {
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    const target = (err.meta?.target as string[] | string | undefined) ?? undefined;
+    const field = Array.isArray(target) ? target.join(', ') : target;
+
+    switch (err.code) {
+      case 'P2002':
+        return new ConflictError(
+          field ? `A record with this ${field} already exists.` : 'Record already exists.'
+        );
+      case 'P2003':
+        return new ValidationError('Referenced record does not exist.');
+      case 'P2025':
+        return new NotFoundError('Record not found.');
+      default:
+        break;
+    }
   }
 
-  if (err.name === 'ValidationError') {
-    return res.status(400).json({
-      error: 'Validation Error',
-      message: err.message,
-      details: err.errors,
-    });
+  if (err instanceof Prisma.PrismaClientValidationError) {
+    return new ValidationError('Malformed query.');
   }
 
-  if (err.name === 'UnauthorizedError') {
-    return res.status(401).json({
-      error: 'Unauthorized',
-      message: err.message,
-    });
-  }
+  return null;
+}
 
-  if (err.name === 'ForbiddenError') {
-    return res.status(403).json({
-      error: 'Forbidden',
-      message: err.message,
-    });
-  }
+export function errorHandler(
+  err: unknown,
+  req: Request,
+  res: Response,
+  _next: NextFunction
+): void {
+  const mapped = fromPrisma(err) ?? (err instanceof AppError ? err : null);
+  const status = mapped?.status ?? 500;
+  const isServerError = status >= 500;
+  const rawMessage = err instanceof Error ? err.message : String(err);
 
-  if (err.name === 'NotFoundError') {
-    return res.status(404).json({
-      error: 'Not Found',
-      message: err.message,
-    });
-  }
+  // Only 5xx is genuinely exceptional; 4xx is routine and shouldn't be noise.
+  const log = isServerError ? console.error : console.warn;
+  log(
+    JSON.stringify({
+      level: isServerError ? 'error' : 'warn',
+      timestamp: new Date().toISOString(),
+      method: req.method,
+      url: req.originalUrl,
+      status,
+      userId: req.user?.userId,
+      orgId: req.user?.orgId,
+      message: rawMessage,
+      body: redact(req.body),
+      ...(isServerError && process.env.NODE_ENV !== 'production'
+        ? { stack: err instanceof Error ? err.stack : undefined }
+        : {}),
+    })
+  );
 
-  // Default error response
-  const statusCode = err.status || 500;
-  const message = process.env.NODE_ENV === 'production' 
+  // Never leak internal messages/stack traces to clients on a 500.
+  const message = isServerError
     ? 'Internal server error'
-    : err.message;
+    : mapped?.message ?? rawMessage;
 
-  res.status(statusCode).json({
-    error: err.name || 'Error',
-    message: message,
+  res.status(status).json({
+    error: message,
+    ...(mapped?.details ? { details: mapped.details } : {}),
     timestamp: new Date().toISOString(),
   });
 }
 
-// Error classes for better error handling
-export class ValidationError extends Error {
-  constructor(message: string, public errors?: any) {
-    super(message);
-    this.name = 'ValidationError';
-  }
-}
-
-export class UnauthorizedError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'UnauthorizedError';
-  }
-}
-
-export class ForbiddenError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ForbiddenError';
-  }
-}
-
-export class NotFoundError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'NotFoundError';
-  }
-}
-
-// Helper to catch async errors
-export function catchAsync(fn: Function) {
-  return function (req: Request, res: Response, next: NextFunction) {
-    fn(req, res, next).catch(next);
+/** Wrap an async handler so rejected promises reach the error middleware. */
+export function catchAsync(
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown>
+): RequestHandler {
+  return (req, res, next) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
   };
 }

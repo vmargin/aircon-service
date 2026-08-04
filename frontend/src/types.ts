@@ -53,7 +53,11 @@ export interface Booking {
 
 export interface Invoice {
     id: string;
-    amount: number;
+    /**
+     * Money is Decimal(12,2) in Postgres, which Prisma serialises to a JSON
+     * *string* to avoid float precision loss. Always wrap reads in Number().
+     */
+    amount: string | number;
     paymentStatus: PaymentStatus;
     paymentMethod?: string | null;
     bookingId: string;
@@ -67,4 +71,16 @@ export interface PublicBranch {
     name: string;
     location?: string | null;
     organizationName: string;
+}
+
+/** Envelope returned by every list endpoint. */
+export interface Paginated<T> {
+    data: T[];
+    pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+        hasMore: boolean;
+    };
 }
