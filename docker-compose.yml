@@ -1,16 +1,29 @@
-version: '3.8'
+# Local development database.
+#
+# Matches the DATABASE_URL in backend/.env.example:
+#   postgresql://postgres:password@localhost:5432/aircon_service
+#
+# The database was previously named `asset_manager`, left over from another
+# project, so nothing in this repo could actually connect to it.
 services:
   db:
     image: postgres:15
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: asset_manager
+      POSTGRES_DB: aircon_service
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    # Let `docker compose up --wait` block until Postgres actually accepts
+    # connections, instead of racing `prisma migrate` against a booting server.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d aircon_service"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
 
 volumes:
   postgres_data:

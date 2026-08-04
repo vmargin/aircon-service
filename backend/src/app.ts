@@ -43,9 +43,18 @@ export function createApp() {
 
   if (allowedOrigins.length === 0) {
     if (process.env.NODE_ENV === 'production') {
-      throw new Error('FRONTEND_URL must be set in production');
+      // Throwing here runs at import time, which on a serverless platform
+      // kills the function before any route — including /health — can answer,
+      // leaving only an opaque 500 with nothing to diagnose. Log loudly and
+      // let the app boot: cross-origin calls still fail closed (no origin is
+      // allowed), but /health stays reachable and says what's wrong.
+      console.error(
+        'FRONTEND_URL is not set. All cross-origin browser requests will be ' +
+          'rejected until it is configured.'
+      );
+    } else {
+      allowedOrigins.push('http://localhost:5173');
     }
-    allowedOrigins.push('http://localhost:5173');
   }
 
   app.use(
@@ -61,8 +70,20 @@ export function createApp() {
 
   // Health check — before the general limiter so monitors can poll freely.
   app.get('/health', healthCheckRateLimiter, (_req, res) => {
-    res.json({
-      status: 'OK',
+    // Report config problems here rather than crashing on boot, so a
+    // misconfigured deployment is diagnosable from the outside.
+    const config = {
+      databaseUrl: Boolean(process.env.DATABASE_URL),
+      jwtSecret: Boolean(process.env.JWT_SECRET),
+      frontendUrl: allowedOrigins.length > 0,
+    };
+    const misconfigured = Object.entries(config)
+      .filter(([, ok]) => !ok)
+      .map(([key]) => key);
+
+    res.status(misconfigured.length > 0 ? 503 : 200).json({
+      status: misconfigured.length > 0 ? 'MISCONFIGURED' : 'OK',
+      missingConfig: misconfigured,
       timestamp: new Date().toISOString(),
       version: process.env.npm_package_version ?? '2.0.0',
       environment: process.env.NODE_ENV ?? 'development',
