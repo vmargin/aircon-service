@@ -35,3 +35,4 @@ Thumbs.db
 # Prisma
 backend/prisma/migrations/*.sql
 !backend/prisma/migrations/*/migration.sql
+.vercel
