@@ -22,12 +22,6 @@ export const loginRateLimiter = limiter({
   message: { error: 'Too many login attempts. Please try again later.' },
 });
 
-/** Public, unauthenticated write endpoint — abuse target, so keep it tight. */
-export const publicBookingRateLimiter = limiter({
-  max: Number(process.env.RATE_LIMIT_PUBLIC_BOOKING_MAX) || 10,
-  message: { error: 'Too many booking attempts. Please try again later.' },
-});
-
 /**
  * General API budget. Keyed per authenticated user where possible so that a
  * whole office behind one NAT address doesn't share a single bucket.

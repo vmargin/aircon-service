@@ -7,6 +7,7 @@ import { ConflictError, NotFoundError, ValidationError } from '../middleware/err
 import { requireUser } from '../middleware/auth';
 import { isBranchScoped } from '../lib/tenancy';
 import { parsePagination, toPage } from '../lib/pagination';
+import { assertValidPaymentTransition } from '../lib/paymentStatus';
 
 const createInvoiceSchema = z.object({
     bookingId: z.string().uuid(),
@@ -126,12 +127,15 @@ export const updatePaymentStatus = async (req: Request, res: Response) => {
 
     const { paymentStatus, paymentMethod } = validation.data;
 
+    // A settled invoice is final — see lib/paymentStatus.ts.
+    assertValidPaymentTransition(invoice.paymentStatus, paymentStatus);
+
     const updated = await prisma.invoice.update({
         where: { id },
         data: {
             paymentStatus,
             paymentMethod,
-            // Stamp on transition into PAID, clear it on the way back out.
+            // Stamped once, when the invoice first becomes PAID.
             paidAt: paymentStatus === PaymentStatus.PAID ? (invoice.paidAt ?? new Date()) : null,
         },
     });

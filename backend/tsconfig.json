@@ -8,14 +8,11 @@
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "sourceMap": true
+        "sourceMap": true,
+        "types": ["node", "jest"]
     },
-    "include": [
-        "src/**/*",
-        "tests/**/*"
-    ],
-    "exclude": [
-        "node_modules",
-        "**/*.spec.ts"
-    ]
+    // prisma/seed.ts was previously outside `include`, so it was never
+    // typechecked despite being run by `npm run db:seed`.
+    "include": ["src/**/*", "tests/**/*", "prisma/**/*.ts"],
+    "exclude": ["node_modules", "dist"]
 }

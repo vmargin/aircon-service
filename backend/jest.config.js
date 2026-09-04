@@ -1,14 +1,9 @@
 module.exports = {
     preset: 'ts-jest',
     testEnvironment: 'node',
-    testMatch: ['**/*.test.ts'],
-    setupFilesAfterEnv: ['./tests/integration/setup.ts'],
-    verbose: true,
-    forceExit: true,
+    testMatch: ['**/tests/**/*.test.ts'],
+    // No setupFilesAfterEnv: the old setup file truncated and re-seeded a live
+    // Postgres database before every run, so `npm test` failed on any machine
+    // without one. These tests exercise pure logic instead.
     clearMocks: true,
-    resetMocks: true,
-    restoreMocks: true,
-    moduleNameMapper: {
-        '^@/(.*)$': '<rootDir>/src/$1',
-    },
 };

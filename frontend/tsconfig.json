@@ -1,17 +1,19 @@
 {
     "compilerOptions": {
-        "target": "ESNext",
+        "target": "ES2022",
         "useDefineForClassFields": true,
         "lib": [
             "DOM",
             "DOM.Iterable",
-            "ESNext"
+            "ES2022"
         ],
         "allowJs": false,
         "skipLibCheck": true,
-        "esModuleInterop": false,
+        "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
         "strict": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
         "forceConsistentCasingInFileNames": true,
         "module": "ESNext",
         "moduleResolution": "Bundler",
@@ -19,19 +21,11 @@
         "isolatedModules": true,
         "noEmit": true,
         "jsx": "react-jsx",
-        "baseUrl": ".",
-        "paths": {
-            "@/*": [
-                "./src/*"
-            ]
-        }
+        "types": [
+            "vite/client"
+        ]
     },
     "include": [
         "src"
-    ],
-    "references": [
-        {
-            "path": "./tsconfig.node.json"
-        }
     ]
 }

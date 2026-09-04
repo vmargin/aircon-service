@@ -6,6 +6,7 @@ import { logAudit } from '../lib/auditLog';
 import { requireUser } from '../middleware/auth';
 import { NotFoundError, ValidationError } from '../middleware/errorHandler';
 import { assertBranchInScope, branchScopedWhere, isBranchScoped } from '../lib/tenancy';
+import { toPage } from '../lib/pagination';
 
 const createTechnicianSchema = z.object({
     name: z.string().trim().min(1).max(120),
@@ -40,7 +41,10 @@ export const getTechnicians = async (req: Request, res: Response) => {
         include: { branch: true },
     });
 
-    res.json(technicians);
+    // Every list endpoint returns the same { data, pagination } envelope so
+    // clients never have to special-case a response shape. Staff lists are
+    // small and always wanted in full, so they aren't paged.
+    res.json(toPage(technicians, technicians.length, 1, Math.max(technicians.length, 1)));
 };
 
 export const createTechnician = async (req: Request, res: Response) => {
@@ -121,5 +125,5 @@ export const getBranches = async (req: Request, res: Response) => {
         orderBy: { name: 'asc' },
     });
 
-    res.json(branches);
+    res.json(toPage(branches, branches.length, 1, Math.max(branches.length, 1)));
 };

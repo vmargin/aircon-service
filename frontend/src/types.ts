@@ -33,6 +33,8 @@ export interface Customer {
     name: string;
     phone: string;
     address?: string | null;
+    /** Present on the list endpoint, which selects a bookings count. */
+    _count?: { bookings: number };
 }
 
 export interface Booking {
@@ -46,6 +48,7 @@ export interface Booking {
     branch?: Branch;
     technicianId?: string | null;
     technician?: Technician | null;
+    notes?: string | null;
     invoice?: Invoice | null;
     createdAt: string;
     updatedAt: string;
@@ -66,13 +69,6 @@ export interface Invoice {
     paidAt?: string | null;
 }
 
-export interface PublicBranch {
-    id: string;
-    name: string;
-    location?: string | null;
-    organizationName: string;
-}
-
 /** Envelope returned by every list endpoint. */
 export interface Paginated<T> {
     data: T[];
@@ -84,3 +80,30 @@ export interface Paginated<T> {
         hasMore: boolean;
     };
 }
+
+/**
+ * BOOKING LIFECYCLE — mirrors backend/src/lib/bookingStatus.ts.
+ *
+ * The status dropdown used to offer all five values regardless of the current
+ * state, so most selections were rejected by the API's state machine. Deriving
+ * the options from this map means the UI can only ever offer a legal move.
+ */
+export const ALLOWED_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
+    PENDING: ['CONFIRMED', 'CANCELLED'],
+    CONFIRMED: ['ON_SITE', 'CANCELLED'],
+    ON_SITE: ['COMPLETED', 'CANCELLED'],
+    COMPLETED: [],
+    CANCELLED: [],
+};
+
+export const STATUS_LABELS: Record<BookingStatus, string> = {
+    PENDING: 'Pending',
+    CONFIRMED: 'Confirmed',
+    ON_SITE: 'On Site',
+    COMPLETED: 'Completed',
+    CANCELLED: 'Cancelled',
+};
+
+export const PAYMENT_METHODS = ['CASH', 'E_WALLET', 'BANK', 'CHEQUE'] as const;
+
+export const SERVICE_TYPES = ['Cleaning', 'Repair', 'Installation', 'Maintenance'] as const;

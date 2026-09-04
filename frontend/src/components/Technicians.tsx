@@ -1,129 +1,321 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Plus, Pencil, UserX, UserCheck } from 'lucide-react';
+
+import api, { getList } from '../api/api';
+import { Branch, Technician } from '../types';
+import { useAuth } from '../auth/AuthContext';
 import {
-    Users,
-    Phone,
-    Plus,
-    Building2,
-    ChevronRight,
-    UserPlus,
-    Shield,
-    ShieldAlert,
-    Filter
-} from 'lucide-react';
-import { getList } from '../api/api';
-import { Technician, User as UserType } from '../types';
-import TechnicianModal from './TechnicianModal';
+    Button,
+    Card,
+    EmptyState,
+    ErrorState,
+    Field,
+    PageHeader,
+    Spinner,
+    inputClass,
+} from './ui';
+import Modal from './Modal';
 
-interface Props {
-    showNotification: (message: string, type: 'success' | 'error' | 'warning' | 'info') => void;
-}
+/**
+ * TECHNICIANS
+ *
+ * Deactivation is a soft delete: the API flips `isActive` so historical
+ * bookings keep their technician. Inactive staff are hidden by default and
+ * revealed with the toggle.
+ */
 
-const Technicians: React.FC<Props> = ({ showNotification }) => {
-    const [selectedTech, setSelectedTech] = useState<Technician | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [showInactive, setShowInactive] = useState(false);
+const TechnicianModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    technician: Technician | null;
+    branches: Branch[];
+}> = ({ isOpen, onClose, technician, branches }) => {
+    const queryClient = useQueryClient();
+    const { user, isAdmin } = useAuth();
+    const [name, setName] = useState('');
+    const [phone, setPhone] = useState('');
+    const [branchId, setBranchId] = useState('');
+    const [error, setError] = useState('');
 
-    const currentUser: UserType | null = (() => {
-        try { return JSON.parse(localStorage.getItem('user') || 'null'); }
-        catch { return null; }
-    })();
+    useEffect(() => {
+        if (!isOpen) return;
+        setName(technician?.name ?? '');
+        setPhone(technician?.phone ?? '');
+        // Branch leaders can only create staff in their own branch.
+        setBranchId(technician?.branchId ?? (!isAdmin ? (user?.branchId ?? '') : ''));
+        setError('');
+    }, [isOpen, technician, isAdmin, user?.branchId]);
 
-    const { data: technicians = [], isLoading, refetch } = useQuery<Technician[]>({
-        queryKey: ['technicians', showInactive],
-        queryFn: async () => {
-            return getList<Technician>('/technicians', { includeInactive: showInactive });
+    const mutation = useMutation({
+        mutationFn: () => {
+            const body = {
+                name: name.trim(),
+                ...(phone.trim() ? { phone: phone.trim() } : {}),
+                ...(technician ? {} : { branchId }),
+            };
+            return technician
+                ? api.patch(`/technicians/${technician.id}`, body)
+                : api.post('/technicians', body);
         },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['technicians'] });
+            onClose();
+        },
+        onError: (err: Error) => setError(err.message),
     });
 
-    const safeTechnicians = Array.isArray(technicians) ? technicians : [];
+    return (
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title={technician ? 'Edit technician' : 'Add technician'}
+        >
+            <form
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    setError('');
+                    mutation.mutate();
+                }}
+                className="p-5 space-y-4"
+            >
+                <Field label="Full name" htmlFor="techName">
+                    <input
+                        id="techName"
+                        required
+                        minLength={2}
+                        autoFocus
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Pedro Santos"
+                        className={inputClass}
+                    />
+                </Field>
 
-    if (isLoading) return <div className="p-10 text-center animate-pulse">Scanning technician dispatch...</div>;
+                <Field label="Phone" htmlFor="techPhone">
+                    <input
+                        id="techPhone"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="Optional"
+                        className={inputClass}
+                    />
+                </Field>
+
+                {/* Branch is fixed after creation — moving staff between
+                    branches would orphan their booking history. */}
+                {!technician && (
+                    <Field
+                        label="Branch"
+                        htmlFor="techBranch"
+                        hint={!isAdmin ? 'Locked to your branch.' : 'Cannot be changed later.'}
+                    >
+                        <select
+                            id="techBranch"
+                            required
+                            disabled={!isAdmin}
+                            value={branchId}
+                            onChange={(e) => setBranchId(e.target.value)}
+                            className={inputClass}
+                        >
+                            <option value="">Select a branch</option>
+                            {branches.map((b) => (
+                                <option key={b.id} value={b.id}>
+                                    {b.name}
+                                </option>
+                            ))}
+                        </select>
+                    </Field>
+                )}
+
+                {error && (
+                    <p role="alert" className="text-xs text-rose-600 font-medium">
+                        {error}
+                    </p>
+                )}
+
+                <div className="flex gap-2 pt-1">
+                    <Button type="button" variant="secondary" onClick={onClose} className="flex-1">
+                        Cancel
+                    </Button>
+                    <Button type="submit" loading={mutation.isPending} className="flex-1">
+                        {technician ? 'Save changes' : 'Add technician'}
+                    </Button>
+                </div>
+            </form>
+        </Modal>
+    );
+};
+
+const Technicians: React.FC = () => {
+    const queryClient = useQueryClient();
+    const [showInactive, setShowInactive] = useState(false);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [editing, setEditing] = useState<Technician | null>(null);
+    const [actionError, setActionError] = useState('');
+
+    const query = useQuery({
+        queryKey: ['technicians', { showInactive }],
+        queryFn: () =>
+            getList<Technician>('/technicians', showInactive ? { includeInactive: 'true' } : {}),
+    });
+
+    const branchesQuery = useQuery({
+        queryKey: ['branches'],
+        queryFn: () => getList<Branch>('/branches'),
+    });
+
+    const toggleActive = useMutation({
+        mutationFn: (t: Technician) =>
+            t.isActive
+                ? api.delete(`/technicians/${t.id}`)
+                : api.patch(`/technicians/${t.id}`, { isActive: true }),
+        onSuccess: () => {
+            setActionError('');
+            queryClient.invalidateQueries({ queryKey: ['technicians'] });
+        },
+        onError: (err: Error) => setActionError(err.message),
+    });
+
+    if (query.isLoading) return <Spinner label="Loading technicians…" />;
+    if (query.isError) return <ErrorState error={query.error} onRetry={() => query.refetch()} />;
+
+    const technicians = query.data ?? [];
 
     return (
-        <div className="animate-in fade-in duration-500">
-            {/* HEADER */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                <div>
-                    <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Technical Personnel</h2>
-                    <p className="text-slate-500 mt-1">Manage service staff and branch assignments.</p>
-                </div>
-
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => setShowInactive(!showInactive)}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-bold uppercase tracking-tight transition-all ${showInactive ? 'bg-amber-50 text-amber-700 border-amber-200 shadow-sm' : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'}`}
+        <div>
+            <PageHeader
+                title="Technicians"
+                subtitle={`${technicians.filter((t) => t.isActive).length} active`}
+                action={
+                    <Button
+                        onClick={() => {
+                            setEditing(null);
+                            setModalOpen(true);
+                        }}
                     >
-                        <Filter className="w-4 h-4" />
-                        {showInactive ? 'Showing All' : 'Active Only'}
-                    </button>
+                        <Plus className="w-4 h-4" /> Add technician
+                    </Button>
+                }
+            />
 
-                    <button
-                        onClick={() => { setSelectedTech(null); setIsModalOpen(true); }}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-200 transition-all active:scale-95"
-                    >
-                        <UserPlus className="w-5 h-5" />
-                        New Technician
-                    </button>
+            {actionError && (
+                <div className="mb-4">
+                    <ErrorState error={new Error(actionError)} />
                 </div>
-            </div>
+            )}
 
-            {/* LIST */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {safeTechnicians.length === 0 ? (
-                    <div className="col-span-full py-20 text-center bg-white rounded-2xl border border-dashed border-slate-200">
-                        <Users className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-                        <p className="text-slate-400">No technical staff found{showInactive ? '' : ' matching active criteria'}.</p>
-                    </div>
+            <label className="inline-flex items-center gap-2 mb-4 cursor-pointer">
+                <input
+                    type="checkbox"
+                    checked={showInactive}
+                    onChange={(e) => setShowInactive(e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-slate-600">Show inactive</span>
+            </label>
+
+            <Card>
+                {technicians.length === 0 ? (
+                    <EmptyState
+                        title="No technicians yet"
+                        message="Add your field staff so you can assign them to jobs."
+                        action={
+                            <Button
+                                onClick={() => {
+                                    setEditing(null);
+                                    setModalOpen(true);
+                                }}
+                            >
+                                <Plus className="w-4 h-4" /> Add technician
+                            </Button>
+                        }
+                    />
                 ) : (
-                    safeTechnicians.map((tech) => (
-                        <div
-                            key={tech.id}
-                            onClick={() => { setSelectedTech(tech); setIsModalOpen(true); }}
-                            className={`bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group cursor-pointer relative overflow-hidden ${!tech.isActive ? 'opacity-70 grayscale-[0.5]' : ''}`}
-                        >
-                            <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <ChevronRight className="w-5 h-5 text-blue-500" />
-                            </div>
-
-                            <div className="flex items-center gap-4 mb-5">
-                                <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${tech.isActive ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-400'}`}>
-                                    {tech.name.charAt(0)}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
-                                        <h4 className="font-bold text-slate-900 truncate">{tech.name}</h4>
-                                        {tech.isActive ? (
-                                            <Shield className="w-3.5 h-3.5 text-emerald-500" />
-                                        ) : (
-                                            <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />
-                                        )}
-                                    </div>
-                                    <p className="text-[10px] text-slate-400 uppercase font-black tracking-tighter">
-                                        {tech.isActive ? 'Active Personnel' : 'Deactivated'}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="space-y-3 pt-2">
-                                <div className="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 p-2 rounded-lg">
-                                    <Phone className="w-4 h-4 text-slate-300" />
-                                    <span className="font-medium">{tech.phone || 'No phone recorded'}</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-sm text-slate-600 bg-blue-50/50 p-2 rounded-lg">
-                                    <Building2 className="w-4 h-4 text-blue-300" />
-                                    <span className="font-semibold text-blue-700">{tech.branch?.name || 'Assigned Branch'}</span>
-                                </div>
-                            </div>
-                        </div>
-                    ))
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="bg-slate-50 border-b border-slate-200 text-left">
+                                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                                        Name
+                                    </th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                                        Phone
+                                    </th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                                        Branch
+                                    </th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                                        Status
+                                    </th>
+                                    <th className="px-4 py-3" />
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {technicians.map((t) => (
+                                    <tr key={t.id} className="hover:bg-slate-50/70 transition">
+                                        <td className="px-4 py-3 font-semibold text-slate-800">
+                                            {t.name}
+                                        </td>
+                                        <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
+                                            {t.phone || '—'}
+                                        </td>
+                                        <td className="px-4 py-3 text-slate-600">
+                                            {t.branch?.name ?? '—'}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span
+                                                className={`inline-flex px-2.5 py-1 rounded-full border text-[11px] font-semibold ${
+                                                    t.isActive
+                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                        : 'bg-slate-100 text-slate-500 border-slate-200'
+                                                }`}
+                                            >
+                                                {t.isActive ? 'Active' : 'Inactive'}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <div className="flex items-center justify-end gap-1">
+                                                <button
+                                                    onClick={() => {
+                                                        setEditing(t);
+                                                        setModalOpen(true);
+                                                    }}
+                                                    title="Edit"
+                                                    className="p-2 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition"
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => toggleActive.mutate(t)}
+                                                    title={t.isActive ? 'Deactivate' : 'Reactivate'}
+                                                    className={`p-2 rounded-lg transition ${
+                                                        t.isActive
+                                                            ? 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                                                            : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'
+                                                    }`}
+                                                >
+                                                    {t.isActive ? (
+                                                        <UserX className="w-4 h-4" />
+                                                    ) : (
+                                                        <UserCheck className="w-4 h-4" />
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 )}
-            </div>
+            </Card>
 
             <TechnicianModal
-                isOpen={isModalOpen}
-                onClose={() => { setIsModalOpen(false); setSelectedTech(null); }}
-                technician={selectedTech}
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                technician={editing}
+                branches={branchesQuery.data ?? []}
             />
         </div>
     );

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { login } from '../controllers/authController';
+import { login, me } from '../controllers/authController';
 import {
     getBookings,
     createBooking,
@@ -7,7 +7,11 @@ import {
     getBookingById,
     deleteBooking,
 } from '../controllers/bookingController';
-import { getCustomers, createCustomer } from '../controllers/customerController';
+import {
+    getCustomers,
+    createCustomer,
+    updateCustomer,
+} from '../controllers/customerController';
 import { getInvoices, createInvoice, updatePaymentStatus } from '../controllers/invoiceController';
 import {
     getTechnicians,
@@ -16,34 +20,33 @@ import {
     deleteTechnician,
     getBranches,
 } from '../controllers/technicianController';
-import { getPublicBranches, createPublicBooking } from '../controllers/publicController';
 import authenticate from '../middleware/auth';
 import { catchAsync } from '../middleware/errorHandler';
-import { loginRateLimiter, publicBookingRateLimiter } from '../middleware/rateLimiter';
+import { loginRateLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
-// --- Public routes (no auth) ------------------------------------------------
+// --- Public (no auth) -------------------------------------------------------
 router.post('/auth/login', loginRateLimiter, catchAsync(login));
-router.get('/public/branches', catchAsync(getPublicBranches));
-router.post('/public/bookings', publicBookingRateLimiter, catchAsync(createPublicBooking));
 
 // --- Everything below requires a valid token --------------------------------
 router.use(authenticate);
+
+// Lets the SPA re-validate a stored token on boot instead of trusting
+// localStorage, which could hold a session the server has since rejected.
+router.get('/auth/me', catchAsync(me));
 
 // Bookings
 router.get('/bookings', catchAsync(getBookings));
 router.post('/bookings', catchAsync(createBooking));
 router.get('/bookings/:id', catchAsync(getBookingById));
-// PATCH is the canonical verb (partial update); PUT is kept as an alias so any
-// older client stays working.
 router.patch('/bookings/:id', catchAsync(updateBooking));
-router.put('/bookings/:id', catchAsync(updateBooking));
 router.delete('/bookings/:id', catchAsync(deleteBooking));
 
 // Customers
 router.get('/customers', catchAsync(getCustomers));
 router.post('/customers', catchAsync(createCustomer));
+router.patch('/customers/:id', catchAsync(updateCustomer));
 
 // Invoices
 router.get('/invoices', catchAsync(getInvoices));

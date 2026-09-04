@@ -1,99 +1,259 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import {
-    Users,
-    MapPin,
-    Phone,
-    Plus,
-    Search,
-    ChevronRight,
-    UserPlus
-} from 'lucide-react';
-import { getList } from '../api/api';
+import React, { useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Plus, Search, Pencil } from 'lucide-react';
+
+import api, { getList } from '../api/api';
 import { Customer } from '../types';
+import {
+    Button,
+    Card,
+    EmptyState,
+    ErrorState,
+    Field,
+    PageHeader,
+    Spinner,
+    inputClass,
+} from './ui';
+import Modal from './Modal';
 
-interface Props {
-    showNotification: (message: string, type: 'success' | 'error' | 'warning' | 'info') => void;
-}
+/**
+ * CUSTOMERS
+ *
+ * The "Add Customer" button on the old page was decorative — it had no click
+ * handler and no modal behind it. Create and edit both work here.
+ */
 
-const Customers: React.FC<Props> = ({ showNotification }) => {
-    const [searchTerm, setSearchTerm] = useState('');
+const CustomerModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    customer: Customer | null;
+}> = ({ isOpen, onClose, customer }) => {
+    const queryClient = useQueryClient();
+    const [name, setName] = useState('');
+    const [phone, setPhone] = useState('');
+    const [address, setAddress] = useState('');
+    const [error, setError] = useState('');
 
-    const { data: customers = [], isLoading } = useQuery<Customer[]>({
-        queryKey: ['customers'],
-        queryFn: async () => {
-            return getList<Customer>('/customers', { limit: 200 });
+    useEffect(() => {
+        if (!isOpen) return;
+        setName(customer?.name ?? '');
+        setPhone(customer?.phone ?? '');
+        setAddress(customer?.address ?? '');
+        setError('');
+    }, [isOpen, customer]);
+
+    const mutation = useMutation({
+        mutationFn: () => {
+            const body = {
+                name: name.trim(),
+                phone: phone.trim(),
+                address: address.trim(),
+            };
+            return customer
+                ? api.patch(`/customers/${customer.id}`, body)
+                : api.post('/customers', body);
         },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['customers'] });
+            onClose();
+        },
+        onError: (err: Error) => setError(err.message),
     });
 
-    const safeCustomers = Array.isArray(customers) ? customers : [];
-    const filteredCustomers = safeCustomers.filter(c =>
-        c && (c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            c.phone.includes(searchTerm))
+    return (
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title={customer ? 'Edit customer' : 'Add customer'}
+        >
+            <form
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    setError('');
+                    mutation.mutate();
+                }}
+                className="p-5 space-y-4"
+            >
+                <Field label="Full name" htmlFor="name">
+                    <input
+                        id="name"
+                        required
+                        minLength={2}
+                        autoFocus
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Juan Dela Cruz"
+                        className={inputClass}
+                    />
+                </Field>
+
+                <Field label="Phone" htmlFor="phone" hint="Must be unique across your organization.">
+                    <input
+                        id="phone"
+                        required
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="09171234567"
+                        className={inputClass}
+                    />
+                </Field>
+
+                <Field label="Address" htmlFor="address">
+                    <input
+                        id="address"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        placeholder="Optional"
+                        className={inputClass}
+                    />
+                </Field>
+
+                {error && (
+                    <p role="alert" className="text-xs text-rose-600 font-medium">
+                        {error}
+                    </p>
+                )}
+
+                <div className="flex gap-2 pt-1">
+                    <Button type="button" variant="secondary" onClick={onClose} className="flex-1">
+                        Cancel
+                    </Button>
+                    <Button type="submit" loading={mutation.isPending} className="flex-1">
+                        {customer ? 'Save changes' : 'Add customer'}
+                    </Button>
+                </div>
+            </form>
+        </Modal>
+    );
+};
+
+const Customers: React.FC = () => {
+    const [search, setSearch] = useState('');
+    const [modalOpen, setModalOpen] = useState(false);
+    const [editing, setEditing] = useState<Customer | null>(null);
+
+    const query = useQuery({
+        queryKey: ['customers'],
+        queryFn: () => getList<Customer>('/customers', { limit: 200 }),
+    });
+
+    const openCreate = () => {
+        setEditing(null);
+        setModalOpen(true);
+    };
+
+    const openEdit = (c: Customer) => {
+        setEditing(c);
+        setModalOpen(true);
+    };
+
+    if (query.isLoading) return <Spinner label="Loading customers…" />;
+    if (query.isError) return <ErrorState error={query.error} onRetry={() => query.refetch()} />;
+
+    const customers = query.data ?? [];
+    const term = search.trim().toLowerCase();
+    const filtered = customers.filter(
+        (c) => !term || c.name.toLowerCase().includes(term) || c.phone.includes(term)
     );
 
-    if (isLoading) return <div className="p-10 text-center animate-pulse">Syncing client database...</div>;
-
     return (
-        <div className="animate-in fade-in duration-500">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                <div>
-                    <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Customer Management</h2>
-                    <p className="text-slate-500 mt-1">Directory of your service clients.</p>
-                </div>
+        <div>
+            <PageHeader
+                title="Customers"
+                subtitle={`${customers.length} total`}
+                action={
+                    <Button onClick={openCreate}>
+                        <Plus className="w-4 h-4" /> Add customer
+                    </Button>
+                }
+            />
 
-                <div className="flex items-center gap-3">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <input
-                            className="pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none w-64"
-                            placeholder="Search by name or phone..."
-                            value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                    <button className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-200">
-                        <UserPlus className="w-5 h-5" />
-                        Add Customer
-                    </button>
+            <Card className="mb-4 p-3">
+                <div className="relative">
+                    <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                    <input
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Search by name or phone…"
+                        className={`${inputClass} pl-9`}
+                    />
                 </div>
-            </div>
+            </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredCustomers.length === 0 ? (
-                    <div className="col-span-full py-20 text-center bg-white rounded-2xl border border-dashed border-slate-200">
-                        <Users className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-                        <p className="text-slate-400">No customers found.</p>
-                    </div>
+            <Card>
+                {filtered.length === 0 ? (
+                    <EmptyState
+                        title="No customers found"
+                        message={
+                            customers.length === 0
+                                ? 'Add your first customer, or create one while booking a job.'
+                                : 'Try a different search.'
+                        }
+                        action={
+                            customers.length === 0 ? (
+                                <Button onClick={openCreate}>
+                                    <Plus className="w-4 h-4" /> Add customer
+                                </Button>
+                            ) : undefined
+                        }
+                    />
                 ) : (
-                    filteredCustomers.map((c) => (
-                        <div key={c.id} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow group cursor-pointer relative overflow-hidden">
-                            <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <ChevronRight className="w-5 h-5 text-blue-500" />
-                            </div>
-                            <div className="flex items-center gap-4 mb-4">
-                                <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 font-bold text-lg">
-                                    {c.name.charAt(0)}
-                                </div>
-                                <div>
-                                    <h4 className="font-bold text-slate-900">{c.name}</h4>
-                                    <p className="text-xs text-slate-400 uppercase font-black tracking-tighter">Client since 2024</p>
-                                </div>
-                            </div>
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-2 text-sm text-slate-600">
-                                    <Phone className="w-4 h-4 text-slate-300" />
-                                    {c.phone}
-                                </div>
-                                <div className="flex items-center gap-2 text-sm text-slate-600">
-                                    <MapPin className="w-4 h-4 text-slate-300" />
-                                    <span className="truncate">{c.address || 'No address provided'}</span>
-                                </div>
-                            </div>
-                        </div>
-                    ))
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="bg-slate-50 border-b border-slate-200 text-left">
+                                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                                        Name
+                                    </th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                                        Phone
+                                    </th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                                        Address
+                                    </th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                                        Jobs
+                                    </th>
+                                    <th className="px-4 py-3" />
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {filtered.map((c) => (
+                                    <tr key={c.id} className="hover:bg-slate-50/70 transition">
+                                        <td className="px-4 py-3 font-semibold text-slate-800">
+                                            {c.name}
+                                        </td>
+                                        <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
+                                            {c.phone}
+                                        </td>
+                                        <td className="px-4 py-3 text-slate-500 max-w-xs truncate">
+                                            {c.address || '—'}
+                                        </td>
+                                        <td className="px-4 py-3 text-slate-600">
+                                            {c._count?.bookings ?? 0}
+                                        </td>
+                                        <td className="px-4 py-3 text-right">
+                                            <button
+                                                onClick={() => openEdit(c)}
+                                                title="Edit customer"
+                                                className="p-2 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition"
+                                            >
+                                                <Pencil className="w-4 h-4" />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 )}
-            </div>
+            </Card>
+
+            <CustomerModal
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                customer={editing}
+            />
         </div>
     );
 };

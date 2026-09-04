@@ -1,149 +1,138 @@
-# Arctic — Aircon Service Manager
+# Aircon Service Management
 
-A full-stack **air conditioning service operations manager** with **multi-tenant architecture**, role-based branch scoping, and audit logging. Built with React, Node.js, Express, Prisma, and PostgreSQL.
+Internal tool for an aircon servicing company with multiple branches. Staff log
+in, book jobs, dispatch technicians, and bill the work.
 
-## Features
+**Stack:** Express + Prisma + PostgreSQL, React + Vite + Tailwind, TypeScript
+throughout. It deploys as **one service on one URL** — the API also serves the
+built frontend, so there is no second host and no CORS to configure.
 
-- **JWT authentication** with bcrypt password hashing
-- **Multi-tenant data isolation** by organization and branch
-- **Role-based access:** Admin (org-wide) and Branch Leader (branch-scoped)
-- **Bookings lifecycle:** Pending → Confirmed → On-site → Completed (with invoice guard)
-- **Invoicing & payments:** Create invoices per booking; track UNPAID / PARTIAL / PAID
-- **Technician assignment:** Branch-scoped; soft-deactivate with audit trail
-- **Public API:** Unauthenticated branch list and booking submission (find/create customer by phone)
-- **Audit logging** for bookings, invoices, and technician actions
-- **Modern React UI** with Tailwind CSS, TanStack Query, and typed API client
+---
 
-## Tech Stack
+## Run it locally
 
-| Layer      | Technologies |
-|-----------|--------------|
-| **Frontend** | React 19 (Vite), TypeScript, Tailwind CSS, Axios, TanStack Query |
-| **Backend**  | Node.js, Express 5, TypeScript, Prisma ORM |
-| **Database** | PostgreSQL (e.g. Supabase) |
-| **Auth**     | JWT, bcryptjs |
-| **Validation** | Zod (request bodies) |
-
-## Quick Start
-
-### Prerequisites
-
-- Node.js 18+
-- PostgreSQL (or Supabase)
-- npm or yarn
-
-### 1. Clone and install
+You need Node 18+ and Docker (for Postgres).
 
 ```bash
 git clone https://github.com/vmargin/aircon-service.git
 cd aircon-service
+
+npm run setup                      # install backend + frontend deps
+cp backend/.env.example backend/.env
+
+npm run db:up                      # start Postgres in Docker
+npm run db:init                    # migrate + seed the demo data
 ```
 
-### 2. Backend
+Then run the two dev servers in separate terminals:
 
 ```bash
-cd backend
-npm install
-cp .env.example .env   # or create .env (see below)
-npx prisma generate
-npx prisma migrate dev
-npx prisma db seed     # if seed script exists
-npm run dev
+npm run dev        # API on  http://localhost:5000
+npm run dev:web    # UI  on  http://localhost:5173
 ```
 
-### 3. Frontend
+Open **http://localhost:5173** and sign in.
+
+### Demo logins
+
+Seeded by `npm run db:init`. Password for all of them is `demo1234`
+(override with `DEMO_ADMIN_PASSWORD` before seeding).
+
+| Email              | Sees              |
+| ------------------ | ----------------- |
+| `admin@arctic.com` | All four branches |
+| `north@arctic.com` | North Branch only |
+| `south@arctic.com` | South Branch only |
+| `east@arctic.com`  | East Branch only  |
+| `west@arctic.com`  | West Branch only  |
+
+The seed is idempotent — re-running it will not duplicate or fail.
+
+---
+
+## What's in it
+
+| Page            | What you can do                                                         |
+| --------------- | ----------------------------------------------------------------------- |
+| **Dashboard**   | Today's jobs, counts by status, revenue collected vs. outstanding       |
+| **Bookings**    | Create/edit jobs, assign a technician, advance status, raise an invoice |
+| **Customers**   | Add and edit customers, see their booking count                         |
+| **Technicians** | Add, edit, deactivate/reactivate field staff                            |
+| **Invoices**    | Record payment method and mark unpaid → partial → paid                  |
+| **Reports**     | Status/service breakdowns and per-technician collections by date range  |
+
+### Rules the API enforces
+
+- **Two roles.** `ADMIN` sees the whole organization. `BRANCH_LEADER` is scoped
+  to their own branch for both reads and writes.
+- **Booking lifecycle.** `PENDING → CONFIRMED → ON_SITE → COMPLETED`, with
+  cancellation allowed from any open state. Completed and cancelled are final,
+  so a job can't skip dispatch or be reopened.
+- **A technician can only be assigned to their own branch's jobs.**
+- **One invoice per booking**, amounts stored as `Decimal(12,2)` (never floats).
+- **Payment only moves forward.** `UNPAID → PARTIAL → PAID`, and `PAID` is
+  terminal — collected money can't be quietly un-collected. Reversing a real
+  payment belongs in a refund flow with its own trail, not a silent field edit.
+- Writes are recorded in an audit log.
+
+---
+
+## Deploy
+
+Any host that runs a Node process and gives you a Postgres database. `railway.json`
+is included, so on Railway you add a Postgres service and set two variables:
+
+| Variable       | Value                                                            |
+| -------------- | ---------------------------------------------------------------- |
+| `DATABASE_URL` | your Postgres connection string                                  |
+| `JWT_SECRET`   | 32+ random chars — `node backend/scripts/generate-jwt-secret.js` |
+
+Also set `NODE_ENV=production` and `TRUST_PROXY=1`. Then:
+
+```
+build:  npm run setup && npm run build
+start:  npm run db:deploy --prefix backend && npm start
+```
+
+The start command applies migrations, then boots the server, which serves both
+the API and the frontend on the same port. Seed the demo users once with
+`npm run db:seed --prefix backend`.
+
+Check `/health` after deploying — it returns `MISCONFIGURED` and names any
+missing variable rather than failing silently.
+
+---
+
+## Useful commands
 
 ```bash
-cd frontend
-npm install
-# Create .env with VITE_API_URL=http://localhost:5000/api
-npm run dev
+npm run typecheck                    # both packages
+npm test                             # backend unit tests
+npm run build                        # production build of both
+npm run db:studio --prefix backend   # browse the database
+npm run db:reset --prefix backend    # wipe, re-migrate, re-seed
 ```
 
-- **Frontend:** http://localhost:5173  
-- **Backend:** http://localhost:5000  
-
-## Environment Variables
-
-### Backend (`backend/.env`)
-
-```env
-DATABASE_URL=postgresql://user:password@host:5432/dbname
-JWT_SECRET=your-secret-key
-PORT=5000
-NODE_ENV=development
-FRONTEND_URL=http://localhost:5173
-```
-
-### Frontend (`frontend/.env`)
-
-```env
-VITE_API_URL=http://localhost:5000/api
-```
-
-## Project Structure
+## Layout
 
 ```
-aircon-service/
-├── backend/
-│   ├── prisma/
-│   │   ├── schema.prisma    # Models: Organization, Branch, User, Customer, Booking, Invoice, Technician, AuditLog
-│   │   └── migrations/
-│   └── src/
-│       ├── controllers/    # auth, booking, invoice, customer, technician, public
-│       ├── middleware/     # JWT authenticate
-│       ├── lib/            # auditLog
-│       ├── db/             # Prisma client
-│       ├── types/          # AuthUser, Express Request extension
-│       └── server.ts       # Express app and routes
-├── frontend/
-│   └── src/
-│       ├── components/     # Dashboard, Financials, Customers, Technicians, Reports, Login, modals
-│       ├── api/            # Axios instance + Bearer token interceptor
-│       ├── types.ts        # Shared TS types
-│       └── App.tsx
-└── ARCHITECTURE_AND_INTERVIEW_GUIDE.md   # Processes, flow, and interview notes
+backend/
+  prisma/schema.prisma    # data model, single squashed migration
+  prisma/seed.ts          # idempotent demo data
+  src/routes/             # all endpoints, one file
+  src/controllers/        # request handling + validation (zod)
+  src/lib/tenancy.ts      # the org/branch scoping rules
+  src/lib/bookingStatus.ts# the lifecycle state machine
+  src/middleware/         # auth, errors, rate limits, logging
+frontend/
+  src/App.tsx             # routes + app shell
+  src/auth/               # login state, token handling
+  src/api/api.ts          # axios client, currency/date helpers
+  src/components/         # one file per page, plus shared ui/
 ```
 
-## API Overview
+## Deliberately not built yet
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST   | `/api/auth/login` | No | Login; returns JWT + user |
-| GET    | `/api/public/branches` | No | List branches (public) |
-| POST   | `/api/public/bookings` | No | Submit booking (find/create customer by phone) |
-| GET    | `/api/bookings` | Yes | List bookings (org/branch-scoped) |
-| POST   | `/api/bookings` | Yes | Create booking |
-| PATCH  | `/api/bookings/:id` | Yes | Update status / assign technician |
-| GET/POST | `/api/invoices` | Yes | List / create invoices |
-| PATCH  | `/api/invoices/:id/payment` | Yes | Update payment status |
-| GET/POST | `/api/customers` | Yes | List / create customers |
-| GET/POST/PATCH/DELETE | `/api/technicians` | Yes | Technicians (delete = soft-deactivate) |
-| GET    | `/api/branches` | Yes | List branches (scoped by role) |
-
-## Security & Data Isolation
-
-- **Authentication:** JWT in `Authorization: Bearer <token>`; 24h expiry.
-- **Authorization:** Every protected controller checks `req.user.orgId` and, for Branch Leader, `req.user.branchId`.
-- **Validation:** Zod schemas on login, bookings, invoices, customers, and public booking.
-- **Audit:** `AuditLog` records who did what (e.g. BOOKING_CREATE, INVOICE_PAYMENT_UPDATE, TECHNICIAN_DEACTIVATE).
-
-## Documentation for Interviews & Learning
-
-See **[ARCHITECTURE_AND_INTERVIEW_GUIDE.md](./ARCHITECTURE_AND_INTERVIEW_GUIDE.md)** for:
-
-- End-to-end request flow (login, protected routes, public booking)
-- Data model and relationships
-- RBAC and business rules (billing guard, technician branch guard)
-- Key backend functions and API summary
-- Frontend state and TanStack Query usage
-- Interview talking points
-
-## Deployment
-
-- **Backend:** e.g. Railway — set root to `backend`, add `DATABASE_URL`, `JWT_SECRET`, `FRONTEND_URL`.
-- **Frontend:** e.g. Vercel — set root to `frontend`, set `VITE_API_URL` to your backend API base (e.g. `https://your-api.railway.app/api`).
-
-## License
-
-ISC
+Public/customer-facing booking, inventory tracking, technician mobile app,
+email/SMS notifications, PDF invoice export. The database and API are shaped to
+allow them, but nothing half-finished ships in this repo.
