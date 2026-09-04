@@ -8,9 +8,11 @@
       "maxDuration": 60
     }
   },
+  "redirects": [
+    { "source": "/health", "destination": "/api/v1/health", "permanent": false }
+  ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" },
-    { "source": "/health", "destination": "/api/v1/health" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
