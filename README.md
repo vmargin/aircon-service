@@ -3,6 +3,8 @@
 Internal tool for an aircon servicing company with multiple branches. Staff log
 in, book jobs, dispatch technicians, and bill the work.
 
+**Live demo:** https://aircon-service.vercel.app
+
 **Stack:** Express + Prisma + PostgreSQL, React + Vite + Tailwind, TypeScript
 throughout. It deploys as **one service on one URL** — the API also serves the
 built frontend, so there is no second host and no CORS to configure.
@@ -47,6 +49,9 @@ Seeded by `npm run db:init`. Password for all of them is `demo1234`
 | `west@arctic.com`  | West Branch only  |
 
 The seed is idempotent — re-running it will not duplicate or fail.
+
+Use synthetic data only. This is an educational portfolio system, not production
+business software.
 
 ---
 
