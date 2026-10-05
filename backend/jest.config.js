@@ -2,8 +2,8 @@ module.exports = {
     preset: 'ts-jest',
     testEnvironment: 'node',
     testMatch: ['**/tests/**/*.test.ts'],
-    // No setupFilesAfterEnv: the old setup file truncated and re-seeded a live
-    // Postgres database before every run, so `npm test` failed on any machine
-    // without one. These tests exercise pure logic instead.
+    // Pure tests run without a database. HTTP integration requires the explicit
+    // local TEST_DATABASE_URL supplied by `node scripts/local.cjs test`; its
+    // fixtures are UUID-owned and it never truncates or reads production .env.
     clearMocks: true,
 };

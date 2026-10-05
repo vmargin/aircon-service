@@ -12,6 +12,10 @@
         "build": "npm run build --prefix frontend && npm run build --prefix backend",
         "start": "npm start --prefix backend",
         "typecheck": "npm run typecheck --prefix backend && npm run typecheck --prefix frontend",
-        "test": "npm test --prefix backend"
+        "test": "npm test --prefix backend",
+        "local": "node scripts/local.cjs start --open",
+        "local:setup": "node scripts/local.cjs setup",
+        "local:stop": "node scripts/local.cjs stop",
+        "test:integration": "node scripts/local.cjs test"
     }
 }

@@ -5,6 +5,7 @@ import prisma from '../db/prisma';
 import { requireUser } from '../middleware/auth';
 import { ConflictError, NotFoundError, ValidationError } from '../middleware/errorHandler';
 import { parsePagination, toPage } from '../lib/pagination';
+import { auditInTransaction } from '../lib/auditLog';
 
 /**
  * Customers belong to the organization, not to a branch, so both ADMIN and
@@ -21,6 +22,9 @@ const createSchema = z.object({
     name: z.string().trim().min(2, 'Name must be at least 2 characters').max(100),
     phone: phoneField,
     address: z.string().trim().max(300).optional().or(z.literal('')),
+    email: z.union([z.string().trim().email().max(150), z.literal(''), z.null()]).optional(),
+    type: z.string().trim().min(1).max(60).optional(),
+    contactPerson: z.string().trim().max(120).nullable().optional(),
 });
 
 const updateSchema = createSchema.partial();
@@ -53,7 +57,7 @@ export const getCustomers = async (req: Request, res: Response) => {
             take,
             orderBy: { name: 'asc' },
             // _count avoids pulling every booking row just to show a total.
-            include: { _count: { select: { bookings: true } } },
+            include: { _count: { select: { bookings: true, units: true } } },
         }),
         prisma.customer.count({ where }),
     ]);
@@ -69,16 +73,21 @@ export const createCustomer = async (req: Request, res: Response) => {
         throw new ValidationError('Validation Error', validation.error.issues);
     }
 
-    const { name, phone, address } = validation.data;
+    const { name, phone, address, email, type, contactPerson } = validation.data;
 
     try {
-        const customer = await prisma.customer.create({
+        const customer = await prisma.$transaction(async (tx) => {
+          const result = await tx.customer.create({
             data: {
                 name,
                 phone,
                 address: address || null,
                 organizationId: user.orgId,
+                email: email || null, type, contactPerson,
             },
+          });
+          await auditInTransaction(tx, req, 'CUSTOMER_CREATE', 'customer', result.id, user.branchId, `Created ${result.name}`);
+          return result;
         });
         res.status(201).json(customer);
     } catch (err) {
@@ -106,16 +115,23 @@ export const updateCustomer = async (req: Request, res: Response) => {
     });
     if (!existing) throw new NotFoundError('Customer not found');
 
-    const { name, phone, address } = validation.data;
+    const { name, phone, address, email, type, contactPerson } = validation.data;
 
     try {
-        const customer = await prisma.customer.update({
+        const customer = await prisma.$transaction(async (tx) => {
+          const result = await tx.customer.update({
             where: { id: existing.id },
             data: {
                 ...(name !== undefined && { name }),
                 ...(phone !== undefined && { phone }),
                 ...(address !== undefined && { address: address || null }),
+                ...(email !== undefined && { email: email || null }),
+                ...(type !== undefined && { type }),
+                ...(contactPerson !== undefined && { contactPerson }),
             },
+          });
+          await auditInTransaction(tx, req, 'CUSTOMER_UPDATE', 'customer', result.id, user.branchId, `Updated ${result.name}`);
+          return result;
         });
         res.json(customer);
     } catch (err) {

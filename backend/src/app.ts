@@ -8,6 +8,7 @@ import { errorHandler, NotFoundError } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger';
 import { generalRateLimiter, healthCheckRateLimiter } from './middleware/rateLimiter';
 import router from './routes/index';
+import { getRuntimeConfigIssues } from './lib/runtimeConfig';
 
 /**
  * Locate the built frontend, if there is one.
@@ -35,6 +36,8 @@ function findClientDist(): string | null {
 export function createApp() {
     const app = express();
     const clientDist = findClientDist();
+    const runtimeIssues = getRuntimeConfigIssues();
+    const isMisconfigured = runtimeIssues.missing.length > 0 || runtimeIssues.invalid.length > 0;
 
     // Rate limiting and request logs are only meaningful if we can see the real
     // client IP, which behind Railway/Render/Fly means trusting the proxy hop.
@@ -101,19 +104,26 @@ export function createApp() {
     // it reports config problems instead of the process dying on boot, so a bad
     // deployment is diagnosable from the outside.
     app.get(['/health', '/api/v1/health'], healthCheckRateLimiter, (_req, res) => {
-        const missing = [
-            !process.env.DATABASE_URL && 'DATABASE_URL',
-            !process.env.JWT_SECRET && 'JWT_SECRET',
-        ].filter((v): v is string => Boolean(v));
-
-        res.status(missing.length > 0 ? 503 : 200).json({
-            status: missing.length > 0 ? 'MISCONFIGURED' : 'OK',
-            missingConfig: missing,
+        res.status(isMisconfigured ? 503 : 200).json({
+            service: 'arctic',
+            instance: process.env.ARCTIC_LOCAL === '1' ? 'local' : 'deployed',
+            status: isMisconfigured ? 'MISCONFIGURED' : 'OK',
+            missingConfig: runtimeIssues.missing,
+            invalidConfig: runtimeIssues.invalid,
             servingClient: Boolean(clientDist),
             environment: process.env.NODE_ENV ?? 'development',
             timestamp: new Date().toISOString(),
         });
     });
+
+    // Serverless hosts cannot fail-fast by exiting the process at import time.
+    // Keep an invalid production configuration from serving auth or business
+    // routes with a weak JWT signing secret instead.
+    if (process.env.NODE_ENV === 'production' && isMisconfigured) {
+        app.use((_req, res) => {
+            res.status(503).json({ service: 'arctic', status: 'MISCONFIGURED' });
+        });
+    }
 
     // Hashed asset files are immutable; index.html must never be cached or users
     // keep booting a stale bundle that points at deleted chunks. Registered

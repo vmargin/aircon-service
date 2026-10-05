@@ -26,12 +26,19 @@ enum PaymentStatus {
   PAID
 }
 
+enum BookingPriority {
+  NORMAL
+  HIGH
+  URGENT
+}
+
 model Organization {
   id        String     @id @default(uuid())
   name      String     @unique
   branches  Branch[]
   users     User[]
   customers Customer[]
+  units     Unit[]
 }
 
 model Branch {
@@ -43,6 +50,7 @@ model Branch {
   users          User[]
   technicians    Technician[]
   bookings       Booking[]
+  inventory      InventoryItem[]
 
   @@index([organizationId])
 }
@@ -71,6 +79,7 @@ model Technician {
   branchId String
   bookings Booking[]
   isActive Boolean   @default(true)
+  specialty String?
 
   @@index([branchId])
   @@index([isActive])
@@ -84,6 +93,10 @@ model Customer {
   organization   Organization @relation(fields: [organizationId], references: [id])
   organizationId String
   bookings       Booking[]
+  units          Unit[]
+  email          String?
+  type           String       @default("Residential")
+  contactPerson  String?
 
   @@unique([organizationId, phone])
   @@index([organizationId])
@@ -105,6 +118,13 @@ model Booking {
   invoice      Invoice?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+  durationMinutes Int         @default(120)
+  priority     BookingPriority @default(NORMAL)
+  diagnosis    String?
+  checklist    Json          @default("[]")
+  unit         Unit?         @relation(fields: [unitId], references: [id])
+  unitId       String?
+  parts        PartUsage[]
 
   @@index([scheduledAt])
   @@index([status])
@@ -125,9 +145,95 @@ model Invoice {
   bookingId     String        @unique
   issuedAt      DateTime      @default(now())
   paidAt        DateTime?
+  /// False for pre-upgrade invoices: preserve their historical payment semantics.
+  ledgerEnabled Boolean       @default(false)
+  payments      Payment[]
 
   @@index([paymentStatus])
   @@index([issuedAt])
+}
+
+model Unit {
+  id                String       @id @default(uuid())
+  name              String
+  brand             String
+  model             String?
+  serialNumber      String?
+  type              String       @default("Split type")
+  capacity          String?
+  location          String?
+  installedAt       DateTime?
+  nextMaintenanceAt DateTime?
+  notes             String?
+  customerId        String
+  customer          Customer     @relation(fields: [customerId], references: [id])
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id])
+  bookings          Booking[]
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@index([organizationId])
+  @@index([customerId])
+  @@index([nextMaintenanceAt])
+}
+
+model InventoryItem {
+  id             String          @id @default(uuid())
+  name           String
+  sku            String
+  unit           String          @default("pcs")
+  quantityOnHand Int             @default(0)
+  reorderLevel   Int             @default(5)
+  unitCost       Decimal         @db.Decimal(12, 2)
+  branchId       String
+  branch         Branch          @relation(fields: [branchId], references: [id])
+  usages         PartUsage[]
+  movements      StockMovement[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@unique([branchId, sku])
+  @@index([branchId])
+}
+
+model PartUsage {
+  id              String        @id @default(uuid())
+  bookingId       String
+  booking         Booking       @relation(fields: [bookingId], references: [id])
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  quantity        Int
+  unitPrice       Decimal       @db.Decimal(12, 2)
+  createdAt       DateTime      @default(now())
+
+  @@index([bookingId])
+  @@index([inventoryItemId])
+}
+
+model StockMovement {
+  id              String        @id @default(uuid())
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  quantity        Int
+  reason          String
+  bookingId       String?
+  createdAt       DateTime      @default(now())
+
+  @@index([inventoryItemId, createdAt])
+}
+
+model Payment {
+  id             String   @id @default(uuid())
+  invoiceId      String
+  invoice        Invoice  @relation(fields: [invoiceId], references: [id])
+  amount         Decimal  @db.Decimal(12, 2)
+  method         String
+  reference      String?
+  idempotencyKey String   @unique
+  createdAt      DateTime @default(now())
+
+  @@index([invoiceId, createdAt])
 }
 
 model AuditLog {

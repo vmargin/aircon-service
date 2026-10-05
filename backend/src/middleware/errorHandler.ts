@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction, RequestHandler } from 'express';
 import { Prisma } from '@prisma/client';
+import { ZodError } from 'zod';
 
 /** Keys whose values must never reach a log drain. */
 const REDACTED_KEYS = new Set([
@@ -92,6 +93,9 @@ function fromPrisma(err: unknown): AppError | null {
         return new ValidationError('Referenced record does not exist.');
       case 'P2025':
         return new NotFoundError('Record not found.');
+      case 'P2034':
+      case 'P2028':
+        return new ConflictError('This record is being updated. Please try again.');
       default:
         break;
     }
@@ -110,7 +114,8 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ): void {
-  const mapped = fromPrisma(err) ?? (err instanceof AppError ? err : null);
+  const parsedBodyError = err instanceof SyntaxError && 'body' in err ? new ValidationError('Request body must be valid JSON.') : null;
+  const mapped = fromPrisma(err) ?? parsedBodyError ?? (err instanceof ZodError ? new ValidationError('Validation Error', err.issues) : err instanceof AppError ? err : null);
   const status = mapped?.status ?? 500;
   const isServerError = status >= 500;
   const rawMessage = err instanceof Error ? err.message : String(err);

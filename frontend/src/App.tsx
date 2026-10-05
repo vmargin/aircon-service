@@ -1,224 +1,468 @@
-import React, { useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 import {
-    BrowserRouter,
-    Routes,
-    Route,
-    Navigate,
-    NavLink,
-    Outlet,
-    useLocation,
-} from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  NavLink,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import {
-    Snowflake,
-    LayoutDashboard,
-    CalendarCheck,
-    Users,
-    Wrench,
-    Receipt,
-    BarChart3,
-    LogOut,
-    Menu,
-    X,
-    Loader2,
-} from 'lucide-react';
-
-import { AuthProvider, useAuth } from './auth/AuthContext';
-import Login from './components/Login';
-import Dashboard from './components/Dashboard';
-import Bookings from './components/Bookings';
-import Customers from './components/Customers';
-import Technicians from './components/Technicians';
-import Financials from './components/Financials';
-import Reports from './components/Reports';
-import { cn } from './components/ui';
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+} from "@tanstack/react-query";
+import {
+  Snowflake,
+  LayoutDashboard,
+  CalendarDays,
+  ClipboardList,
+  Users,
+  Wrench,
+  AirVent,
+  Package,
+  Receipt,
+  BarChart3,
+  Settings as SettingsIcon,
+  LogOut,
+  Menu,
+  X,
+  Search,
+  Bell,
+  ChevronRight,
+} from "lucide-react";
+import { AuthProvider, useAuth } from "./auth/AuthContext";
+import { getAllList } from "./api/api";
+import { Booking, Customer } from "./types";
+import Login from "./components/Login";
+import Dashboard from "./components/Dashboard";
+import Bookings from "./components/Bookings";
+import Customers from "./components/Customers";
+import Technicians from "./components/Technicians";
+import Financials from "./components/Financials";
+import Reports from "./components/Reports";
+import Calendar from "./components/Calendar";
+import Units from "./components/Units";
+import Inventory from "./components/Inventory";
+import Settings from "./components/Settings";
+import WorkOrderModal from "./components/WorkOrderModal";
+import Modal from "./components/Modal";
+import { Avatar } from "./components/Visuals";
+import { Spinner, ErrorState } from "./components/ui";
 
 const queryClient = new QueryClient({
-    defaultOptions: {
-        queries: {
-            // A 401 is terminal — retrying just burns requests before the
-            // interceptor signs the user out.
-            retry: 1,
-            refetchOnWindowFocus: false,
-            staleTime: 30_000,
-        },
-    },
+  defaultOptions: {
+    queries: { retry: 1, staleTime: 30_000, refetchOnWindowFocus: true },
+  },
 });
-
 const NAV = [
-    { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/bookings', label: 'Bookings', icon: CalendarCheck },
-    { to: '/customers', label: 'Customers', icon: Users },
-    { to: '/technicians', label: 'Technicians', icon: Wrench },
-    { to: '/invoices', label: 'Invoices', icon: Receipt },
-    { to: '/reports', label: 'Reports', icon: BarChart3 },
-] as const;
-
-/** Sidebar content, shared by the desktop rail and the mobile drawer. */
-const SidebarContent: React.FC<{ onNavigate?: () => void }> = ({ onNavigate }) => {
-    const { user, logout } = useAuth();
-
-    return (
-        <div className="flex flex-col h-full">
-            <div className="flex items-center gap-2.5 px-5 h-16 border-b border-slate-800">
-                <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
-                    <Snowflake className="w-4.5 h-4.5 text-white" />
+  {
+    section: "SERVICE",
+    entries: [
+      { to: "/", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/calendar", label: "Calendar", icon: CalendarDays },
+      { to: "/bookings", label: "Service jobs", icon: ClipboardList },
+    ],
+  },
+  {
+    section: "PEOPLE & ASSETS",
+    entries: [
+      { to: "/customers", label: "Clients", icon: Users },
+      { to: "/technicians", label: "Technicians", icon: Wrench },
+      { to: "/units", label: "Aircon units", icon: AirVent },
+      { to: "/inventory", label: "Parts inventory", icon: Package },
+    ],
+  },
+  {
+    section: "BUSINESS",
+    entries: [
+      { to: "/invoices", label: "Invoices & payments", icon: Receipt },
+      { to: "/reports", label: "Reports", icon: BarChart3 },
+    ],
+  },
+];
+function SearchDialog({
+  open,
+  onClose,
+  onJob,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onJob: (id: string) => void;
+}) {
+  const [search, setSearch] = useState("");
+  const navigate = useNavigate();
+  const result = useQuery({
+    queryKey: ["global-search"],
+    enabled: open,
+    queryFn: async () => {
+      const [jobs, clients] = await Promise.all([
+        getAllList<Booking>("/bookings"),
+        getAllList<Customer>("/customers"),
+      ]);
+      return { jobs, clients };
+    },
+  });
+  const q = search.trim().toLowerCase();
+  const jobs = (result.data?.jobs ?? [])
+    .filter(
+      (j) =>
+        !q ||
+        [j.id, j.customer?.name, j.serviceType, j.notes].some((v) =>
+          v?.toLowerCase().includes(q),
+        ),
+    )
+    .slice(0, 7);
+  const clients = q
+    ? (result.data?.clients ?? [])
+        .filter((c) =>
+          [c.name, c.phone, c.address].some((v) =>
+            v?.toLowerCase().includes(q),
+          ),
+        )
+        .slice(0, 5)
+    : [];
+  return (
+    <Modal
+      isOpen={open}
+      onClose={onClose}
+      title="Find your next action"
+      subtitle="Search service jobs and clients"
+    >
+      <div className="search-modal-content">
+        <label className="sr-only" htmlFor="global-query">
+          Search jobs and clients
+        </label>
+        <input
+          id="global-query"
+          className="field-input"
+          placeholder="Client, job ID, service or phone…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          autoFocus
+        />
+        {result.isLoading ? (
+          <Spinner label="Finding your records…" />
+        ) : result.isError ? (
+          <ErrorState error={result.error} onRetry={() => result.refetch()} />
+        ) : (
+          <div className="search-results">
+            {jobs.map((job) => (
+              <button
+                key={job.id}
+                className="search-result"
+                onClick={() => {
+                  onClose();
+                  onJob(job.id);
+                }}
+              >
+                <ClipboardList size={17} />
+                <div>
+                  {job.customer?.name}
+                  <small>
+                    {job.serviceType} · {job.id.slice(0, 8).toUpperCase()}
+                  </small>
                 </div>
-                <div className="min-w-0">
-                    <p className="text-sm font-bold text-white truncate">
-                        {user?.orgName || 'Arctic Aircon'}
-                    </p>
-                    <p className="text-[11px] text-slate-400 truncate">
-                        {user?.role === 'ADMIN' ? 'All branches' : user?.branchName || 'Branch'}
-                    </p>
+                <ChevronRight size={16} />
+              </button>
+            ))}
+            {clients.map((client) => (
+              <button
+                key={client.id}
+                className="search-result"
+                onClick={() => {
+                  navigate(`/customers?q=${encodeURIComponent(client.name)}`);
+                  onClose();
+                }}
+              >
+                <Users size={17} />
+                <div>
+                  {client.name}
+                  <small>{client.phone} · Client</small>
                 </div>
-            </div>
-
-            <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-                {NAV.map(({ to, label, icon: Icon }) => (
-                    <NavLink
-                        key={to}
-                        to={to}
-                        end={to === '/'}
-                        onClick={onNavigate}
-                        className={({ isActive }) =>
-                            cn(
-                                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition',
-                                isActive
-                                    ? 'bg-blue-600 text-white'
-                                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                            )
-                        }
-                    >
-                        <Icon className="w-4.5 h-4.5 shrink-0" />
-                        {label}
-                    </NavLink>
-                ))}
-            </nav>
-
-            <div className="p-3 border-t border-slate-800">
-                <p className="px-3 pb-2 text-[11px] text-slate-500 truncate">{user?.email}</p>
-                <button
-                    onClick={logout}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-rose-600 hover:text-white transition"
-                >
-                    <LogOut className="w-4.5 h-4.5 shrink-0" />
-                    Sign out
-                </button>
-            </div>
+                <ChevronRight size={16} />
+              </button>
+            ))}
+            {jobs.length + clients.length === 0 && (
+              <div className="empty-state">
+                <p>No matches. Try a client name or service type.</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+}
+function SidebarContent({
+  onNavigate,
+  onClose,
+}: {
+  onNavigate: () => void;
+  onClose?: () => void;
+}) {
+  const { logout } = useAuth();
+  return (
+    <>
+      {onClose && (
+        <button
+          className="icon-button sidebar-mobile-close"
+          aria-label="Close navigation"
+          onClick={onClose}
+        >
+          <X size={19} />
+        </button>
+      )}
+      <NavLink className="brand" to="/" onClick={onNavigate}>
+        <Snowflake />
+        ARCTIC
+      </NavLink>
+      <div className="brand-caption">AIRCON SERVICE MANAGEMENT</div>
+      <nav aria-label="Main navigation">
+        {NAV.map((group) => (
+          <div className="nav-group" key={group.section}>
+            <p className="nav-label">{group.section}</p>
+            {group.entries.map(({ to, label, icon: Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={to === "/"}
+                onClick={onNavigate}
+                className={({ isActive }) =>
+                  `nav-item ${isActive ? "active" : ""}`
+                }
+              >
+                <Icon />
+                {label}
+              </NavLink>
+            ))}
+          </div>
+        ))}
+      </nav>
+      <div className="sidebar-bottom">
+        <NavLink
+          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+          to="/settings"
+          onClick={onNavigate}
+        >
+          <SettingsIcon />
+          Settings
+        </NavLink>
+        <button
+          className="nav-item"
+          style={{ width: "100%", background: "transparent" }}
+          onClick={() => {
+            onNavigate();
+            logout();
+          }}
+        >
+          <LogOut />
+          Sign out
+        </button>
+        <div className="sidebar-tagline">
+          <p>Keep every space cool.</p>
+          <small>Service. People. Peace of mind.</small>
         </div>
-    );
-};
-
-/**
- * App shell. The old version rendered a sidebar with `hidden lg:flex` and no
- * trigger anywhere, so on a phone the entire navigation was unreachable. This
- * version has a real header button and an overlay drawer.
- */
-const AppLayout: React.FC = () => {
-    const [drawerOpen, setDrawerOpen] = useState(false);
-    const location = useLocation();
-    const current = NAV.find((n) => n.to === location.pathname)?.label ?? 'Dashboard';
-
-    return (
-        <div className="min-h-screen bg-slate-100 lg:flex">
-            {/* Desktop rail */}
-            <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:shrink-0 bg-slate-900 lg:h-screen lg:sticky lg:top-0">
-                <SidebarContent />
-            </aside>
-
-            {/* Mobile drawer */}
-            <div
-                className={cn(
-                    'lg:hidden fixed inset-0 z-50 transition-opacity duration-200',
-                    drawerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                )}
+      </div>
+    </>
+  );
+}
+function AppLayout() {
+  const { user, isAdmin } = useAuth();
+  const [drawer, setDrawer] = useState(false);
+  const [search, setSearch] = useState(false);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const drawerRef = useRef<HTMLDialogElement>(null);
+  const drawerTriggerRef = useRef<HTMLButtonElement>(null);
+  const location = useLocation();
+  const current =
+    NAV.flatMap((g) => g.entries).find((n) => n.to === location.pathname)
+      ?.label ?? "Settings";
+  useEffect(() => {
+    document.title = `${current} | ARCTIC`;
+    setDrawer(false);
+  }, [current]);
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setDrawer(false);
+        setSearch((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  }, []);
+  useEffect(() => {
+    if (!drawer) return;
+    const dialog = drawerRef.current;
+    if (!dialog) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialog.showModal();
+    return () => {
+      dialog.close();
+      document.body.style.overflow = previousOverflow;
+      drawerTriggerRef.current?.focus();
+    };
+  }, [drawer]);
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 1021px)");
+    const closeAtDesktop = () => {
+      if (desktop.matches) setDrawer(false);
+    };
+    desktop.addEventListener("change", closeAtDesktop);
+    return () => desktop.removeEventListener("change", closeAtDesktop);
+  }, []);
+  return (
+    <div className="app">
+      <a className="skip-link" href="#main-content">
+        Skip to content
+      </a>
+      <aside className="sidebar desktop-sidebar">
+        <SidebarContent onNavigate={() => setDrawer(false)} />
+      </aside>
+      <dialog
+        ref={drawerRef}
+        id="mobile-navigation"
+        className="drawer-dialog"
+        aria-label="Navigation menu"
+        onCancel={(event) => {
+          event.preventDefault();
+          setDrawer(false);
+        }}
+        onClick={(event) => {
+          if (event.target === event.currentTarget) setDrawer(false);
+        }}
+      >
+        <div className="sidebar drawer-sidebar">
+          <SidebarContent
+            onNavigate={() => setDrawer(false)}
+            onClose={() => setDrawer(false)}
+          />
+        </div>
+      </dialog>
+      <div className="app-body">
+        <header className="topbar">
+          <div className="topbar-left">
+            <button
+              ref={drawerTriggerRef}
+              className="icon-button mobile-menu"
+              aria-controls="mobile-navigation"
+              aria-haspopup="dialog"
+              aria-label="Open navigation"
+              aria-expanded={drawer}
+              onClick={() => setDrawer(true)}
             >
-                <div
-                    className="absolute inset-0 bg-slate-900/50"
-                    onClick={() => setDrawerOpen(false)}
-                />
-                <aside
-                    className={cn(
-                        'absolute inset-y-0 left-0 w-64 bg-slate-900 shadow-xl transition-transform duration-200',
-                        drawerOpen ? 'translate-x-0' : '-translate-x-full'
-                    )}
-                >
-                    <SidebarContent onNavigate={() => setDrawerOpen(false)} />
-                </aside>
+              <Menu size={20} />
+            </button>
+            <div className="breadcrumb">
+              Workspace<span>/</span>
+              {current}
             </div>
-
-            <div className="flex-1 min-w-0">
-                {/* Mobile header with the trigger the old build was missing */}
-                <header className="lg:hidden sticky top-0 z-40 flex items-center gap-3 h-14 px-4 bg-white border-b border-slate-200">
-                    <button
-                        onClick={() => setDrawerOpen(true)}
-                        aria-label="Open navigation"
-                        className="p-2 -ml-2 rounded-lg hover:bg-slate-100 transition"
-                    >
-                        <Menu className="w-5 h-5 text-slate-600" />
-                    </button>
-                    <span className="text-sm font-semibold text-slate-800">{current}</span>
-                    {drawerOpen && (
-                        <button
-                            onClick={() => setDrawerOpen(false)}
-                            aria-label="Close navigation"
-                            className="ml-auto p-2 rounded-lg hover:bg-slate-100"
-                        >
-                            <X className="w-5 h-5 text-slate-600" />
-                        </button>
-                    )}
-                </header>
-
-                <main className="p-4 sm:p-6 max-w-7xl mx-auto">
-                    <Outlet />
-                </main>
-            </div>
-        </div>
-    );
-};
-
-/** Blocks the app until the stored token has been checked against the server. */
-const RequireAuth: React.FC = () => {
-    const { user, loading } = useAuth();
-
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-100">
-                <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-            </div>
-        );
-    }
-
-    return user ? <AppLayout /> : <Navigate to="/login" replace />;
-};
-
-const LoginRoute: React.FC = () => {
-    const { user, loading } = useAuth();
-    if (loading) return null;
-    return user ? <Navigate to="/" replace /> : <Login />;
-};
-
-const App: React.FC = () => (
+            <button className="global-search" onClick={() => setSearch(true)}>
+              <Search size={15} />
+              <span>Search jobs, clients…</span>
+              <kbd>⌘ K</kbd>
+            </button>
+          </div>
+          <div className="topbar-right">
+            <NavLink
+              className="icon-button"
+              to="/units?due=1"
+              aria-label="View service reminders"
+              title="Service reminders"
+            >
+              <Bell size={18} />
+            </NavLink>
+            <NavLink
+              className="account"
+              to="/settings"
+              aria-label="View account settings"
+            >
+              <Avatar name={isAdmin ? "Arctic Admin" : "Branch Leader"} />
+              <div>
+                <strong>{isAdmin ? "Administrator" : "Branch leader"}</strong>
+                <small>
+                  {isAdmin ? "Organization workspace" : user?.branchName}
+                </small>
+              </div>
+              <ChevronRight size={12} />
+            </NavLink>
+          </div>
+        </header>
+        <main className="app-main" id="main-content" tabIndex={-1}>
+          <Outlet />
+          <footer className="app-footer">
+            <span>
+              <strong>ARCTIC</strong>Keep every space cool.
+            </span>
+            <span>Aircon service management for a cooler tomorrow.</span>
+          </footer>
+        </main>
+      </div>
+      <SearchDialog
+        open={search}
+        onClose={() => setSearch(false)}
+        onJob={setJobId}
+      />
+      <WorkOrderModal
+        bookingId={jobId}
+        isOpen={!!jobId}
+        onClose={() => setJobId(null)}
+      />
+    </div>
+  );
+}
+function RequireAuth() {
+  const { user, loading } = useAuth();
+  return loading ? (
+    <div className="app">
+      <Spinner label="Opening your workspace…" />
+    </div>
+  ) : user ? (
+    <AppLayout />
+  ) : (
+    <Navigate to="/login" replace />
+  );
+}
+function LoginRoute() {
+  const { user, loading } = useAuth();
+  return loading ? <Spinner /> : user ? <Navigate to="/" replace /> : <Login />;
+}
+export default function App() {
+  return (
     <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-            <AuthProvider>
-                <Routes>
-                    <Route path="/login" element={<LoginRoute />} />
-                    <Route element={<RequireAuth />}>
-                        <Route path="/" element={<Dashboard />} />
-                        <Route path="/bookings" element={<Bookings />} />
-                        <Route path="/customers" element={<Customers />} />
-                        <Route path="/technicians" element={<Technicians />} />
-                        <Route path="/invoices" element={<Financials />} />
-                        <Route path="/reports" element={<Reports />} />
-                    </Route>
-                    {/* Unknown paths fall back to the dashboard. */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-            </AuthProvider>
-        </BrowserRouter>
+      <BrowserRouter>
+        <AuthProvider>
+          <Routes>
+            <Route path="/login" element={<LoginRoute />} />
+            <Route element={<RequireAuth />}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/bookings" element={<Bookings />} />
+              <Route
+                path="/jobs"
+                element={<Navigate to="/bookings" replace />}
+              />
+              <Route path="/calendar" element={<Calendar />} />
+              <Route path="/customers" element={<Customers />} />
+              <Route path="/technicians" element={<Technicians />} />
+              <Route path="/units" element={<Units />} />
+              <Route path="/inventory" element={<Inventory />} />
+              <Route path="/invoices" element={<Financials />} />
+              <Route
+                path="/financials"
+                element={<Navigate to="/invoices" replace />}
+              />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/settings" element={<Settings />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
     </QueryClientProvider>
-);
-
-export default App;
+  );
+}

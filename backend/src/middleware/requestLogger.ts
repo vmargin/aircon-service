@@ -7,6 +7,7 @@ export function requestLogger() {
 
   return morgan(format, {
     skip: (req: Request, _res: Response) => {
+      if (process.env.NODE_ENV === 'test') return true;
       // Skip health checks and static files in production
       if (process.env.NODE_ENV === 'production') {
         return req.url === '/health' || req.url.startsWith('/static/');

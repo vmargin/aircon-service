@@ -12,7 +12,10 @@ import {
     createCustomer,
     updateCustomer,
 } from '../controllers/customerController';
-import { getInvoices, createInvoice, updatePaymentStatus } from '../controllers/invoiceController';
+import { getInvoices, createInvoice, updatePaymentStatus, recordPayment } from '../controllers/invoiceController';
+import { getUnits, createUnit, updateUnit } from '../controllers/unitController';
+import { getInventory, createInventoryItem, restockInventory, useBookingPart } from '../controllers/inventoryController';
+import { getOverview, getActivity } from '../controllers/overviewController';
 import {
     getTechnicians,
     createTechnician,
@@ -42,6 +45,7 @@ router.post('/bookings', catchAsync(createBooking));
 router.get('/bookings/:id', catchAsync(getBookingById));
 router.patch('/bookings/:id', catchAsync(updateBooking));
 router.delete('/bookings/:id', catchAsync(deleteBooking));
+router.post('/bookings/:id/parts', catchAsync(useBookingPart));
 
 // Customers
 router.get('/customers', catchAsync(getCustomers));
@@ -52,6 +56,16 @@ router.patch('/customers/:id', catchAsync(updateCustomer));
 router.get('/invoices', catchAsync(getInvoices));
 router.post('/invoices', catchAsync(createInvoice));
 router.patch('/invoices/:id/payment', catchAsync(updatePaymentStatus));
+router.post('/invoices/:id/payments', catchAsync(recordPayment));
+
+router.get('/units', catchAsync(getUnits));
+router.post('/units', catchAsync(createUnit));
+router.patch('/units/:id', catchAsync(updateUnit));
+router.get('/inventory', catchAsync(getInventory));
+router.post('/inventory', catchAsync(createInventoryItem));
+router.patch('/inventory/:id/restock', catchAsync(restockInventory));
+router.get('/overview', catchAsync(getOverview));
+router.get('/activity', catchAsync(getActivity));
 
 // Technicians & branches
 router.get('/technicians', catchAsync(getTechnicians));

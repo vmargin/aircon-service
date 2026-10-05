@@ -33,9 +33,45 @@ export interface Customer {
     name: string;
     phone: string;
     address?: string | null;
+    email?: string | null;
+    type?: string;
+    contactPerson?: string | null;
     /** Present on the list endpoint, which selects a bookings count. */
     _count?: { bookings: number };
 }
+
+export interface Unit {
+    id: string;
+    customerId: string;
+    customer?: Customer;
+    name: string;
+    brand?: string | null;
+    model?: string | null;
+    serialNumber?: string | null;
+    type: string;
+    capacity?: string | null;
+    location?: string | null;
+    installedAt?: string | null;
+    nextMaintenanceAt?: string | null;
+    notes?: string | null;
+    bookings?: Booking[];
+}
+
+export interface InventoryItem {
+    id: string;
+    branchId: string;
+    branch?: Branch;
+    name: string;
+    sku: string;
+    unit: string;
+    quantityOnHand: number;
+    reorderLevel: number;
+    unitCost: string | number;
+}
+
+export interface InspectionItem { id: string; label: string; checked: boolean }
+export interface BookingPart { id: string; quantity: number; unitPrice: string | number; unitPriceCents?: number; inventoryItem: InventoryItem }
+export interface Payment { id: string; amount: string | number; method: string; reference?: string | null; paidAt?: string; createdAt: string }
 
 export interface Booking {
     id: string;
@@ -52,6 +88,13 @@ export interface Booking {
     invoice?: Invoice | null;
     createdAt: string;
     updatedAt: string;
+    unitId?: string | null;
+    unit?: Unit | null;
+    durationMinutes?: number;
+    priority?: 'NORMAL' | 'HIGH' | 'URGENT';
+    diagnosis?: string | null;
+    checklist?: InspectionItem[];
+    parts?: BookingPart[];
 }
 
 export interface Invoice {
@@ -67,6 +110,11 @@ export interface Invoice {
     booking?: Booking;
     issuedAt: string;
     paidAt?: string | null;
+    amountPaid?: string | number | null;
+    balance?: string | number | null;
+    payments?: Payment[];
+    needsReview?: boolean;
+    legacyBaseline?: boolean;
 }
 
 /** Envelope returned by every list endpoint. */

@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { getRuntimeConfigIssues } from './lib/runtimeConfig';
 
 // Load env before anything reads process.env at module scope.
 dotenv.config();
@@ -23,30 +24,26 @@ import prisma from './db/prisma';
  */
 const IS_SERVERLESS = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
 
-const REQUIRED_ENV = ['DATABASE_URL', 'JWT_SECRET'] as const;
-
-const missing = REQUIRED_ENV.filter((key) => !process.env[key]);
-const weakSecret =
-    process.env.NODE_ENV === 'production' && (process.env.JWT_SECRET ?? '').length < 32;
+const { missing, invalid } = getRuntimeConfigIssues();
 
 if (missing.length > 0) {
     console.error(`Missing required environment variables: ${missing.join(', ')}`);
 }
-if (weakSecret) {
+if (invalid.includes('JWT_SECRET')) {
     console.error('JWT_SECRET must be at least 32 characters in production.');
 }
 
 // Fail fast when we own the process, so a misconfigured container never starts
 // and silently serves traffic. Under serverless we only log: exiting would take
 // the whole function down and hide the reason.
-if ((missing.length > 0 || weakSecret) && !IS_SERVERLESS) {
+if ((missing.length > 0 || invalid.length > 0) && !IS_SERVERLESS) {
     process.exit(1);
 }
 
 const PORT = Number(process.env.PORT) || 5000;
 
 if (!IS_SERVERLESS) {
-    const server = app.listen(PORT, () => {
+    const server = app.listen(PORT, process.env.HOST || '0.0.0.0', () => {
         console.log(`🚀 API listening on http://localhost:${PORT}`);
         console.log(`   Health: http://localhost:${PORT}/health`);
     });

@@ -1,250 +1,393 @@
-import React, { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Download,
+  BarChart3,
+  CheckCircle2,
+  CreditCard,
+  Wallet,
+} from "lucide-react";
+import { formatCurrency } from "../api/api";
+import { getAll, manilaDay } from "../api/operational";
+import { Booking, BookingStatus, Invoice, STATUS_LABELS } from "../types";
+import {
+  Button,
+  Card,
+  EmptyState,
+  ErrorState,
+  Field,
+  PageHeader,
+  Spinner,
+  inputClass,
+} from "./ui";
 
-import { getList, formatCurrency } from '../api/api';
-import { Booking, BookingStatus, Invoice, STATUS_LABELS } from '../types';
-import { Card, EmptyState, ErrorState, PageHeader, Spinner, cn } from './ui';
-
-/**
- * REPORTS
- *
- * Everything here is computed client-side from the bookings and invoices the
- * API already returns — no dedicated reporting endpoint, and no PDF/canvas
- * export (the old build pulled in jspdf + html2canvas and never used them).
- */
-
-const RANGES = [
-    { value: 7, label: '7 days' },
-    { value: 30, label: '30 days' },
-    { value: 90, label: '90 days' },
-    { value: 0, label: 'All time' },
-] as const;
-
-const Reports: React.FC = () => {
-    const [days, setDays] = useState<number>(30);
-
-    const bookingsQuery = useQuery({
-        queryKey: ['bookings', 'reports'],
-        queryFn: () => getList<Booking>('/bookings', { limit: 500 }),
-    });
-
-    const invoicesQuery = useQuery({
-        queryKey: ['invoices', 'reports'],
-        queryFn: () => getList<Invoice>('/invoices', { limit: 500 }),
-    });
-
-    const report = useMemo(() => {
-        const bookings = bookingsQuery.data ?? [];
-        const invoices = invoicesQuery.data ?? [];
-
-        const cutoff = days > 0 ? Date.now() - days * 86_400_000 : 0;
-        const inRange = bookings.filter((b) => +new Date(b.scheduledAt) >= cutoff);
-        const invoicesInRange = invoices.filter((i) => +new Date(i.issuedAt) >= cutoff);
-
-        const byStatus = inRange.reduce<Record<string, number>>((acc, b) => {
-            acc[b.status] = (acc[b.status] ?? 0) + 1;
-            return acc;
-        }, {});
-
-        const byService = inRange.reduce<Record<string, number>>((acc, b) => {
-            acc[b.serviceType] = (acc[b.serviceType] ?? 0) + 1;
-            return acc;
-        }, {});
-
-        // Revenue per technician counts only invoices that were actually paid.
-        const byTechnician = new Map<string, { name: string; jobs: number; revenue: number }>();
-        for (const inv of invoicesInRange) {
-            const tech = inv.booking?.technician;
-            if (!tech) continue;
-            const entry = byTechnician.get(tech.id) ?? { name: tech.name, jobs: 0, revenue: 0 };
-            entry.jobs += 1;
-            if (inv.paymentStatus === 'PAID') entry.revenue += Number(inv.amount);
-            byTechnician.set(tech.id, entry);
-        }
-
-        const collected = invoicesInRange
-            .filter((i) => i.paymentStatus === 'PAID')
-            .reduce((s, i) => s + Number(i.amount), 0);
-        const invoiced = invoicesInRange.reduce((s, i) => s + Number(i.amount), 0);
-        const completed = byStatus.COMPLETED ?? 0;
-
-        return {
-            totalJobs: inRange.length,
-            completed,
-            completionRate: inRange.length ? Math.round((completed / inRange.length) * 100) : 0,
-            collected,
-            invoiced,
-            collectionRate: invoiced ? Math.round((collected / invoiced) * 100) : 0,
-            avgTicket: invoicesInRange.length ? invoiced / invoicesInRange.length : 0,
-            byStatus,
-            byService: Object.entries(byService).sort((a, b) => b[1] - a[1]),
-            technicians: [...byTechnician.values()].sort((a, b) => b.revenue - a.revenue),
-        };
-    }, [bookingsQuery.data, invoicesQuery.data, days]);
-
-    if (bookingsQuery.isLoading) return <Spinner label="Building report…" />;
-    if (bookingsQuery.isError) {
-        return <ErrorState error={bookingsQuery.error} onRetry={() => bookingsQuery.refetch()} />;
-    }
-
-    const headline = [
-        { label: 'Jobs', value: String(report.totalJobs) },
-        { label: 'Completed', value: `${report.completed} (${report.completionRate}%)` },
-        { label: 'Collected', value: formatCurrency(report.collected) },
-        { label: 'Avg. ticket', value: formatCurrency(report.avgTicket) },
-    ];
-
-    return (
-        <div>
-            <PageHeader title="Reports" subtitle="Performance at a glance" />
-
-            <div className="flex gap-1.5 mb-5 overflow-x-auto pb-0.5">
-                {RANGES.map((r) => (
-                    <button
-                        key={r.value}
-                        onClick={() => setDays(r.value)}
-                        className={cn(
-                            'px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition',
-                            days === r.value
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-                        )}
-                    >
-                        {r.label}
-                    </button>
-                ))}
-            </div>
-
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                {headline.map((s) => (
-                    <Card key={s.label} className="p-4">
-                        <p className="text-xs font-medium text-slate-500">{s.label}</p>
-                        <p className="mt-1 text-lg font-bold text-slate-800 truncate">{s.value}</p>
-                    </Card>
-                ))}
-            </div>
-
-            {report.totalJobs === 0 ? (
-                <Card className="mt-5">
-                    <EmptyState
-                        title="Nothing to report yet"
-                        message="Once jobs are scheduled in this period, the breakdown appears here."
-                    />
-                </Card>
-            ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-5">
-                    <Card>
-                        <div className="px-5 py-4 border-b border-slate-100">
-                            <h2 className="text-sm font-bold text-slate-800">Job status</h2>
-                        </div>
-                        <div className="p-5 space-y-3">
-                            {(Object.keys(STATUS_LABELS) as BookingStatus[]).map((status) => {
-                                const count = report.byStatus[status] ?? 0;
-                                const pct = report.totalJobs
-                                    ? Math.round((count / report.totalJobs) * 100)
-                                    : 0;
-                                return (
-                                    <div key={status}>
-                                        <div className="flex justify-between text-xs mb-1">
-                                            <span className="text-slate-600 font-medium">
-                                                {STATUS_LABELS[status]}
-                                            </span>
-                                            <span className="text-slate-400">
-                                                {count} · {pct}%
-                                            </span>
-                                        </div>
-                                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-blue-500 rounded-full transition-all"
-                                                style={{ width: `${pct}%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </Card>
-
-                    <Card>
-                        <div className="px-5 py-4 border-b border-slate-100">
-                            <h2 className="text-sm font-bold text-slate-800">Services</h2>
-                        </div>
-                        <div className="p-5 space-y-3">
-                            {report.byService.map(([service, count]) => {
-                                const pct = Math.round((count / report.totalJobs) * 100);
-                                return (
-                                    <div key={service}>
-                                        <div className="flex justify-between text-xs mb-1">
-                                            <span className="text-slate-600 font-medium">
-                                                {service}
-                                            </span>
-                                            <span className="text-slate-400">
-                                                {count} · {pct}%
-                                            </span>
-                                        </div>
-                                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-violet-500 rounded-full transition-all"
-                                                style={{ width: `${pct}%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </Card>
-
-                    <Card className="lg:col-span-2">
-                        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-                            <h2 className="text-sm font-bold text-slate-800">Technicians</h2>
-                            <span className="text-xs text-slate-400">
-                                {report.collectionRate}% of invoiced amount collected
-                            </span>
-                        </div>
-                        {report.technicians.length === 0 ? (
-                            <EmptyState
-                                title="No billed jobs yet"
-                                message="Technician revenue appears once their jobs are invoiced."
-                            />
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="bg-slate-50 border-b border-slate-200 text-left">
-                                            <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                                                Technician
-                                            </th>
-                                            <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                                                Billed jobs
-                                            </th>
-                                            <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                                                Collected
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100">
-                                        {report.technicians.map((t) => (
-                                            <tr key={t.name} className="hover:bg-slate-50/70">
-                                                <td className="px-5 py-3 font-semibold text-slate-800">
-                                                    {t.name}
-                                                </td>
-                                                <td className="px-5 py-3 text-slate-600">
-                                                    {t.jobs}
-                                                </td>
-                                                <td className="px-5 py-3 font-semibold text-slate-800">
-                                                    {formatCurrency(t.revenue)}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </Card>
-                </div>
-            )}
-        </div>
-    );
+const cents = (value: string | number | null | undefined) =>
+  Math.round(Number(value ?? 0) * 100);
+const before = (days: number) =>
+  manilaDay(new Date(Date.now() - days * 86400000));
+const csvCell = (value: unknown) => {
+  const s = String(value ?? "");
+  return '"' + (/^[=+@-]/.test(s) ? "'" : "") + s.replaceAll('"', '""') + '"';
 };
-
-export default Reports;
+export default function Reports() {
+  const [range, setRange] = useState("30");
+  const [from, setFrom] = useState(before(29));
+  const [to, setTo] = useState(manilaDay());
+  const bookings = useQuery({
+    queryKey: ["bookings"],
+    queryFn: () => getAll<Booking>("/bookings"),
+  });
+  const invoices = useQuery({
+    queryKey: ["invoices"],
+    queryFn: () => getAll<Invoice>("/invoices"),
+  });
+  const inRange = (value: string) => {
+    const day = manilaDay(value);
+    return (!from || day >= from) && (!to || day <= to);
+  };
+  const report = useMemo(() => {
+    const jobs = (bookings.data ?? []).filter((b) => inRange(b.scheduledAt));
+    const bills = (invoices.data ?? []).filter((i) => inRange(i.issuedAt));
+    const byStatus = jobs.reduce<Record<string, number>>(
+      (sum, b) => ({ ...sum, [b.status]: (sum[b.status] ?? 0) + 1 }),
+      {},
+    );
+    const byService = jobs.reduce<Record<string, number>>(
+      (sum, b) => ({ ...sum, [b.serviceType]: (sum[b.serviceType] ?? 0) + 1 }),
+      {},
+    );
+    const techs = new Map<
+      string,
+      { name: string; jobs: number; completed: number; collected: number }
+    >();
+    for (const b of jobs) {
+      if (!b.technician) continue;
+      const entry = techs.get(b.technician.id) ?? {
+        name: b.technician.name,
+        jobs: 0,
+        completed: 0,
+        collected: 0,
+      };
+      entry.jobs += 1;
+      if (b.status === "COMPLETED") entry.completed += 1;
+      techs.set(b.technician.id, entry);
+    }
+    let collected = 0;
+    let undatedLegacy = 0;
+    for (const i of invoices.data ?? []) {
+      let received = 0;
+      for (const p of i.payments ?? [])
+        if (inRange(p.paidAt ?? p.createdAt)) received += cents(p.amount);
+      if (i.legacyBaseline) {
+        if (i.paidAt && inRange(i.paidAt)) received += cents(i.amount);
+        else if (!i.paidAt) {
+          undatedLegacy += 1;
+          if (!from && !to) received += cents(i.amount);
+        }
+      }
+      collected += received;
+      const tech = i.booking?.technician;
+      if (tech && received) {
+        const entry = techs.get(tech.id) ?? {
+          name: tech.name,
+          jobs: 0,
+          completed: 0,
+          collected: 0,
+        };
+        entry.collected += received;
+        techs.set(tech.id, entry);
+      }
+    }
+    const invoiced = bills.reduce((sum, i) => sum + cents(i.amount), 0);
+    const outstanding = bills
+      .filter((i) => !i.needsReview)
+      .reduce((sum, i) => sum + cents(i.balance), 0);
+    const completed = byStatus.COMPLETED ?? 0;
+    const eligible = jobs.length - (byStatus.CANCELLED ?? 0);
+    return {
+      jobs,
+      bills,
+      byStatus,
+      byService,
+      collected,
+      invoiced,
+      outstanding,
+      completed,
+      completionRate: eligible ? Math.round((completed / eligible) * 100) : 0,
+      technicians: [...techs.values()].sort(
+        (a, b) => b.completed - a.completed,
+      ),
+      review: bills.filter((i) => i.needsReview).length,
+      undatedLegacy,
+    };
+  }, [bookings.data, invoices.data, from, to]);
+  const quickRange = (value: string) => {
+    setRange(value);
+    setTo(value === "all" ? "" : manilaDay());
+    setFrom(value === "all" ? "" : before(Number(value) - 1));
+  };
+  const exportCsv = () => {
+    const data = [
+      [
+        "Invoice",
+        "Client",
+        "Service",
+        "Issued at",
+        "Amount PHP",
+        "Paid PHP",
+        "Balance PHP",
+        "Status",
+      ],
+      ...report.bills.map((i) => [
+        i.id,
+        i.booking?.customer?.name,
+        i.booking?.serviceType,
+        i.issuedAt,
+        i.amount,
+        i.needsReview ? "UNKNOWN" : i.amountPaid,
+        i.needsReview ? "UNKNOWN" : i.balance,
+        i.needsReview ? "NEEDS REVIEW" : i.paymentStatus,
+      ]),
+    ];
+    const blob = new Blob(
+      ["\uFEFF" + data.map((row) => row.map(csvCell).join(",")).join("\r\n")],
+      { type: "text/csv;charset=utf-8;" },
+    );
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "arctic-billing-" + (from || "all") + ".csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+  if (bookings.isLoading || invoices.isLoading)
+    return <Spinner label="Building your service report…" />;
+  if (bookings.isError || invoices.isError)
+    return (
+      <ErrorState
+        error={bookings.error || invoices.error}
+        onRetry={() => {
+          void bookings.refetch();
+          void invoices.refetch();
+        }}
+      />
+    );
+  const invalid = Boolean(from && to && from > to);
+  return (
+    <div className="page-stack">
+      <PageHeader
+        title="Analytics & reports"
+        subtitle="Saved jobs, issued invoices and actual payment receipts."
+        action={
+          <Button variant="secondary" onClick={exportCsv} disabled={invalid}>
+            <Download size={16} /> Export billing CSV
+          </Button>
+        }
+      />
+      <Card>
+        <div className="page-toolbar">
+          <div className="tab-bar">
+            {[
+              ["7", "7 days"],
+              ["30", "30 days"],
+              ["90", "90 days"],
+              ["all", "All time"],
+            ].map(([v, label]) => (
+              <button
+                key={v}
+                className={range === v ? "active" : ""}
+                onClick={() => quickRange(v)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="form-grid">
+            <Field label="From (Manila)" htmlFor="report-from">
+              <input
+                id="report-from"
+                type="date"
+                value={from}
+                className={inputClass}
+                onChange={(e) => {
+                  setRange("custom");
+                  setFrom(e.target.value);
+                }}
+              />
+            </Field>
+            <Field label="Through (Manila)" htmlFor="report-to">
+              <input
+                id="report-to"
+                type="date"
+                value={to}
+                className={inputClass}
+                onChange={(e) => {
+                  setRange("custom");
+                  setTo(e.target.value);
+                }}
+              />
+            </Field>
+          </div>
+        </div>
+      </Card>
+      {invalid ? (
+        <p role="alert" className="notice notice-error">
+          The start date must be on or before the end date.
+        </p>
+      ) : (
+        <>
+          <div className="metric-grid">
+            {[
+              {
+                label: "Scheduled visits",
+                value: String(report.jobs.length),
+                icon: BarChart3,
+              },
+              {
+                label: "Completed",
+                value: report.completed + " · " + report.completionRate + "%",
+                icon: CheckCircle2,
+              },
+              {
+                label: "Collected in period",
+                value: formatCurrency(report.collected / 100),
+                icon: CreditCard,
+              },
+              {
+                label: "Invoiced in period",
+                value: formatCurrency(report.invoiced / 100),
+                icon: Wallet,
+              },
+            ].map((m) => (
+              <Card className="metric-card" key={m.label}>
+                <m.icon size={20} />
+                <p className="muted">{m.label}</p>
+                <strong>{m.value}</strong>
+              </Card>
+            ))}
+          </div>
+          {report.review > 0 && (
+            <p className="notice notice-warning">
+              {report.review} historical partial invoice
+              {report.review === 1 ? "" : "s"} have unknown paid amounts and
+              balances. Collection and outstanding figures exclude those unknown
+              amounts.
+            </p>
+          )}
+          {report.undatedLegacy > 0 && (
+            <p className="notice">
+              {report.undatedLegacy} historical settled invoice
+              {report.undatedLegacy === 1 ? "" : "s"} lack a receipt date. They
+              count in all-time collections and are excluded from dated
+              collections.
+            </p>
+          )}
+          <p className="muted report-note">
+            Visits use their scheduled date. Invoiced totals use issue dates.
+            Collections use receipt dates. Known current balance for invoices
+            issued in this period: {formatCurrency(report.outstanding / 100)}.
+            Completion excludes cancelled visits.
+          </p>
+          <div className="report-grid">
+            <Card>
+              <div className="panel-header">
+                <h3>Service job status</h3>
+                <span className="muted">{report.jobs.length} visits</span>
+              </div>
+              <div className="panel-body report-bars">
+                {(Object.keys(STATUS_LABELS) as BookingStatus[]).map((s) => {
+                  const count = report.byStatus[s] ?? 0;
+                  return (
+                    <div key={s}>
+                      <div className="flex justify-between">
+                        <span>{STATUS_LABELS[s]}</span>
+                        <span className="muted">{count}</span>
+                      </div>
+                      <div className="progress-track">
+                        <div
+                          className={
+                            "progress-fill progress-" + s.toLowerCase()
+                          }
+                          style={{
+                            width: report.jobs.length
+                              ? (count / report.jobs.length) * 100 + "%"
+                              : "0%",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+            <Card>
+              <div className="panel-header">
+                <h3>Services performed</h3>
+              </div>
+              <div className="panel-body report-bars">
+                {Object.entries(report.byService).length ? (
+                  Object.entries(report.byService)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([s, count]) => (
+                      <div key={s}>
+                        <div className="flex justify-between">
+                          <span>{s}</span>
+                          <span className="muted">{count}</span>
+                        </div>
+                        <div className="progress-track">
+                          <div
+                            className="progress-fill"
+                            style={{
+                              width: (count / report.jobs.length) * 100 + "%",
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))
+                ) : (
+                  <EmptyState title="No visits in this period" />
+                )}
+              </div>
+            </Card>
+          </div>
+          <Card>
+            <div className="panel-header">
+              <h3>Technician performance</h3>
+              <span className="muted">
+                Jobs by schedule · receipts by payment date
+              </span>
+            </div>
+            {report.technicians.length ? (
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Technician</th>
+                      <th>Visits</th>
+                      <th>Completed</th>
+                      <th>Collected</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {report.technicians.map((t) => (
+                      <tr key={t.name}>
+                        <td>
+                          <strong>{t.name}</strong>
+                        </td>
+                        <td>{t.jobs}</td>
+                        <td>{t.completed}</td>
+                        <td>{formatCurrency(t.collected / 100)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <EmptyState title="No technician activity in this period" />
+            )}
+          </Card>
+        </>
+      )}
+    </div>
+  );
+}

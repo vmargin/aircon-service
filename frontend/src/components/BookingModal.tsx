@@ -1,313 +1,392 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { UserPlus } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import api from "../api/api";
+import {
+  getAll,
+  invalidateOperations,
+  manilaInput,
+  scheduleIso,
+} from "../api/operational";
+import {
+  Booking,
+  Branch,
+  Customer,
+  SERVICE_TYPES,
+  Technician,
+  Unit,
+} from "../types";
+import { useAuth } from "../auth/AuthContext";
+import { Button, ErrorState, Field, inputClass } from "./ui";
+import Modal from "./Modal";
 
-import api, { getList } from '../api/api';
-import { Branch, Customer, SERVICE_TYPES, Technician } from '../types';
-import { useAuth } from '../auth/AuthContext';
-import { Button, Field, inputClass } from './ui';
-import Modal from './Modal';
-
-/**
- * NEW BOOKING
- *
- * The old version posted `customerName`/`phone` strings and relied on the
- * backend to find-or-create a customer, which could race and produce
- * duplicates. It now always resolves to a real `customerId`: either an
- * existing customer is picked, or one is created here first.
- *
- * `scheduledAt` is converted to a full ISO string because the API validates
- * with `z.string().datetime()`, which rejects the `datetime-local` format.
- */
-
-/** Default the picker to the next whole hour. */
-function defaultSchedule(): string {
-    const d = new Date();
-    d.setHours(d.getHours() + 1, 0, 0, 0);
-    // datetime-local wants a local-time string with no timezone suffix.
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  booking?: Booking | null;
+  initialSchedule?: string;
+  initialCustomerId?: string;
 }
 
-const BookingModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
-    const queryClient = useQueryClient();
-    const { user, isAdmin } = useAuth();
-
-    const [mode, setMode] = useState<'existing' | 'new'>('existing');
-    const [customerId, setCustomerId] = useState('');
-    const [newName, setNewName] = useState('');
-    const [newPhone, setNewPhone] = useState('');
-    const [newAddress, setNewAddress] = useState('');
-    const [serviceType, setServiceType] = useState<string>(SERVICE_TYPES[0]);
-    const [scheduledAt, setScheduledAt] = useState(defaultSchedule);
-    const [branchId, setBranchId] = useState('');
-    const [technicianId, setTechnicianId] = useState('');
-    const [notes, setNotes] = useState('');
-    const [error, setError] = useState('');
-
-    const customersQuery = useQuery({
-        queryKey: ['customers'],
-        queryFn: () => getList<Customer>('/customers', { limit: 200 }),
-        enabled: isOpen,
-    });
-
-    const branchesQuery = useQuery({
-        queryKey: ['branches'],
-        queryFn: () => getList<Branch>('/branches'),
-        enabled: isOpen,
-    });
-
-    const techniciansQuery = useQuery({
-        queryKey: ['technicians'],
-        queryFn: () => getList<Technician>('/technicians'),
-        enabled: isOpen,
-    });
-
-    const branches = branchesQuery.data ?? [];
-    const customers = customersQuery.data ?? [];
-
-    // Reset the form each time the modal opens.
-    useEffect(() => {
-        if (!isOpen) return;
-        setMode('existing');
-        setCustomerId('');
-        setNewName('');
-        setNewPhone('');
-        setNewAddress('');
-        setServiceType(SERVICE_TYPES[0]);
-        setScheduledAt(defaultSchedule());
-        setTechnicianId('');
-        setNotes('');
-        setError('');
-    }, [isOpen]);
-
-    // A branch leader can only ever book for their own branch, so pin it.
-    useEffect(() => {
-        if (!isOpen) return;
-        if (!isAdmin && user?.branchId) {
-            setBranchId(user.branchId);
-        } else if (branches.length === 1) {
-            setBranchId(branches[0].id);
-        }
-    }, [isOpen, isAdmin, user?.branchId, branches]);
-
-    // Only technicians at the chosen branch are assignable — the API rejects
-    // anything else with a 403.
-    const assignableTechs = useMemo(
-        () => (techniciansQuery.data ?? []).filter((t) => t.branchId === branchId && t.isActive),
-        [techniciansQuery.data, branchId]
+export default function BookingModal({
+  isOpen,
+  onClose,
+  booking,
+  initialSchedule,
+  initialCustomerId,
+}: Props) {
+  const client = useQueryClient();
+  const { user, isAdmin } = useAuth();
+  const [customerId, setCustomerId] = useState("");
+  const [mode, setMode] = useState<"existing" | "new">("existing");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [branchId, setBranchId] = useState("");
+  const [unitId, setUnitId] = useState("");
+  const [technicianId, setTechnicianId] = useState("");
+  const [serviceType, setServiceType] = useState<string>(SERVICE_TYPES[0]);
+  const [scheduledAt, setScheduledAt] = useState("");
+  const [durationMinutes, setDuration] = useState("120");
+  const [priority, setPriority] = useState("NORMAL");
+  const [notes, setNotes] = useState("");
+  const [error, setError] = useState("");
+  const customers = useQuery({
+    queryKey: ["customers"],
+    queryFn: () => getAll<Customer>("/customers"),
+    enabled: isOpen,
+  });
+  const branches = useQuery({
+    queryKey: ["branches"],
+    queryFn: () => getAll<Branch>("/branches"),
+    enabled: isOpen,
+  });
+  const technicians = useQuery({
+    queryKey: ["technicians"],
+    queryFn: () => getAll<Technician>("/technicians"),
+    enabled: isOpen,
+  });
+  const units = useQuery({
+    queryKey: ["units"],
+    queryFn: () => getAll<Unit>("/units"),
+    enabled: isOpen,
+  });
+  useEffect(() => {
+    if (!isOpen) return;
+    setCustomerId(booking?.customerId ?? initialCustomerId ?? "");
+    setMode("existing");
+    setName("");
+    setPhone("");
+    setAddress("");
+    setUnitId(booking?.unitId ?? "");
+    setTechnicianId(booking?.technicianId ?? "");
+    setServiceType(booking?.serviceType ?? SERVICE_TYPES[0]);
+    setScheduledAt(
+      booking
+        ? manilaInput(booking.scheduledAt)
+        : (initialSchedule ?? manilaInput(new Date(Date.now() + 3600000))),
     );
-
-    // Clear a stale technician if the branch changes under it.
-    useEffect(() => {
-        if (technicianId && !assignableTechs.some((t) => t.id === technicianId)) {
-            setTechnicianId('');
-        }
-    }, [assignableTechs, technicianId]);
-
-    const mutation = useMutation({
-        mutationFn: async () => {
-            let resolvedCustomerId = customerId;
-
-            if (mode === 'new') {
-                const { data: created } = await api.post<Customer>('/customers', {
-                    name: newName.trim(),
-                    phone: newPhone.trim(),
-                    ...(newAddress.trim() ? { address: newAddress.trim() } : {}),
-                });
-                resolvedCustomerId = created.id;
-            }
-
-            if (!resolvedCustomerId) throw new Error('Select or add a customer first.');
-            if (!branchId) throw new Error('Select a branch.');
-
-            await api.post('/bookings', {
-                customerId: resolvedCustomerId,
-                branchId,
-                serviceType,
-                // The API validates ISO-8601 with an offset.
-                scheduledAt: new Date(scheduledAt).toISOString(),
-                ...(technicianId ? { technicianId } : {}),
-                ...(notes.trim() ? { notes: notes.trim() } : {}),
-            });
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['bookings'] });
-            queryClient.invalidateQueries({ queryKey: ['customers'] });
-            onClose();
-        },
-        onError: (err: Error) => setError(err.message),
-    });
-
-    return (
-        <Modal isOpen={isOpen} onClose={onClose} title="New booking">
-            <form
-                onSubmit={(e) => {
-                    e.preventDefault();
-                    setError('');
-                    mutation.mutate();
-                }}
-                className="p-5 space-y-4 max-h-[70vh] overflow-y-auto"
+    setDuration(String(booking?.durationMinutes ?? 120));
+    setPriority(booking?.priority ?? "NORMAL");
+    setNotes(booking?.notes ?? "");
+    setError("");
+    setBranchId(booking?.branchId ?? (!isAdmin ? (user?.branchId ?? "") : ""));
+  }, [
+    isOpen,
+    booking,
+    initialSchedule,
+    initialCustomerId,
+    isAdmin,
+    user?.branchId,
+  ]);
+  useEffect(() => {
+    if (isOpen && !branchId && branches.data?.length === 1)
+      setBranchId(branches.data[0].id);
+  }, [isOpen, branchId, branches.data]);
+  const availableTechs = (technicians.data ?? []).filter(
+    (t) => t.branchId === branchId && t.isActive,
+  );
+  const customerUnits = (units.data ?? []).filter(
+    (u) => u.customerId === customerId,
+  );
+  const mutation = useMutation({
+    mutationFn: async () => {
+      let resolved = customerId;
+      if (!booking && mode === "new") {
+        const { data } = await api.post<Customer>("/customers", {
+          name: name.trim(),
+          phone: phone.trim(),
+          address: address.trim() || undefined,
+        });
+        resolved = data.id;
+        setCustomerId(data.id);
+        setMode("existing");
+        void client.invalidateQueries({ queryKey: ["customers"] });
+      }
+      if (!resolved || !branchId)
+        throw new Error("Select a client and branch.");
+      const body = {
+        scheduledAt: scheduleIso(scheduledAt),
+        durationMinutes: Number(durationMinutes),
+        priority,
+        technicianId: technicianId || null,
+        unitId: unitId || null,
+        notes: notes.trim(),
+        serviceType,
+      };
+      if (booking) return api.patch("/bookings/" + booking.id, body);
+      return api.post("/bookings", { ...body, customerId: resolved, branchId });
+    },
+    onSuccess: () => {
+      invalidateOperations(client);
+      onClose();
+    },
+    onError: (err: Error) => setError(err.message),
+  });
+  const loadError =
+    customers.error || branches.error || technicians.error || units.error;
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={booking ? "Edit booking" : "New booking"}
+      subtitle="Plan the visit, equipment and technician in one place."
+    >
+      <form
+        className="form-stack panel-body"
+        onSubmit={(e) => {
+          e.preventDefault();
+          setError("");
+          mutation.mutate();
+        }}
+      >
+        {loadError && (
+          <ErrorState
+            error={loadError}
+            onRetry={() => {
+              void customers.refetch();
+              void branches.refetch();
+              void technicians.refetch();
+              void units.refetch();
+            }}
+          />
+        )}
+        {!booking && (
+          <div className="tab-bar">
+            <button
+              type="button"
+              className={mode === "existing" ? "active" : ""}
+              onClick={() => setMode("existing")}
             >
-                {/* Customer: pick or create */}
-                <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                            Customer
-                        </span>
-                        <button
-                            type="button"
-                            onClick={() => setMode(mode === 'existing' ? 'new' : 'existing')}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800"
-                        >
-                            <UserPlus className="w-3.5 h-3.5" />
-                            {mode === 'existing' ? 'Add new' : 'Pick existing'}
-                        </button>
-                    </div>
-
-                    {mode === 'existing' ? (
-                        <select
-                            required
-                            value={customerId}
-                            onChange={(e) => setCustomerId(e.target.value)}
-                            className={inputClass}
-                        >
-                            <option value="">
-                                {customersQuery.isLoading ? 'Loading…' : 'Select a customer'}
-                            </option>
-                            {customers.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                    {c.name} — {c.phone}
-                                </option>
-                            ))}
-                        </select>
-                    ) : (
-                        <div className="space-y-2">
-                            <input
-                                required
-                                value={newName}
-                                onChange={(e) => setNewName(e.target.value)}
-                                placeholder="Full name"
-                                className={inputClass}
-                            />
-                            <input
-                                required
-                                value={newPhone}
-                                onChange={(e) => setNewPhone(e.target.value)}
-                                placeholder="Phone (e.g. 09171234567)"
-                                className={inputClass}
-                            />
-                            <input
-                                value={newAddress}
-                                onChange={(e) => setNewAddress(e.target.value)}
-                                placeholder="Address (optional)"
-                                className={inputClass}
-                            />
-                        </div>
-                    )}
-                </div>
-
-                <Field label="Service" htmlFor="serviceType">
-                    <select
-                        id="serviceType"
-                        value={serviceType}
-                        onChange={(e) => setServiceType(e.target.value)}
-                        className={inputClass}
-                    >
-                        {SERVICE_TYPES.map((s) => (
-                            <option key={s} value={s}>
-                                {s}
-                            </option>
-                        ))}
-                    </select>
-                </Field>
-
-                <Field label="Schedule" htmlFor="scheduledAt">
-                    <input
-                        id="scheduledAt"
-                        type="datetime-local"
-                        required
-                        value={scheduledAt}
-                        onChange={(e) => setScheduledAt(e.target.value)}
-                        className={inputClass}
-                    />
-                </Field>
-
-                <Field
-                    label="Branch"
-                    htmlFor="branchId"
-                    hint={!isAdmin ? 'Branch leaders can only book for their own branch.' : undefined}
-                >
-                    <select
-                        id="branchId"
-                        required
-                        disabled={!isAdmin}
-                        value={branchId}
-                        onChange={(e) => setBranchId(e.target.value)}
-                        className={inputClass}
-                    >
-                        <option value="">Select a branch</option>
-                        {branches.map((b) => (
-                            <option key={b.id} value={b.id}>
-                                {b.name}
-                            </option>
-                        ))}
-                    </select>
-                </Field>
-
-                <Field
-                    label="Technician"
-                    htmlFor="technicianId"
-                    hint={
-                        branchId && assignableTechs.length === 0
-                            ? 'No active technicians at this branch yet.'
-                            : 'Optional — you can assign later.'
-                    }
-                >
-                    <select
-                        id="technicianId"
-                        value={technicianId}
-                        onChange={(e) => setTechnicianId(e.target.value)}
-                        disabled={!branchId || assignableTechs.length === 0}
-                        className={inputClass}
-                    >
-                        <option value="">Unassigned</option>
-                        {assignableTechs.map((t) => (
-                            <option key={t.id} value={t.id}>
-                                {t.name}
-                            </option>
-                        ))}
-                    </select>
-                </Field>
-
-                <Field label="Notes" htmlFor="notes">
-                    <textarea
-                        id="notes"
-                        rows={2}
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        placeholder="Unit details, access instructions…"
-                        className={inputClass}
-                    />
-                </Field>
-
-                {error && (
-                    <p role="alert" className="text-xs text-rose-600 font-medium">
-                        {error}
-                    </p>
-                )}
-
-                <div className="flex gap-2 pt-1">
-                    <Button type="button" variant="secondary" onClick={onClose} className="flex-1">
-                        Cancel
-                    </Button>
-                    <Button type="submit" loading={mutation.isPending} className="flex-1">
-                        Create booking
-                    </Button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
-
-export default BookingModal;
+              Existing client
+            </button>
+            <button
+              type="button"
+              className={mode === "new" ? "active" : ""}
+              onClick={() => {
+                setMode("new");
+                setUnitId("");
+              }}
+            >
+              New client
+            </button>
+          </div>
+        )}
+        {mode === "new" ? (
+          <div className="form-grid">
+            <Field label="Client name" htmlFor="booking-client-name">
+              <input
+                id="booking-client-name"
+                required
+                minLength={2}
+                maxLength={100}
+                className={inputClass}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </Field>
+            <Field label="Phone" htmlFor="booking-client-phone">
+              <input
+                id="booking-client-phone"
+                type="tel"
+                required
+                minLength={7}
+                maxLength={20}
+                className={inputClass}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+            </Field>
+            <Field label="Service address" htmlFor="booking-client-address">
+              <input
+                id="booking-client-address"
+                maxLength={300}
+                className={inputClass}
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+              />
+            </Field>
+          </div>
+        ) : (
+          <Field label="Client" htmlFor="booking-customer">
+            <select
+              id="booking-customer"
+              required
+              disabled={Boolean(booking)}
+              className={inputClass}
+              value={customerId}
+              onChange={(e) => {
+                setCustomerId(e.target.value);
+                setUnitId("");
+              }}
+            >
+              <option value="">Select a client</option>
+              {customers.data?.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name} · {c.phone}
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
+        <div className="form-grid">
+          <Field
+            label="Equipment"
+            htmlFor="booking-unit"
+            hint="Optional. Register units from the Equipment page."
+          >
+            <select
+              id="booking-unit"
+              className={inputClass}
+              value={unitId}
+              disabled={mode === "new" || !customerId}
+              onChange={(e) => setUnitId(e.target.value)}
+            >
+              <option value="">No unit selected</option>
+              {customerUnits.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name} · {u.brand}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Service type" htmlFor="booking-service">
+            <select
+              id="booking-service"
+              className={inputClass}
+              value={serviceType}
+              onChange={(e) => setServiceType(e.target.value)}
+            >
+              {SERVICE_TYPES.map((s) => (
+                <option key={s}>{s}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Schedule (Manila)" htmlFor="booking-time">
+            <input
+              id="booking-time"
+              type="datetime-local"
+              required
+              className={inputClass}
+              value={scheduledAt}
+              onChange={(e) => setScheduledAt(e.target.value)}
+            />
+          </Field>
+          <Field label="Duration" htmlFor="booking-duration">
+            <select
+              id="booking-duration"
+              className={inputClass}
+              value={durationMinutes}
+              onChange={(e) => setDuration(e.target.value)}
+            >
+              {[30, 60, 90, 120, 180, 240, 360, 480].map((d) => (
+                <option key={d} value={d}>
+                  {d < 60 ? d + " minutes" : d / 60 + " hours"}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Branch" htmlFor="booking-branch">
+            <select
+              id="booking-branch"
+              required
+              disabled={!isAdmin || Boolean(booking)}
+              className={inputClass}
+              value={branchId}
+              onChange={(e) => {
+                setBranchId(e.target.value);
+                setTechnicianId("");
+              }}
+            >
+              <option value="">Select a branch</option>
+              {branches.data?.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field
+            label="Technician"
+            htmlFor="booking-technician"
+            hint="Overlapping visits are checked before saving."
+          >
+            <select
+              id="booking-technician"
+              disabled={!branchId}
+              className={inputClass}
+              value={technicianId}
+              onChange={(e) => setTechnicianId(e.target.value)}
+            >
+              <option value="">Assign later</option>
+              {availableTechs.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Priority" htmlFor="booking-priority">
+            <select
+              id="booking-priority"
+              className={inputClass}
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
+            >
+              <option value="NORMAL">Normal</option>
+              <option value="HIGH">High</option>
+              <option value="URGENT">Urgent</option>
+            </select>
+          </Field>
+        </div>
+        <Field label="Visit notes" htmlFor="booking-notes">
+          <textarea
+            id="booking-notes"
+            rows={3}
+            maxLength={2000}
+            className={inputClass}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Symptoms, access instructions or client requests"
+          />
+        </Field>
+        {error && (
+          <p className="notice notice-error" role="alert">
+            {error}
+          </p>
+        )}
+        <div className="form-actions">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            loading={mutation.isPending}
+            disabled={Boolean(loadError)}
+          >
+            Save booking
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}

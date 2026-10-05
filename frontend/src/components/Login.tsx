@@ -1,132 +1,162 @@
-import React, { useState } from 'react';
-import { Snowflake, Loader2, AlertCircle, Mail, Lock } from 'lucide-react';
-import { useAuth } from '../auth/AuthContext';
-
-/**
- * Login screen. The demo credential hints are shown only when
- * VITE_SHOW_DEMO_CREDENTIALS is set, so a real deployment doesn't advertise
- * its seed accounts on the sign-in page.
- */
-const SHOW_DEMO_HINT = import.meta.env.VITE_SHOW_DEMO_CREDENTIALS === 'true';
-
-const Login: React.FC = () => {
-    const { login } = useAuth();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [submitting, setSubmitting] = useState(false);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
-        setSubmitting(true);
-        try {
-            await login(email.trim(), password);
-            // On success AuthProvider sets `user`, and the router swaps to the
-            // app shell — no manual navigation needed.
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Sign in failed. Please try again.');
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4">
-            <div className="w-full max-w-sm">
-                <div className="flex flex-col items-center mb-8">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200">
-                        <Snowflake className="w-7 h-7 text-white" />
-                    </div>
-                    <h1 className="mt-4 text-2xl font-bold text-slate-800">Arctic Aircon</h1>
-                    <p className="text-sm text-slate-500">Service Management</p>
-                </div>
-
-                <form
-                    onSubmit={handleSubmit}
-                    className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4"
-                >
-                    <div className="space-y-1.5">
-                        <label
-                            htmlFor="email"
-                            className="text-xs font-semibold text-slate-500 uppercase tracking-wide"
-                        >
-                            Email
-                        </label>
-                        <div className="relative">
-                            <Mail className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
-                            <input
-                                id="email"
-                                type="email"
-                                required
-                                autoComplete="email"
-                                autoFocus
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="you@company.com"
-                                className="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                        <label
-                            htmlFor="password"
-                            className="text-xs font-semibold text-slate-500 uppercase tracking-wide"
-                        >
-                            Password
-                        </label>
-                        <div className="relative">
-                            <Lock className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
-                            <input
-                                id="password"
-                                type="password"
-                                required
-                                autoComplete="current-password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="••••••••"
-                                className="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition"
-                            />
-                        </div>
-                    </div>
-
-                    {error && (
-                        <div
-                            role="alert"
-                            className="flex items-start gap-2 p-3 bg-rose-50 border border-rose-100 rounded-xl"
-                        >
-                            <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
-                            <p className="text-xs text-rose-700 font-medium">{error}</p>
-                        </div>
-                    )}
-
-                    <button
-                        type="submit"
-                        disabled={submitting}
-                        className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white text-sm font-semibold rounded-xl transition flex items-center justify-center gap-2"
-                    >
-                        {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sign in'}
-                    </button>
-                </form>
-
-                {SHOW_DEMO_HINT && (
-                    <div className="mt-4 p-4 bg-white/60 border border-slate-200 rounded-xl">
-                        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-2">
-                            Demo accounts
-                        </p>
-                        <ul className="space-y-1 text-xs text-slate-600 font-mono">
-                            <li>admin@arctic.com — all branches</li>
-                            <li>north@arctic.com — one branch</li>
-                        </ul>
-                        <p className="mt-2 text-[11px] text-slate-400">
-                            Password is whatever you seeded (default <code>demo1234</code>).
-                        </p>
-                    </div>
-                )}
-            </div>
+import { FormEvent, useState } from "react";
+import {
+  Snowflake,
+  CalendarDays,
+  Users,
+  ChartNoAxesColumnIncreasing,
+  ArrowRight,
+  ShieldCheck,
+} from "lucide-react";
+import { useAuth } from "../auth/AuthContext";
+import { Button, Field, inputClass } from "./ui";
+export default function Login() {
+  const { login } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState("");
+  async function signIn(demo = false) {
+    setError("");
+    setPending(true);
+    try {
+      await login(
+        demo ? "admin@arctic.com" : email,
+        demo ? "demo1234" : password,
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to sign in.");
+    } finally {
+      setPending(false);
+    }
+  }
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    void signIn();
+  }
+  return (
+    <main className="login-page">
+      <section className="login-story">
+        <div className="brand">
+          <Snowflake />
+          ARCTIC
         </div>
-    );
-};
-
-export default Login;
+        <div className="login-story-content">
+          <div className="eyebrow">AIRCON SERVICE MANAGEMENT</div>
+          <h1>
+            Smarter
+            <br />
+            aircon service.
+            <br />
+            <span>
+              From booking
+              <br />
+              to breakdown.
+            </span>
+          </h1>
+          <p>
+            Keep operations smooth, customers happy, and every unit running at
+            its best. Your entire service day, in one place.
+          </p>
+          <div className="login-benefits">
+            <div>
+              <CalendarDays />
+              <span>
+                Streamline
+                <br />
+                operations
+              </span>
+            </div>
+            <div>
+              <Users />
+              <span>
+                Empower
+                <br />
+                technicians
+              </span>
+            </div>
+            <div>
+              <ChartNoAxesColumnIncreasing />
+              <span>
+                Grow your
+                <br />
+                business
+              </span>
+            </div>
+          </div>
+        </div>
+        <p className="login-brand-footer">ARCTIC · Keep every space cool.</p>
+        <div className="login-circles" aria-hidden="true" />
+      </section>
+      <section className="login-form-side">
+        <div className="login-form-wrap">
+          <div className="eyebrow">YOUR SERVICE WORKSPACE</div>
+          <h2>Welcome back.</h2>
+          <p>
+            A clearer view of your business starts here.
+            <br />
+            Sign in to plan, dispatch, and get things done.
+          </p>
+          <form onSubmit={submit}>
+            <Field label="Email address">
+              <input
+                className={inputClass}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+                autoComplete="username"
+                required
+              />
+            </Field>
+            <Field label="Password">
+              <input
+                className={inputClass}
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                autoComplete="current-password"
+                required
+              />
+            </Field>
+            {error && (
+              <p className="error-message" role="alert">
+                {error}
+              </p>
+            )}
+            <Button type="submit" loading={pending}>
+              Sign in to ARCTIC
+              <ArrowRight size={16} />
+            </Button>
+          </form>
+          <div className="demo-card">
+            <p>
+              <strong>Take a look around.</strong>
+              <br />
+              Explore the portfolio demo with synthetic service records.
+            </p>
+            <Button
+              variant="secondary"
+              loading={pending}
+              onClick={() => void signIn(true)}
+            >
+              Explore demo workspace
+              <ArrowRight size={15} />
+            </Button>
+          </div>
+          <div className="login-note">
+            <ShieldCheck
+              size={13}
+              style={{
+                display: "inline",
+                verticalAlign: "middle",
+                marginRight: 5,
+              }}
+            />
+            Your workspace access follows your assigned branch.
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}

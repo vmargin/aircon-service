@@ -1,230 +1,119 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
+import { BookingPriority, BookingStatus, Prisma, UserRole } from '@prisma/client';
 import prisma from '../db/prisma';
-import { BookingStatus, Prisma, UserRole } from '@prisma/client';
-import { logAudit } from '../lib/auditLog';
-import { ForbiddenError, NotFoundError, ValidationError } from '../middleware/errorHandler';
+import { auditInTransaction } from '../lib/auditLog';
+import { NotFoundError, ValidationError } from '../middleware/errorHandler';
 import { requireUser } from '../middleware/auth';
-import {
-    assertBranchInScope,
-    assertCustomerInScope,
-    assertTechnicianInScope,
-    branchScopedWhere,
-} from '../lib/tenancy';
+import { assertBranchInScope, assertCustomerInScope, branchScopedWhere } from '../lib/tenancy';
 import { assertValidTransition } from '../lib/bookingStatus';
 import { parsePagination, toPage } from '../lib/pagination';
+import { BOOKING_INCLUDE, serializeBooking } from '../lib/bookingView';
+import { assertDispatchAvailable, assertOpen, assertTechnicianAssignable, TERMINAL_STATUSES } from '../lib/dispatch';
 
-const BOOKING_INCLUDE = {
-    customer: true,
-    branch: true,
-    technician: true,
-    invoice: true,
-} satisfies Prisma.BookingInclude;
-
-const createBookingSchema = z.object({
-    customerId: z.string().uuid(),
-    serviceType: z.string().min(1).max(120),
+const sharedFields = {
+    serviceType: z.string().trim().min(1).max(120),
     scheduledAt: z.string().datetime(),
-    branchId: z.string().uuid(),
-    technicianId: z.string().uuid().optional(),
-    notes: z.string().max(2000).optional(),
-});
-
-const updateBookingSchema = z.object({
-    status: z.nativeEnum(BookingStatus).optional(),
-    scheduledAt: z.string().datetime().optional(),
-    // '' and null both mean "unassign".
     technicianId: z.union([z.string().uuid(), z.literal(''), z.null()]).optional(),
-    notes: z.string().max(2000).optional(),
-});
+    unitId: z.union([z.string().uuid(), z.literal(''), z.null()]).optional(),
+    notes: z.string().trim().max(2000).nullable().optional(),
+    durationMinutes: z.number().int().min(30).max(480).default(120),
+    priority: z.nativeEnum(BookingPriority).default(BookingPriority.NORMAL),
+};
+const createSchema = z.object({ ...sharedFields, customerId: z.string().uuid(), branchId: z.string().uuid() });
+const checklistSchema = z.array(z.object({ id: z.string().min(1).max(80), label: z.string().trim().min(1).max(250), checked: z.boolean() })).max(30).refine((items) => new Set(items.map((item) => item.id)).size === items.length, 'Checklist item IDs must be unique.');
+const updateSchema = z.object({ ...sharedFields, durationMinutes: z.number().int().min(30).max(480), priority: z.nativeEnum(BookingPriority), status: z.nativeEnum(BookingStatus), diagnosis: z.string().trim().max(4000).nullable(), checklist: checklistSchema }).partial();
+const listSchema = z.object({ status: z.nativeEnum(BookingStatus).optional(), branchId: z.string().uuid().optional(), technicianId: z.string().uuid().optional(), customerId: z.string().uuid().optional(), unitId: z.string().uuid().optional(), from: z.string().datetime().optional(), to: z.string().datetime().optional(), q: z.string().trim().max(100).optional(), search: z.string().trim().max(100).optional() });
 
-const listBookingsSchema = z.object({
-    status: z.nativeEnum(BookingStatus).optional(),
-    branchId: z.string().uuid().optional(),
-    technicianId: z.string().uuid().optional(),
-    from: z.string().datetime().optional(),
-    to: z.string().datetime().optional(),
-    q: z.string().trim().min(1).max(100).optional(),
-});
+async function assertUnit(tx: Prisma.TransactionClient, orgId: string, customerId: string, unitId?: string | null) {
+    if (!unitId) return;
+    await tx.$queryRaw`SELECT "id" FROM "Unit" WHERE "id" = ${unitId} FOR SHARE`;
+    const unit = await tx.unit.findFirst({ where: { id: unitId, organizationId: orgId, customerId } });
+    if (!unit) throw new ValidationError('Choose a unit registered to this customer.');
+}
 
 export const getBookings = async (req: Request, res: Response) => {
     const user = requireUser(req);
     const { page, limit, skip, take } = parsePagination(req.query);
-    const filters = listBookingsSchema.parse(req.query);
-
+    const filters = listSchema.parse(req.query);
     const where: Prisma.BookingWhereInput = { ...branchScopedWhere(user) };
-
     if (filters.status) where.status = filters.status;
     if (filters.technicianId) where.technicianId = filters.technicianId;
-
-    // An admin may narrow to a branch; a branch leader is already pinned to one.
-    if (filters.branchId && user.role === UserRole.ADMIN) {
-        where.branchId = filters.branchId;
-    }
-
-    if (filters.from || filters.to) {
-        where.scheduledAt = {
-            ...(filters.from ? { gte: new Date(filters.from) } : {}),
-            ...(filters.to ? { lte: new Date(filters.to) } : {}),
-        };
-    }
-
-    if (filters.q) {
-        where.OR = [
-            { serviceType: { contains: filters.q, mode: 'insensitive' } },
-            { customer: { name: { contains: filters.q, mode: 'insensitive' } } },
-            { customer: { phone: { contains: filters.q } } },
-        ];
-    }
-
+    if (filters.customerId) where.customerId = filters.customerId;
+    if (filters.unitId) where.unitId = filters.unitId;
+    if (filters.branchId && user.role === UserRole.ADMIN) where.branchId = filters.branchId;
+    if (filters.from || filters.to) where.scheduledAt = { ...(filters.from ? { gte: new Date(filters.from) } : {}), ...(filters.to ? { lte: new Date(filters.to) } : {}) };
+    const search = filters.q || filters.search;
+    if (search) where.OR = [ { serviceType: { contains: search, mode: 'insensitive' } }, { customer: { name: { contains: search, mode: 'insensitive' } } }, { customer: { phone: { contains: search } } } ];
     const [bookings, total] = await prisma.$transaction([
-        prisma.booking.findMany({
-            where,
-            include: BOOKING_INCLUDE,
-            orderBy: { scheduledAt: 'asc' },
-            skip,
-            take,
-        }),
+        prisma.booking.findMany({ where, include: BOOKING_INCLUDE, orderBy: { scheduledAt: 'asc' }, skip, take }),
         prisma.booking.count({ where }),
     ]);
-
-    res.json(toPage(bookings, total, page, limit));
+    res.json(toPage(bookings.map(serializeBooking), total, page, limit));
 };
 
 export const createBooking = async (req: Request, res: Response) => {
     const user = requireUser(req);
-
-    const validation = createBookingSchema.safeParse(req.body);
-    if (!validation.success) {
-        throw new ValidationError('Validation Error', validation.error.issues);
-    }
-
-    const { customerId, branchId, technicianId, serviceType, scheduledAt, notes } =
-        validation.data;
-
-    // Resolve every foreign key inside the caller's tenant before writing.
-    // Without this an admin could attach a booking to another org's branch.
-    await assertBranchInScope(user, branchId);
-    await assertCustomerInScope(user, customerId);
-
-    if (technicianId) {
-        const technician = await assertTechnicianInScope(user, technicianId);
-        if (technician.branchId !== branchId) {
-            throw new ForbiddenError('Technician does not belong to this branch');
-        }
-    }
-
-    const booking = await prisma.booking.create({
-        data: {
-            customerId,
-            branchId,
-            technicianId: technicianId || null,
-            serviceType,
-            notes,
-            scheduledAt: new Date(scheduledAt),
-        },
-        include: BOOKING_INCLUDE,
+    const data = createSchema.parse(req.body);
+    const booking = await prisma.$transaction(async (tx) => {
+        await assertBranchInScope(user, data.branchId, tx);
+        await assertCustomerInScope(user, data.customerId, tx);
+        await assertUnit(tx, user.orgId, data.customerId, data.unitId);
+        const scheduledAt = new Date(data.scheduledAt);
+        if (data.technicianId) await assertDispatchAvailable(tx, user, data.technicianId, data.branchId, scheduledAt, data.durationMinutes);
+        const created = await tx.booking.create({ data: { ...data, scheduledAt, technicianId: data.technicianId || null, unitId: data.unitId || null }, include: BOOKING_INCLUDE });
+        await auditInTransaction(tx, req, 'BOOKING_CREATE', 'booking', created.id, created.branchId, `${created.serviceType} for ${created.customer.name}`);
+        return created;
     });
-
-    await logAudit(req, 'BOOKING_CREATE', 'booking', booking.id, booking.branchId);
-    res.status(201).json(booking);
+    res.status(201).json(serializeBooking(booking));
 };
 
 export const updateBooking = async (req: Request, res: Response) => {
     const user = requireUser(req);
-    const { id } = req.params as { id: string };
-
-    const validation = updateBookingSchema.safeParse(req.body);
-    if (!validation.success) {
-        throw new ValidationError('Validation Error', validation.error.issues);
-    }
-
-    const { status, scheduledAt, technicianId, notes } = validation.data;
-
-    const booking = await prisma.booking.findFirst({
-        where: { id, ...branchScopedWhere(user) },
-        include: { invoice: true },
-    });
-
-    if (!booking) throw new NotFoundError('Booking not found');
-
-    if (status) {
-        assertValidTransition(booking.status, status);
-
-        // Billing guard: a job cannot be closed out before it has been invoiced.
-        if (status === BookingStatus.COMPLETED && !booking.invoice) {
-            throw new ValidationError('Billing Guard: an invoice is required before completion.');
+    const data = updateSchema.parse(req.body);
+    if (!Object.keys(data).length) throw new ValidationError('No booking changes were supplied.');
+    const updated = await prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT "id" FROM "Booking" WHERE "id" = ${req.params.id} FOR UPDATE`;
+        const booking = await tx.booking.findFirst({ where: { id: req.params.id, ...branchScopedWhere(user) }, include: { invoice: true } });
+        if (!booking) throw new NotFoundError('Booking not found');
+        if (TERMINAL_STATUSES.includes(booking.status) && Object.keys(data).length === 1 && data.status === booking.status) {
+            return tx.booking.findUniqueOrThrow({ where: { id: booking.id }, include: BOOKING_INCLUDE });
         }
-    }
-
-    // technicianId is optional; '' / null explicitly unassign.
-    let nextTechnicianId: string | null | undefined;
-    if (technicianId !== undefined) {
-        if (!technicianId) {
-            nextTechnicianId = null;
-        } else {
-            const technician = await assertTechnicianInScope(user, technicianId);
-            if (technician.branchId !== booking.branchId) {
-                throw new ForbiddenError('Technician does not belong to this booking\'s branch');
-            }
-            nextTechnicianId = technician.id;
+        assertOpen(booking.status);
+        if (data.status) assertValidTransition(booking.status, data.status);
+        if (data.status === BookingStatus.COMPLETED && !booking.invoice) throw new ValidationError('Create an invoice before completing this work order.');
+        const technicianId = data.technicianId === undefined ? booking.technicianId : data.technicianId || null;
+        const scheduledAt = data.scheduledAt ? new Date(data.scheduledAt) : booking.scheduledAt;
+        const durationMinutes = data.durationMinutes ?? booking.durationMinutes;
+        await assertUnit(tx, user.orgId, booking.customerId, data.unitId);
+        if (technicianId && !TERMINAL_STATUSES.includes(data.status ?? booking.status)) {
+            await assertDispatchAvailable(tx, user, technicianId, booking.branchId, scheduledAt, durationMinutes, booking.id);
+        } else if (technicianId && data.technicianId !== undefined) {
+            await assertTechnicianAssignable(tx, user, technicianId, booking.branchId);
         }
-    }
-
-    const updated = await prisma.booking.update({
-        where: { id },
-        data: {
-            status,
-            notes,
-            technicianId: nextTechnicianId,
-            scheduledAt: scheduledAt ? new Date(scheduledAt) : undefined,
-        },
-        include: BOOKING_INCLUDE,
+        if (data.status === BookingStatus.ON_SITE && !technicianId) throw new ValidationError('Assign a technician before starting on-site service.');
+        const result = await tx.booking.update({ where: { id: booking.id }, data: { ...data, scheduledAt, technicianId, unitId: data.unitId === undefined ? undefined : data.unitId || null, checklist: data.checklist as Prisma.InputJsonValue | undefined }, include: BOOKING_INCLUDE });
+        await auditInTransaction(tx, req, 'BOOKING_UPDATE', 'booking', result.id, result.branchId, data.status ? `Status ${booking.status} → ${data.status}` : `Updated ${result.customer.name} work order`);
+        return result;
     });
-
-    await logAudit(
-        req,
-        'BOOKING_UPDATE',
-        'booking',
-        updated.id,
-        updated.branchId,
-        status ? `status: ${booking.status} -> ${status}` : undefined
-    );
-    res.json(updated);
+    res.json(serializeBooking(updated));
 };
 
 export const getBookingById = async (req: Request, res: Response) => {
-    const user = requireUser(req);
-    const { id } = req.params as { id: string };
-
-    const booking = await prisma.booking.findFirst({
-        where: { id, ...branchScopedWhere(user) },
-        include: BOOKING_INCLUDE,
-    });
-
+    const booking = await prisma.booking.findFirst({ where: { id: req.params.id, ...branchScopedWhere(requireUser(req)) }, include: BOOKING_INCLUDE });
     if (!booking) throw new NotFoundError('Booking not found');
-    res.json(booking);
+    res.json(serializeBooking(booking));
 };
 
 export const deleteBooking = async (req: Request, res: Response) => {
-    const user = requireUser(req);
-    const { id } = req.params as { id: string };
-
-    const booking = await prisma.booking.findFirst({
-        where: { id, ...branchScopedWhere(user) },
-        include: { invoice: true },
+    await prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT "id" FROM "Booking" WHERE "id" = ${req.params.id} FOR UPDATE`;
+        const booking = await tx.booking.findFirst({ where: { id: req.params.id, ...branchScopedWhere(requireUser(req)) }, include: { invoice: true, _count: { select: { parts: true } } } });
+        if (!booking) throw new NotFoundError('Booking not found');
+        assertOpen(booking.status);
+        if (booking.invoice || booking._count.parts > 0) throw new ValidationError('A booking with billing or stock history cannot be deleted. Cancel it instead.');
+        await tx.booking.delete({ where: { id: booking.id } });
+        await auditInTransaction(tx, req, 'BOOKING_DELETE', 'booking', booking.id, booking.branchId);
     });
-
-    if (!booking) throw new NotFoundError('Booking not found');
-
-    // Deleting a booking with an invoice would orphan financial history.
-    if (booking.invoice) {
-        throw new ValidationError(
-            'Cannot delete a booking that has been invoiced. Cancel it instead.'
-        );
-    }
-
-    await prisma.booking.delete({ where: { id } });
-    await logAudit(req, 'BOOKING_DELETE', 'booking', id, booking.branchId);
     res.json({ message: 'Booking deleted successfully' });
 };

@@ -1,5 +1,5 @@
 import prisma from '../db/prisma';
-import { UserRole } from '@prisma/client';
+import { UserRole, Prisma } from '@prisma/client';
 import { AuthUser } from '../types';
 import { ForbiddenError, NotFoundError } from '../middleware/errorHandler';
 
@@ -15,7 +15,10 @@ import { ForbiddenError, NotFoundError } from '../middleware/errorHandler';
 
 /** True when the caller only sees a single branch. */
 export function isBranchScoped(user: AuthUser): user is AuthUser & { branchId: string } {
-    return user.role === UserRole.BRANCH_LEADER && !!user.branchId;
+    if (user.role === UserRole.BRANCH_LEADER && !user.branchId) {
+        throw new ForbiddenError('Branch access is not configured. Contact your administrator.');
+    }
+    return user.role === UserRole.BRANCH_LEADER;
 }
 
 /**
@@ -32,12 +35,12 @@ export function branchScopedWhere(user: AuthUser) {
  * Resolve a branch that the caller is allowed to write to.
  * Throws rather than returning null so callers cannot ignore the result.
  */
-export async function assertBranchInScope(user: AuthUser, branchId: string) {
+export async function assertBranchInScope(user: AuthUser, branchId: string, db: Prisma.TransactionClient = prisma) {
     if (isBranchScoped(user) && branchId !== user.branchId) {
         throw new ForbiddenError('You can only act on your own branch');
     }
 
-    const branch = await prisma.branch.findFirst({
+    const branch = await db.branch.findFirst({
         where: { id: branchId, organizationId: user.orgId },
     });
 
@@ -46,8 +49,8 @@ export async function assertBranchInScope(user: AuthUser, branchId: string) {
 }
 
 /** Resolve a customer belonging to the caller's organization. */
-export async function assertCustomerInScope(user: AuthUser, customerId: string) {
-    const customer = await prisma.customer.findFirst({
+export async function assertCustomerInScope(user: AuthUser, customerId: string, db: Prisma.TransactionClient = prisma) {
+    const customer = await db.customer.findFirst({
         where: { id: customerId, organizationId: user.orgId },
     });
 
@@ -59,8 +62,8 @@ export async function assertCustomerInScope(user: AuthUser, customerId: string) 
  * Resolve a technician the caller may assign: same organization always, and
  * same branch when the caller is branch-scoped.
  */
-export async function assertTechnicianInScope(user: AuthUser, technicianId: string) {
-    const technician = await prisma.technician.findFirst({
+export async function assertTechnicianInScope(user: AuthUser, technicianId: string, db: Prisma.TransactionClient = prisma) {
+    const technician = await db.technician.findFirst({
         where: { id: technicianId, branch: { organizationId: user.orgId } },
     });
 

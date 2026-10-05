@@ -36,3 +36,9 @@ Thumbs.db
 backend/prisma/migrations/*.sql
 !backend/prisma/migrations/*/migration.sql
 .vercel
+
+# Isolated local PostgreSQL, generated credentials and browser evidence
+.local/
+.sauron/backups/
+.sauron/graph/
+artifacts/
