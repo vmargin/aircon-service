@@ -40,4 +40,4 @@ The research requirements R1–R10 in `research.md` map to existing customer/uni
 - [x] Light and dark palettes switch consistently and survive reload; representative text, navigation, and status combinations passed the WCAG 4.5:1 contrast check.
 - [x] Branch authorization and existing service/payment invariants remain unchanged; checklist and inventory mutations retain server-side validation and audit records.
 - [x] Typecheck, unit/integration suites, production build, and Playwright smoke checks pass after the final inventory and responsive-toolbar changes.
-- [ ] Only the requested feature branch is pushed; production and `master` remain untouched.
+- [x] Only the requested feature branch is pushed; production and `master` remain untouched.

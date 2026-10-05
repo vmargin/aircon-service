@@ -17,4 +17,9 @@ The local launcher uses `.local/postgres`; existing demo records were preserved 
 
 The PostgreSQL migration is additive and is included with the code. Production migration state was not inspected or changed. Railway's start command runs `prisma migrate deploy`; the Vercel build command does not. Verify the target deployment and apply the migration to its intended database before serving the new API against that schema. A Git push alone does not prove that migration or deployment succeeded.
 
+## Branch delivery
+
+- Feature implementation commit `aa3eddcc62218511ed6cac1f78408c988bf98b05` was pushed to `origin/codex/aircon-service-operations` and verified with `git ls-remote`.
+- `origin/master` remains at `e34d30bbb5751b35b625775a53d5c1aa1121e9c2`. No production deployment or production database change was made.
+
 The production JWT-secret guard was also covered by tests: a short production secret makes health and application routes return 503, including in the serverless app path.
