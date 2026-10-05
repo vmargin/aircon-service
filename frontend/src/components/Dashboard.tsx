@@ -332,15 +332,15 @@ export default function Dashboard() {
           </div>
           <div className="chart-legend">
             <span>
-              <i className="legend-dot" style={{ background: "#5eb9e5" }} />
+              <i className="legend-dot" style={{ background: "var(--chart-completed)" }} />
               Completed
             </span>
             <span>
-              <i className="legend-dot" style={{ background: "#3a88bb" }} />
+              <i className="legend-dot" style={{ background: "var(--chart-progress)" }} />
               On site
             </span>
             <span>
-              <i className="legend-dot" style={{ background: "#648ea4" }} />
+              <i className="legend-dot" style={{ background: "var(--chart-scheduled)" }} />
               Scheduled
             </span>
           </div>
@@ -476,7 +476,7 @@ export default function Dashboard() {
                       <small
                         style={{
                           display: "block",
-                          color: "#93b5c6",
+                          color: "var(--muted)",
                           marginTop: 5,
                         }}
                       >
@@ -588,7 +588,7 @@ export default function Dashboard() {
           <div className="dispatch-foot">
             Outstanding balance
             <strong
-              style={{ color: "#c4e3f3", marginLeft: "auto", fontWeight: 500 }}
+              style={{ color: "var(--text)", marginLeft: "auto", fontWeight: 500 }}
             >
               {formatCurrency(summary.outstanding)}
             </strong>

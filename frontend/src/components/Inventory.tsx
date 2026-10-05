@@ -1,7 +1,15 @@
 import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Boxes, PackagePlus, Plus, Search } from "lucide-react";
+import {
+  AlertTriangle,
+  Boxes,
+  PackagePlus,
+  Plus,
+  Search,
+  SlidersHorizontal,
+} from "lucide-react";
 import api, { formatCurrency } from "../api/api";
+import { clearIdempotencyKey, getIdempotencyKey } from "../api/idempotency";
 import { getAll, invalidateOperations, manilaDate } from "../api/operational";
 import { useAuth } from "../auth/AuthContext";
 import { Branch, InventoryItem } from "../types";
@@ -25,6 +33,22 @@ interface StockItem extends InventoryItem {
     createdAt: string;
   }[];
 }
+interface RestockRequest {
+  itemId: string;
+  quantity: number;
+  note?: string;
+  idempotencyKey: string;
+  scope: string;
+  keyPayload: { inventoryItemId: string; quantity: number; note: string | null };
+}
+interface AdjustmentRequest {
+  itemId: string;
+  delta: number;
+  reason: string;
+  idempotencyKey: string;
+  scope: string;
+  keyPayload: { inventoryItemId: string; delta: number; reason: string };
+}
 const emptyForm = {
   branchId: "",
   name: "",
@@ -45,6 +69,9 @@ export default function Inventory() {
   const [restocking, setRestocking] = useState<StockItem | null>(null);
   const [quantity, setQuantity] = useState("1");
   const [note, setNote] = useState("");
+  const [adjusting, setAdjusting] = useState<StockItem | null>(null);
+  const [adjustment, setAdjustment] = useState("1");
+  const [adjustmentReason, setAdjustmentReason] = useState("");
   const [error, setError] = useState("");
   const [movementItem, setMovementItem] = useState<StockItem | null>(null);
   const items = useQuery({
@@ -71,13 +98,38 @@ export default function Inventory() {
     onError: (err: Error) => setError(err.message),
   });
   const restock = useMutation({
-    mutationFn: () =>
-      api.patch("/inventory/" + restocking!.id + "/restock", {
-        quantity: Number(quantity),
-        note: note || undefined,
+    mutationFn: ({ itemId, quantity, note, idempotencyKey }: RestockRequest) =>
+      api.patch("/inventory/" + itemId + "/restock", {
+        quantity,
+        note,
+        idempotencyKey,
       }),
-    onSuccess: () => {
+    onSuccess: (_result, request) => {
+      clearIdempotencyKey(
+        request.scope,
+        request.keyPayload,
+        request.idempotencyKey,
+      );
       setRestocking(null);
+      setError("");
+      invalidateOperations(client);
+    },
+    onError: (err: Error) => setError(err.message),
+  });
+  const adjust = useMutation({
+    mutationFn: ({ itemId, delta, reason, idempotencyKey }: AdjustmentRequest) =>
+      api.post("/inventory/" + itemId + "/adjustments", {
+        delta,
+        reason,
+        idempotencyKey,
+      }),
+    onSuccess: (_result, request) => {
+      clearIdempotencyKey(
+        request.scope,
+        request.keyPayload,
+        request.idempotencyKey,
+      );
+      setAdjusting(null);
       setError("");
       invalidateOperations(client);
     },
@@ -99,6 +151,40 @@ export default function Inventory() {
     event.preventDefault();
     setError("");
     save.mutate();
+  };
+  const submitRestock = () => {
+    if (!restocking) return;
+    const quantityValue = Number(quantity);
+    const noteValue = note.trim();
+    const keyPayload = {
+      inventoryItemId: restocking.id,
+      quantity: quantityValue,
+      note: noteValue || null,
+    };
+    const scope = `restock:${user?.orgId ?? "unknown"}:${user?.email ?? "unknown"}`;
+    restock.mutate({
+      itemId: restocking.id,
+      quantity: quantityValue,
+      note: noteValue || undefined,
+      idempotencyKey: getIdempotencyKey(scope, keyPayload),
+      scope,
+      keyPayload,
+    });
+  };
+  const submitAdjustment = () => {
+    if (!adjusting) return;
+    const delta = Number(adjustment);
+    const reason = adjustmentReason.trim();
+    const keyPayload = { inventoryItemId: adjusting.id, delta, reason };
+    const scope = `adjustment:${user?.orgId ?? "unknown"}:${user?.email ?? "unknown"}`;
+    adjust.mutate({
+      itemId: adjusting.id,
+      delta,
+      reason,
+      idempotencyKey: getIdempotencyKey(scope, keyPayload),
+      scope,
+      keyPayload,
+    });
   };
   const all = items.data ?? [];
   const scoped = all.filter((item) => !branch || item.branchId === branch);
@@ -263,6 +349,17 @@ export default function Inventory() {
                         >
                           <PackagePlus size={14} /> Restock
                         </Button>
+                        <Button
+                          variant="secondary"
+                          onClick={() => {
+                            setAdjusting(item);
+                            setAdjustment("1");
+                            setAdjustmentReason("");
+                            setError("");
+                          }}
+                        >
+                          <SlidersHorizontal size={14} /> Adjust
+                        </Button>
                         <button
                           className="icon-button"
                           aria-label={"View stock movements for " + item.name}
@@ -417,7 +514,7 @@ export default function Inventory() {
           onSubmit={(e) => {
             e.preventDefault();
             setError("");
-            restock.mutate();
+            submitRestock();
           }}
         >
           {error && (
@@ -469,6 +566,79 @@ export default function Inventory() {
         </form>
       </Modal>
       <Modal
+        isOpen={Boolean(adjusting)}
+        onClose={() => !adjust.isPending && setAdjusting(null)}
+        title="Adjust stock count"
+        subtitle={
+          adjusting
+            ? adjusting.name + " · " + (adjusting.branch?.name ?? "Branch")
+            : ""
+        }
+        maxWidth="sm"
+      >
+        <form
+          className="form-stack"
+          onSubmit={(e) => {
+            e.preventDefault();
+            setError("");
+            submitAdjustment();
+          }}
+        >
+          {error && (
+            <p className="notice notice-error" role="alert">
+              {error}
+            </p>
+          )}
+          <p className="muted">
+            Currently {adjusting?.quantityOnHand} {adjusting?.unit} on hand.
+            Use a positive number to add stock or a negative number to remove it.
+          </p>
+          <Field
+            label={`Signed quantity (${adjusting?.unit ?? "pcs"})`}
+            hint="Use a negative quantity for damaged, missing, or corrected stock."
+          >
+            <input
+              className={inputClass}
+              type="number"
+              min={-1_000_000}
+              max={1_000_000}
+              step={1}
+              required
+              value={adjustment}
+              onChange={(e) => setAdjustment(e.target.value)}
+            />
+          </Field>
+          <Field label="Reason">
+            <input
+              className={inputClass}
+              required
+              minLength={1}
+              maxLength={300}
+              placeholder="Cycle count correction"
+              value={adjustmentReason}
+              onChange={(e) => setAdjustmentReason(e.target.value)}
+            />
+          </Field>
+          <div className="modal-actions">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={adjust.isPending}
+              onClick={() => setAdjusting(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              loading={adjust.isPending}
+              type="submit"
+              disabled={!adjustmentReason.trim() || Number(adjustment) === 0}
+            >
+              Save adjustment
+            </Button>
+          </div>
+        </form>
+      </Modal>
+      <Modal
         isOpen={Boolean(movementItem)}
         onClose={() => setMovementItem(null)}
         title="Recent stock movements"
@@ -479,7 +649,7 @@ export default function Inventory() {
           {!movementItem?.movements?.length ? (
             <EmptyState
               title="No recorded movements yet"
-              message="Opening stock, restocking, and work order use will appear here."
+              message="Opening stock, restocks, adjustments, and work order use will appear here."
             />
           ) : (
             <div className="history-list">

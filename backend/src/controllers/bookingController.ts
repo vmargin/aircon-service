@@ -21,7 +21,30 @@ const sharedFields = {
     priority: z.nativeEnum(BookingPriority).default(BookingPriority.NORMAL),
 };
 const createSchema = z.object({ ...sharedFields, customerId: z.string().uuid(), branchId: z.string().uuid() });
-const checklistSchema = z.array(z.object({ id: z.string().min(1).max(80), label: z.string().trim().min(1).max(250), checked: z.boolean() })).max(30).refine((items) => new Set(items.map((item) => item.id)).size === items.length, 'Checklist item IDs must be unique.');
+const inspectionOutcomeSchema = z.enum([
+    'PENDING',
+    'PASS',
+    'FOLLOW_UP',
+    'NOT_APPLICABLE',
+]);
+const checklistItemSchema = z.object({
+    id: z.string().min(1).max(80),
+    label: z.string().trim().min(1).max(250),
+    outcome: inspectionOutcomeSchema.optional(),
+    checked: z.boolean().optional(),
+})
+    .refine(
+        (item) => item.outcome !== undefined || item.checked !== undefined,
+        'Each checklist item must include an outcome.',
+    )
+    .refine(
+        (item) => item.outcome === undefined || item.checked === undefined || item.checked === (item.outcome === 'PASS'),
+        'Legacy checked must match whether the outcome is PASS.',
+    );
+const checklistSchema = z.array(checklistItemSchema)
+    .max(30)
+    .refine((items) => new Set(items.map((item) => item.id)).size === items.length, 'Checklist item IDs must be unique.')
+    .transform((items) => items.map((item) => item.outcome === undefined ? item : { ...item, checked: item.outcome === 'PASS' }));
 const updateSchema = z.object({ ...sharedFields, durationMinutes: z.number().int().min(30).max(480), priority: z.nativeEnum(BookingPriority), status: z.nativeEnum(BookingStatus), diagnosis: z.string().trim().max(4000).nullable(), checklist: checklistSchema }).partial();
 const listSchema = z.object({ status: z.nativeEnum(BookingStatus).optional(), branchId: z.string().uuid().optional(), technicianId: z.string().uuid().optional(), customerId: z.string().uuid().optional(), unitId: z.string().uuid().optional(), from: z.string().datetime().optional(), to: z.string().datetime().optional(), q: z.string().trim().max(100).optional(), search: z.string().trim().max(100).optional() });
 

@@ -144,9 +144,51 @@ integration('HTTP domain integration (isolated PostgreSQL)', () => {
         expect((await request(`/bookings/${mainBooking}`, { status: 'CONFIRMED' }, 'PATCH')).status).toBe(200);
         expect((await request(`/bookings/${mainBooking}`, { status: 'ON_SITE' }, 'PATCH')).status).toBe(200);
         expect((await request(`/bookings/${mainBooking}`, { status: 'COMPLETED' }, 'PATCH')).status).toBe(400);
-        const update = await request(`/bookings/${mainBooking}`, { diagnosis: 'Filter requires replacement', checklist: [{ id: 'filter', label: 'Inspect air filter', checked: true }] }, 'PATCH');
+        const outcomes = [
+            { id: 'visual', label: 'Inspect indoor and outdoor units', outcome: 'PENDING' },
+            { id: 'filter', label: 'Inspect air filter', outcome: 'PASS' },
+            { id: 'coil', label: 'Inspect coils', outcome: 'FOLLOW_UP' },
+            { id: 'refrigerant', label: 'Check refrigerant observations', outcome: 'NOT_APPLICABLE' },
+        ];
+        const update = await request(`/bookings/${mainBooking}`, {
+            diagnosis: 'Filter requires replacement',
+            checklist: outcomes,
+        }, 'PATCH');
         expect(update.data.durationMinutes).toBe(120);
-        expect(update.data.checklist[0].checked).toBe(true);
+        expect(update.status).toBe(200);
+        expect(update.data.checklist.map((item: any) => item.outcome)).toEqual([
+            'PENDING', 'PASS', 'FOLLOW_UP', 'NOT_APPLICABLE',
+        ]);
+        expect(update.data.checklist.map((item: any) => item.checked)).toEqual([false, true, false, false]);
+        expect((await request(`/bookings/${mainBooking}`, {
+            checklist: [{ id: 'invalid', label: 'Invalid status', outcome: 'FAILED' }],
+        }, 'PATCH')).status).toBe(400);
+        expect((await request(`/bookings/${mainBooking}`, {
+            checklist: [{ id: 'missing-outcome', label: 'No result' }],
+        }, 'PATCH')).status).toBe(400);
+        expect((await request(`/bookings/${mainBooking}`, {
+            checklist: [{ id: 'conflict', label: 'Conflicting fields', outcome: 'PASS', checked: false }],
+        }, 'PATCH')).status).toBe(400);
+        expect((await request(`/bookings/${mainBooking}`, {
+            checklist: [{ id: 'duplicate', label: 'First', outcome: 'PASS' }, { id: 'duplicate', label: 'Second', outcome: 'PENDING' }],
+        }, 'PATCH')).status).toBe(400);
+        expect((await request(`/bookings/${mainBooking}`, {
+            checklist: [{ id: '', label: 'Missing ID', outcome: 'PASS' }],
+        }, 'PATCH')).status).toBe(400);
+        expect((await request(`/bookings/${mainBooking}`, {
+            checklist: [{ id: 'empty-label', label: '  ', outcome: 'PASS' }],
+        }, 'PATCH')).status).toBe(400);
+        const legacyChecklist = [
+            { id: 'legacy-passed', label: 'Legacy passed result', checked: true },
+            { id: 'legacy-pending', label: 'Legacy unchecked result', checked: false },
+        ];
+        const legacy = await request(`/bookings/${mainBooking}`, {
+            checklist: legacyChecklist,
+        }, 'PATCH');
+        expect(legacy.status).toBe(200);
+        expect(legacy.data.checklist).toEqual(legacyChecklist);
+        const legacyRead = await request(`/bookings/${mainBooking}`, undefined, 'GET');
+        expect(legacyRead.data.checklist).toEqual(legacyChecklist);
         expect((await request(`/units/${unitId}`, { customerId: otherCustomerId }, 'PATCH')).status).toBe(400);
     });
 
@@ -154,12 +196,102 @@ integration('HTTP domain integration (isolated PostgreSQL)', () => {
         const create = await request('/inventory', { branchId, name: 'Air filter', sku: 'TEST-FILTER', quantityOnHand: 5, reorderLevel: 2, unitCost: 12.25 });
         expect(create.status).toBe(201);
         itemId = create.data.id;
-        const use = () => request(`/bookings/${mainBooking}/parts`, { inventoryItemId: itemId, quantity: 4 });
+        const openingMovement = await db.stockMovement.findFirstOrThrow({ where: { inventoryItemId: itemId, reason: 'Opening stock' } });
+        expect(openingMovement).toMatchObject({ quantity: 5, idempotencyKey: null, idempotencyPayloadHash: null });
+
+        const missingPartKey = await request(`/bookings/${mainBooking}/parts`, { inventoryItemId: itemId, quantity: 1 });
+        const missingRestockKey = await request(`/inventory/${itemId}/restock`, { quantity: 1 }, 'PATCH');
+        const missingAdjustmentKey = await request(`/inventory/${itemId}/adjustments`, { delta: 1, reason: 'Missing retry key' }, 'POST');
+        expect([missingPartKey.status, missingRestockKey.status, missingAdjustmentKey.status]).toEqual([400, 400, 400]);
+        expect((await db.inventoryItem.findUniqueOrThrow({ where: { id: itemId } })).quantityOnHand).toBe(5);
+        expect(await db.partUsage.count({ where: { bookingId: mainBooking, inventoryItemId: itemId } })).toBe(0);
+        expect(await db.stockMovement.count({ where: { inventoryItemId: itemId } })).toBe(1);
+
+        const use = () => request(`/bookings/${mainBooking}/parts`, { inventoryItemId: itemId, quantity: 4, idempotencyKey: randomUUID() });
         expect((await Promise.all([use(), use()])).map((result) => result.status).sort()).toEqual([201, 409]);
         expect((await db.inventoryItem.findUniqueOrThrow({ where: { id: itemId } })).quantityOnHand).toBe(1);
-        expect((await request(`/inventory/${itemId}/restock`, { quantity: -2 }, 'PATCH')).status).toBe(400);
-        expect((await request(`/inventory/${itemId}/restock`, { quantity: 2 }, 'PATCH')).data.quantityOnHand).toBe(3);
-        expect((await db.stockMovement.findMany({ where: { inventoryItemId: itemId } })).map((movement) => movement.quantity).sort((a, b) => a - b)).toEqual([-4, 2, 5]);
+
+        const partKey = randomUUID();
+        const partRequest = { inventoryItemId: itemId, quantity: 1, idempotencyKey: partKey };
+        const partRetries = await Promise.all([
+            request(`/bookings/${mainBooking}/parts`, partRequest),
+            request(`/bookings/${mainBooking}/parts`, partRequest),
+        ]);
+        expect(partRetries.map((result) => result.status).sort()).toEqual([200, 201]);
+        expect((await db.inventoryItem.findUniqueOrThrow({ where: { id: itemId } })).quantityOnHand).toBe(0);
+        expect(await db.stockMovement.count({ where: { idempotencyKey: partKey } })).toBe(1);
+        expect(await db.partUsage.count({ where: { bookingId: mainBooking, inventoryItemId: itemId } })).toBe(2);
+        expect((await request(`/bookings/${mainBooking}/parts`, partRequest)).status).toBe(200);
+        expect((await request(`/bookings/${mainBooking}/parts`, { ...partRequest, quantity: 2 })).status).toBe(409);
+        expect((await db.inventoryItem.findUniqueOrThrow({ where: { id: itemId } })).quantityOnHand).toBe(0);
+
+        expect((await request(`/inventory/${itemId}/restock`, { quantity: -2, idempotencyKey: randomUUID() }, 'PATCH')).status).toBe(400);
+        const restockKey = randomUUID();
+        const restockRequest = { quantity: 2, note: 'Supplier delivery', idempotencyKey: restockKey };
+        const restockRetries = await Promise.all([
+            request(`/inventory/${itemId}/restock`, restockRequest, 'PATCH'),
+            request(`/inventory/${itemId}/restock`, restockRequest, 'PATCH'),
+        ]);
+        expect(restockRetries.map((result) => result.status)).toEqual([200, 200]);
+        expect((await db.inventoryItem.findUniqueOrThrow({ where: { id: itemId } })).quantityOnHand).toBe(2);
+        expect(await db.stockMovement.count({ where: { idempotencyKey: restockKey } })).toBe(1);
+        expect((await request(`/inventory/${itemId}/restock`, restockRequest, 'PATCH')).status).toBe(200);
+        expect((await request(`/inventory/${itemId}/restock`, { ...restockRequest, quantity: 3 }, 'PATCH')).status).toBe(409);
+        expect((await request(`/inventory/${itemId}/adjustments`, {
+            delta: 2, reason: 'Same effect, different action', idempotencyKey: restockKey,
+        }, 'POST')).status).toBe(409);
+        expect((await db.inventoryItem.findUniqueOrThrow({ where: { id: itemId } })).quantityOnHand).toBe(2);
+
+        const adjustmentKey = randomUUID();
+        const adjustmentRequest = { delta: 3, reason: 'Cycle count correction', idempotencyKey: adjustmentKey };
+        const adjustmentRetries = await Promise.all([
+            request(`/inventory/${itemId}/adjustments`, adjustmentRequest, 'POST'),
+            request(`/inventory/${itemId}/adjustments`, adjustmentRequest, 'POST'),
+        ]);
+        expect(adjustmentRetries.map((result) => result.status).sort()).toEqual([200, 201]);
+        expect((await db.inventoryItem.findUniqueOrThrow({ where: { id: itemId } })).quantityOnHand).toBe(5);
+        expect(await db.stockMovement.count({ where: { idempotencyKey: adjustmentKey } })).toBe(1);
+        expect((await request(`/inventory/${itemId}/adjustments`, adjustmentRequest, 'POST')).status).toBe(200);
+        expect((await request(`/inventory/${itemId}/adjustments`, {
+            ...adjustmentRequest, delta: -2,
+        }, 'POST')).status).toBe(409);
+        expect((await request(`/inventory/${itemId}/adjustments`, adjustmentRequest, 'POST', leader)).status).toBe(409);
+        expect((await request(`/inventory/${itemId}/adjustments`, {
+            delta: -6, reason: 'Remove more than available', idempotencyKey: randomUUID(),
+        }, 'POST')).status).toBe(409);
+        expect((await request(`/inventory/${itemId}/adjustments`, {
+            delta: 0, reason: 'No change', idempotencyKey: randomUUID(),
+        }, 'POST')).status).toBe(400);
+        expect((await db.inventoryItem.findUniqueOrThrow({ where: { id: itemId } })).quantityOnHand).toBe(5);
+
+        const maximum = await request('/inventory', {
+            branchId, name: 'Maximum stock item', sku: 'TEST-MAX-STOCK', quantityOnHand: 1_000_000,
+            reorderLevel: 0, unitCost: 1,
+        });
+        expect(maximum.status).toBe(201);
+        expect((await request(`/inventory/${maximum.data.id}/adjustments`, {
+            delta: 1, reason: 'Over supported limit', idempotencyKey: randomUUID(),
+        }, 'POST')).status).toBe(400);
+
+        const foreign = await request('/inventory', {
+            branchId: otherBranchId, name: 'Other branch stock', sku: 'TEST-OTHER-BRANCH',
+            quantityOnHand: 2, reorderLevel: 1, unitCost: 5,
+        });
+        expect(foreign.status).toBe(201);
+        expect((await request(`/inventory/${foreign.data.id}/adjustments`, {
+            delta: -1, reason: 'Branch leader must not cross branches', idempotencyKey: randomUUID(),
+        }, 'POST', leader)).status).toBe(404);
+        expect((await db.inventoryItem.findUniqueOrThrow({ where: { id: foreign.data.id } })).quantityOnHand).toBe(2);
+
+        const movements = await db.stockMovement.findMany({ where: { inventoryItemId: itemId } });
+        expect(movements.map((movement) => movement.quantity).sort((a, b) => a - b)).toEqual([-4, -1, 2, 3, 5]);
+        const adjustmentMovement = await db.stockMovement.findUniqueOrThrow({ where: { idempotencyKey: adjustmentKey } });
+        expect(adjustmentMovement).toMatchObject({ quantity: 3, reason: 'Cycle count correction', bookingId: null });
+        expect(await db.auditLog.count({ where: { action: 'PART_USE', resourceId: mainBooking } })).toBe(2);
+        expect(await db.auditLog.count({ where: { action: 'INVENTORY_RESTOCK', resourceId: itemId } })).toBe(1);
+        const adjustmentAudit = await db.auditLog.findFirstOrThrow({ where: { action: 'INVENTORY_ADJUST', resourceId: itemId } });
+        expect(adjustmentAudit).toMatchObject({ branchId, details: expect.stringContaining('+3 pcs') });
+        expect(adjustmentAudit.details).toContain('Cycle count correction');
     });
 
     it('issues one invoice per job and derives exact partial receipts with idempotency', async () => {
@@ -168,7 +300,7 @@ integration('HTTP domain integration (isolated PostgreSQL)', () => {
         invoiceId = created.data.id;
         expect(created.data.amount).toBe('100.10');
         expect((await request('/invoices', { bookingId: mainBooking, amount: 100 })).status).toBe(409);
-        expect((await request(`/bookings/${mainBooking}/parts`, { inventoryItemId: itemId, quantity: 1 })).status).toBe(400);
+        expect((await request(`/bookings/${mainBooking}/parts`, { inventoryItemId: itemId, quantity: 1, idempotencyKey: randomUUID() })).status).toBe(400);
         const payment = { amount: 33.35, method: 'CASH', idempotencyKey: randomUUID() };
         const first = await request(`/invoices/${invoiceId}/payments`, payment);
         expect(first).toMatchObject({ status: 201, data: { amountPaid: '33.35', balance: '66.75', paymentStatus: 'PARTIAL' } });

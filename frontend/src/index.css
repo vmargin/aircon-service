@@ -25,3 +25,40 @@
 .drawer-dialog { position: fixed; margin: 0; padding: 0; inset: 0 auto 0 0; max-height: 100dvh; height: 100dvh; width: 228px; max-width: calc(100vw - 40px); border: 0; background: transparent; color: inherit; } .drawer-dialog:not([open]) { display: none; } .drawer-dialog::backdrop { background: #010f1bb5; backdrop-filter: blur(3px); } .drawer-dialog .drawer-sidebar { position: relative; inset: auto; height: 100%; width: 100%; transform: none; overflow-y: auto; }
 @media(max-width:1020px) { .desktop-sidebar { display: none; } }
 .calendar-scroll { overflow-x: auto; }
+
+/* Date and branch filters keep consistent columns without squeezing their labels. */
+.report-filter-grid {
+  flex: 1 1 420px;
+  min-width: min(100%, 420px);
+  align-items: end;
+  gap: 12px;
+}
+.report-filter-grid.has-branch {
+  flex-basis: 570px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 760px) {
+  .page-toolbar { align-items: stretch; }
+  .page-toolbar > .tab-bar { max-width: 100%; overflow-x: auto; }
+  .report-filter-grid,
+  .report-filter-grid.has-branch {
+    flex: 1 1 100%;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 360px) {
+  .global-search {
+    flex: 0 0 44px;
+    width: 44px;
+    justify-content: center;
+    padding: 10px;
+  }
+
+  .global-search span,
+  .global-search kbd {
+    display: none;
+  }
+}

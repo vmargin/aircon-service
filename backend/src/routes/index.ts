@@ -14,7 +14,7 @@ import {
 } from '../controllers/customerController';
 import { getInvoices, createInvoice, updatePaymentStatus, recordPayment } from '../controllers/invoiceController';
 import { getUnits, createUnit, updateUnit } from '../controllers/unitController';
-import { getInventory, createInventoryItem, restockInventory, useBookingPart } from '../controllers/inventoryController';
+import { getInventory, createInventoryItem, restockInventory, adjustInventory, useBookingPart } from '../controllers/inventoryController';
 import { getOverview, getActivity } from '../controllers/overviewController';
 import {
     getTechnicians,
@@ -64,6 +64,7 @@ router.patch('/units/:id', catchAsync(updateUnit));
 router.get('/inventory', catchAsync(getInventory));
 router.post('/inventory', catchAsync(createInventoryItem));
 router.patch('/inventory/:id/restock', catchAsync(restockInventory));
+router.post('/inventory/:id/adjustments', catchAsync(adjustInventory));
 router.get('/overview', catchAsync(getOverview));
 router.get('/activity', catchAsync(getActivity));
 

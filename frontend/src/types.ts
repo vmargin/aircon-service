@@ -69,7 +69,19 @@ export interface InventoryItem {
     unitCost: string | number;
 }
 
-export interface InspectionItem { id: string; label: string; checked: boolean }
+export type InspectionOutcome = 'PENDING' | 'PASS' | 'FOLLOW_UP' | 'NOT_APPLICABLE';
+
+/**
+ * `checked` is retained for persisted checklist rows written by older clients.
+ * New rows include `outcome`; when both fields exist, `checked` is the legacy
+ * projection of whether the outcome is PASS.
+ */
+export interface InspectionItem {
+    id: string;
+    label: string;
+    outcome?: InspectionOutcome;
+    checked?: boolean;
+}
 export interface BookingPart { id: string; quantity: number; unitPrice: string | number; unitPriceCents?: number; inventoryItem: InventoryItem }
 export interface Payment { id: string; amount: string | number; method: string; reference?: string | null; paidAt?: string; createdAt: string }
 

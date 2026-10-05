@@ -13,42 +13,35 @@ built frontend, so there is no second host and no CORS to configure.
 
 ## Run it locally
 
-You need Node 18+ and Docker (for Postgres).
+You need Node 18+ and PostgreSQL 14+ installed.
 
 ```bash
 git clone https://github.com/vmargin/aircon-service.git
 cd aircon-service
 
 npm run setup                      # install backend + frontend deps
-cp backend/.env.example backend/.env
-
-npm run db:up                      # start Postgres in Docker
-npm run db:init                    # migrate + seed the demo data
+npm run local                      # create/use isolated .local data, migrate, seed, build and serve
 ```
 
-Then run the two dev servers in separate terminals:
-
-```bash
-npm run dev        # API on  http://localhost:5000
-npm run dev:web    # UI  on  http://localhost:5173
-```
-
-Open **http://localhost:5173** and sign in.
+Open **http://localhost:5000**. The local launcher uses its own PostgreSQL
+cluster and `arctic_dev`/`arctic_test` databases under `.local`; it does not read
+`backend/.env` or connect to cloud data. Keep its terminal open while using the
+app. Use `Ctrl+C` to stop the app, then `npm run local:stop` to stop its local
+PostgreSQL cluster.
 
 ### Demo logins
 
-Seeded by `npm run db:init`. Password for all of them is `demo1234`
-(override with `DEMO_ADMIN_PASSWORD` before seeding).
+Seeded only into the isolated local demo database. Password for all listed
+accounts is `demo1234`.
 
-| Email              | Sees              |
-| ------------------ | ----------------- |
-| `admin@arctic.com` | All four branches |
-| `north@arctic.com` | North Branch only |
-| `south@arctic.com` | South Branch only |
-| `east@arctic.com`  | East Branch only  |
-| `west@arctic.com`  | West Branch only  |
+| Email              | Access |
+| ------------------ | --- |
+| `admin@arctic.com` | All branches: Makati, Quezon City, Cavite, and Bulacan |
+| `south@arctic.com` | Makati Branch |
+| `north@arctic.com` | Quezon City Branch |
 
-The seed is idempotent — re-running it will not duplicate or fail.
+The seed is additive and idempotent. Cavite and Bulacan are demo branches with
+no seeded staff; assign real branch users before expecting dispatch there.
 
 Use synthetic data only. This is an educational portfolio system, not production
 business software.
@@ -57,14 +50,15 @@ business software.
 
 ## What's in it
 
-| Page            | What you can do                                                         |
-| --------------- | ----------------------------------------------------------------------- |
-| **Dashboard**   | Today's jobs, counts by status, revenue collected vs. outstanding       |
-| **Bookings**    | Create/edit jobs, assign a technician, advance status, raise an invoice |
-| **Customers**   | Add and edit customers, see their booking count                         |
-| **Technicians** | Add, edit, deactivate/reactivate field staff                            |
-| **Invoices**    | Record payment method and mark unpaid → partial → paid                  |
-| **Reports**     | Status/service breakdowns and per-technician collections by date range  |
+| Page | What you can do |
+| --- | --- |
+| **Dashboard** | Review today's jobs, dispatch, service trends, and attention items. |
+| **Calendar / service jobs** | Schedule work, assign technicians, advance the ordered lifecycle, and open field work orders. |
+| **Clients / aircon units** | Keep customer and equipment details, service history, and explicit next-maintenance dates together. |
+| **Parts inventory** | Track branch stock, low-stock levels, restocks, adjustments, and parts used on a work order. |
+| **Invoices & payments** | Issue one invoice per job and record separate dated receipts with exact amounts. |
+| **Reports** | Filter visits and billing by date and branch, review service/technician summaries, see open balances grouped by days since invoice issue, and export billing CSV. Age bands do not imply a due date or overdue status. |
+| **Theme** | Switch between the deep-teal dark theme and the cool light theme; the browser saves the choice. |
 
 ### Rules the API enforces
 
@@ -79,6 +73,10 @@ business software.
   terminal — collected money can't be quietly un-collected. Reversing a real
   payment belongs in a refund flow with its own trail, not a silent field edit.
 - Writes are recorded in an audit log.
+- **Field checklist.** Inspection items preserve Pending, Pass, Follow-up, and
+  Not applicable outcomes while still reading older checked-only records.
+- **Stock ledger.** Restocks, adjustments, and work-order use are branch-scoped,
+  transaction-protected, and retry-safe when the client sends the same request key.
 
 ---
 

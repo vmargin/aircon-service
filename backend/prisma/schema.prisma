@@ -212,13 +212,15 @@ model PartUsage {
 }
 
 model StockMovement {
-  id              String        @id @default(uuid())
-  inventoryItemId String
-  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
-  quantity        Int
-  reason          String
-  bookingId       String?
-  createdAt       DateTime      @default(now())
+  id                      String        @id @default(uuid())
+  inventoryItemId         String
+  inventoryItem           InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  quantity                Int
+  reason                  String
+  bookingId               String?
+  idempotencyKey          String?       @unique
+  idempotencyPayloadHash  String?       @db.VarChar(64)
+  createdAt               DateTime      @default(now())
 
   @@index([inventoryItemId, createdAt])
 }

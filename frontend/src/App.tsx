@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -32,6 +32,8 @@ import {
   Search,
   Bell,
   ChevronRight,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { getAllList } from "./api/api";
@@ -57,6 +59,19 @@ const queryClient = new QueryClient({
     queries: { retry: 1, staleTime: 30_000, refetchOnWindowFocus: true },
   },
 });
+type ThemeMode = "dark" | "light";
+const THEME_STORAGE_KEY = "arctic-theme";
+
+function readThemePreference(): ThemeMode {
+  try {
+    return window.localStorage.getItem(THEME_STORAGE_KEY) === "light"
+      ? "light"
+      : "dark";
+  } catch {
+    return "dark";
+  }
+}
+
 const NAV = [
   {
     section: "SERVICE",
@@ -269,7 +284,13 @@ function SidebarContent({
     </>
   );
 }
-function AppLayout() {
+function AppLayout({
+  theme,
+  onToggleTheme,
+}: {
+  theme: ThemeMode;
+  onToggleTheme: () => void;
+}) {
   const { user, isAdmin } = useAuth();
   const [drawer, setDrawer] = useState(false);
   const [search, setSearch] = useState(false);
@@ -362,13 +383,27 @@ function AppLayout() {
               Workspace<span>/</span>
               {current}
             </div>
-            <button className="global-search" onClick={() => setSearch(true)}>
+            <button
+              className="global-search"
+              aria-label="Search jobs and clients"
+              onClick={() => setSearch(true)}
+            >
               <Search size={15} />
               <span>Search jobs, clients…</span>
               <kbd>⌘ K</kbd>
             </button>
           </div>
           <div className="topbar-right">
+            <button
+              className="icon-button theme-toggle"
+              type="button"
+              aria-label="Light theme"
+              aria-pressed={theme === "light"}
+              title={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+              onClick={onToggleTheme}
+            >
+              {theme === "light" ? <Moon size={17} /> : <Sun size={17} />}
+            </button>
             <NavLink
               className="icon-button"
               to="/units?due=1"
@@ -416,14 +451,20 @@ function AppLayout() {
     </div>
   );
 }
-function RequireAuth() {
+function RequireAuth({
+  theme,
+  onToggleTheme,
+}: {
+  theme: ThemeMode;
+  onToggleTheme: () => void;
+}) {
   const { user, loading } = useAuth();
   return loading ? (
     <div className="app">
       <Spinner label="Opening your workspace…" />
     </div>
   ) : user ? (
-    <AppLayout />
+    <AppLayout theme={theme} onToggleTheme={onToggleTheme} />
   ) : (
     <Navigate to="/login" replace />
   );
@@ -433,13 +474,32 @@ function LoginRoute() {
   return loading ? <Spinner /> : user ? <Navigate to="/" replace /> : <Login />;
 }
 export default function App() {
+  const [theme, setTheme] = useState<ThemeMode>(readThemePreference);
+  useLayoutEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", theme === "light" ? "#f3f7f9" : "#071c25");
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {
+      // The current page still follows the selected theme when storage is unavailable.
+    }
+  }, [theme]);
+
+  const toggleTheme = () =>
+    setTheme((current) => (current === "light" ? "dark" : "light"));
+
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<LoginRoute />} />
-            <Route element={<RequireAuth />}>
+            <Route
+              element={<RequireAuth theme={theme} onToggleTheme={toggleTheme} />}
+            >
               <Route path="/" element={<Dashboard />} />
               <Route path="/bookings" element={<Bookings />} />
               <Route

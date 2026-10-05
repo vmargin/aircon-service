@@ -9,7 +9,8 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "../api/api";
 import { getAll, manilaDay } from "../api/operational";
-import { Booking, BookingStatus, Invoice, STATUS_LABELS } from "../types";
+import { useAuth } from "../auth/AuthContext";
+import { Booking, BookingStatus, Branch, Invoice, STATUS_LABELS } from "../types";
 import {
   Button,
   Card,
@@ -23,6 +24,16 @@ import {
 
 const cents = (value: string | number | null | undefined) =>
   Math.round(Number(value ?? 0) * 100);
+const dayOrdinal = (value: string) => {
+  const [year, month, day] = manilaDay(value).split("-").map(Number);
+  return Date.UTC(year, month - 1, day) / 86400000;
+};
+const RECEIVABLE_AGE_BANDS = [
+  { label: "0–30 days", min: 0, max: 30 },
+  { label: "31–60 days", min: 31, max: 60 },
+  { label: "61–90 days", min: 61, max: 90 },
+  { label: "91+ days", min: 91, max: Number.POSITIVE_INFINITY },
+];
 const before = (days: number) =>
   manilaDay(new Date(Date.now() - days * 86400000));
 const csvCell = (value: unknown) => {
@@ -33,6 +44,13 @@ export default function Reports() {
   const [range, setRange] = useState("30");
   const [from, setFrom] = useState(before(29));
   const [to, setTo] = useState(manilaDay());
+  const [branchId, setBranchId] = useState("");
+  const { isAdmin } = useAuth();
+  const branches = useQuery({
+    queryKey: ["branches"],
+    queryFn: () => getAll<Branch>("/branches"),
+    enabled: isAdmin,
+  });
   const bookings = useQuery({
     queryKey: ["bookings"],
     queryFn: () => getAll<Booking>("/bookings"),
@@ -46,8 +64,14 @@ export default function Reports() {
     return (!from || day >= from) && (!to || day <= to);
   };
   const report = useMemo(() => {
-    const jobs = (bookings.data ?? []).filter((b) => inRange(b.scheduledAt));
-    const bills = (invoices.data ?? []).filter((i) => inRange(i.issuedAt));
+    const scopedJobs = (bookings.data ?? []).filter(
+      (booking) => !branchId || booking.branchId === branchId,
+    );
+    const scopedInvoices = (invoices.data ?? []).filter(
+      (invoice) => !branchId || invoice.booking?.branchId === branchId,
+    );
+    const jobs = scopedJobs.filter((booking) => inRange(booking.scheduledAt));
+    const bills = scopedInvoices.filter((invoice) => inRange(invoice.issuedAt));
     const byStatus = jobs.reduce<Record<string, number>>(
       (sum, b) => ({ ...sum, [b.status]: (sum[b.status] ?? 0) + 1 }),
       {},
@@ -74,7 +98,7 @@ export default function Reports() {
     }
     let collected = 0;
     let undatedLegacy = 0;
-    for (const i of invoices.data ?? []) {
+    for (const i of scopedInvoices) {
       let received = 0;
       for (const p of i.payments ?? [])
         if (inRange(p.paidAt ?? p.createdAt)) received += cents(p.amount);
@@ -102,6 +126,26 @@ export default function Reports() {
     const outstanding = bills
       .filter((i) => !i.needsReview)
       .reduce((sum, i) => sum + cents(i.balance), 0);
+    const asOfDay = manilaDay();
+    const openReceivables = scopedInvoices
+      .filter((invoice) => !invoice.needsReview && invoice.balance != null && cents(invoice.balance) > 0)
+      .map((invoice) => ({
+        invoice,
+        ageDays: Math.max(0, dayOrdinal(asOfDay) - dayOrdinal(invoice.issuedAt)),
+      }));
+    const receivableAging = RECEIVABLE_AGE_BANDS.map((band) => {
+      const invoices = openReceivables.filter(
+        ({ ageDays }) => ageDays >= band.min && ageDays <= band.max,
+      );
+      return {
+        ...band,
+        invoiceCount: invoices.length,
+        balanceCents: invoices.reduce(
+          (sum, { invoice }) => sum + cents(invoice.balance),
+          0,
+        ),
+      };
+    });
     const completed = byStatus.COMPLETED ?? 0;
     const eligible = jobs.length - (byStatus.CANCELLED ?? 0);
     return {
@@ -119,8 +163,15 @@ export default function Reports() {
       ),
       review: bills.filter((i) => i.needsReview).length,
       undatedLegacy,
+      receivableAging,
+      openReceivableCount: openReceivables.length,
+      openReceivableCents: openReceivables.reduce(
+        (sum, { invoice }) => sum + cents(invoice.balance),
+        0,
+      ),
+      unknownReceivableCount: scopedInvoices.filter((invoice) => invoice.needsReview).length,
     };
-  }, [bookings.data, invoices.data, from, to]);
+  }, [bookings.data, invoices.data, from, to, branchId]);
   const quickRange = (value: string) => {
     setRange(value);
     setTo(value === "all" ? "" : manilaDay());
@@ -131,6 +182,7 @@ export default function Reports() {
       [
         "Invoice",
         "Client",
+        "Branch",
         "Service",
         "Issued at",
         "Amount PHP",
@@ -141,6 +193,7 @@ export default function Reports() {
       ...report.bills.map((i) => [
         i.id,
         i.booking?.customer?.name,
+        i.booking?.branch?.name,
         i.booking?.serviceType,
         i.issuedAt,
         i.amount,
@@ -156,19 +209,21 @@ export default function Reports() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "arctic-billing-" + (from || "all") + ".csv";
+    link.download =
+      "arctic-billing-" + (branchId || "all-branches") + "-" + (from || "all") + ".csv";
     link.click();
     URL.revokeObjectURL(url);
   };
-  if (bookings.isLoading || invoices.isLoading)
+  if (bookings.isLoading || invoices.isLoading || (isAdmin && branches.isLoading))
     return <Spinner label="Building your service report…" />;
-  if (bookings.isError || invoices.isError)
+  if (bookings.isError || invoices.isError || (isAdmin && branches.isError))
     return (
       <ErrorState
-        error={bookings.error || invoices.error}
+        error={bookings.error || invoices.error || branches.error}
         onRetry={() => {
           void bookings.refetch();
           void invoices.refetch();
+          if (isAdmin) void branches.refetch();
         }}
       />
     );
@@ -196,13 +251,33 @@ export default function Reports() {
               <button
                 key={v}
                 className={range === v ? "active" : ""}
+                aria-pressed={range === v}
                 onClick={() => quickRange(v)}
               >
                 {label}
               </button>
             ))}
           </div>
-          <div className="form-grid">
+          <div
+            className={`form-grid report-filter-grid${isAdmin ? " has-branch" : ""}`}
+          >
+            {isAdmin && (
+              <Field label="Branch" htmlFor="report-branch">
+                <select
+                  id="report-branch"
+                  className={inputClass}
+                  value={branchId}
+                  onChange={(event) => setBranchId(event.target.value)}
+                >
+                  <option value="">All branches</option>
+                  {branches.data?.map((branch) => (
+                    <option key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            )}
             <Field label="From (Manila)" htmlFor="report-from">
               <input
                 id="report-from"
@@ -288,6 +363,50 @@ export default function Reports() {
             issued in this period: {formatCurrency(report.outstanding / 100)}.
             Completion excludes cancelled visits.
           </p>
+          <Card>
+            <div className="panel-header">
+              <h3>Open balance by invoice age</h3>
+              <span className="muted">All issue dates · current branch scope</span>
+            </div>
+            <div className="table-wrap">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Days since issue</th>
+                    <th scope="col">Invoices</th>
+                    <th scope="col">Open balance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {report.receivableAging.map((band) => (
+                    <tr key={band.label}>
+                      <th scope="row">{band.label}</th>
+                      <td>{band.invoiceCount}</td>
+                      <td>{formatCurrency(band.balanceCents / 100)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <th scope="row">Known open balance</th>
+                    <td>{report.openReceivableCount} invoices</td>
+                    <td>{formatCurrency(report.openReceivableCents / 100)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+            <p className="muted report-note">
+              Age is measured from invoice issue date. These bands do not set
+              payment terms or determine whether an invoice is overdue.
+            </p>
+            {report.unknownReceivableCount > 0 && (
+              <p className="notice notice-warning">
+                {report.unknownReceivableCount} historical invoice
+                {report.unknownReceivableCount === 1 ? " has" : "s have"} an
+                unknown balance and {report.unknownReceivableCount === 1 ? "is" : "are"} excluded.
+              </p>
+            )}
+          </Card>
           <div className="report-grid">
             <Card>
               <div className="panel-header">

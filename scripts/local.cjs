@@ -76,7 +76,7 @@ async function main() {
   migrate();
   run(npm, ['run', 'db:seed:demo'], path.join(root, 'backend'));
   if (mode === 'setup') return;
-  run(npm, ['run', 'build']);
+  run(npm, ['run', 'build'], root, { NODE_ENV: 'production' });
   console.log('\nARCTIC • http://localhost:5000\nLocal demo: admin@arctic.com / demo1234\nKeep this terminal open. Your records persist in .local/postgres.\n');
   const server = spawn(process.execPath, ['backend/dist/src/server.js'], { cwd: root, env, stdio: 'inherit', windowsHide: true });
   server.on('error', error => { console.error(error.message); process.exitCode = 1; });

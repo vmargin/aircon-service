@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ClipboardCheck, Pencil, Plus, Receipt } from "lucide-react";
 import { Link } from "react-router-dom";
 import api, { formatCurrency } from "../api/api";
+import { clearIdempotencyKey, getIdempotencyKey } from "../api/idempotency";
+import { useAuth } from "../auth/AuthContext";
 import {
   getAll,
   invalidateOperations,
@@ -15,6 +17,7 @@ import {
   Booking,
   BookingStatus,
   InspectionItem,
+  InspectionOutcome,
   InventoryItem,
 } from "../types";
 import {
@@ -35,36 +38,76 @@ const INSPECTION: InspectionItem[] = [
   {
     id: "visual",
     label: "Visual inspection of indoor and outdoor units",
+    outcome: "PENDING",
     checked: false,
   },
-  { id: "filter", label: "Air filter condition and cleaning", checked: false },
+  {
+    id: "filter",
+    label: "Air filter condition and cleaning",
+    outcome: "PENDING",
+    checked: false,
+  },
   {
     id: "coils",
     label: "Evaporator and condenser coil condition",
+    outcome: "PENDING",
     checked: false,
   },
-  { id: "drain", label: "Condensate drainage and leaks", checked: false },
+  {
+    id: "drain",
+    label: "Condensate drainage and leaks",
+    outcome: "PENDING",
+    checked: false,
+  },
   {
     id: "airflow",
     label: "Airflow and temperature difference",
+    outcome: "PENDING",
     checked: false,
   },
   {
     id: "electrical",
     label: "Electrical connections and safety controls",
+    outcome: "PENDING",
     checked: false,
   },
   {
     id: "refrigerant",
     label: "Refrigerant and leak observations",
+    outcome: "PENDING",
     checked: false,
   },
   {
     id: "test",
     label: "Final operation test and client handover",
+    outcome: "PENDING",
     checked: false,
   },
 ];
+const INSPECTION_OUTCOMES: { value: InspectionOutcome; label: string }[] = [
+  { value: "PENDING", label: "Pending" },
+  { value: "PASS", label: "Pass" },
+  { value: "FOLLOW_UP", label: "Follow-up required" },
+  { value: "NOT_APPLICABLE", label: "Not applicable" },
+];
+
+function getInspectionOutcome(item: InspectionItem): InspectionOutcome {
+  if (item.outcome) return item.outcome;
+  return item.checked ? "PASS" : "PENDING";
+}
+
+function withInspectionOutcome(
+  item: InspectionItem,
+  outcome: InspectionOutcome,
+): InspectionItem {
+  return { ...item, outcome, checked: outcome === "PASS" };
+}
+
+function normalizeChecklist(items: InspectionItem[]): InspectionItem[] {
+  return items.map((item) =>
+    withInspectionOutcome(item, getInspectionOutcome(item)),
+  );
+}
 interface Activity {
   id: string;
   action: string;
@@ -77,7 +120,14 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
 }
+interface PartUseRequest {
+  bookingId: string;
+  inventoryItemId: string;
+  quantity: number;
+  idempotencyKey: string;
+}
 export default function WorkOrderModal({ bookingId, isOpen, onClose }: Props) {
+  const { user } = useAuth();
   const client = useQueryClient();
   const [tab, setTab] = useState("details");
   const [editing, setEditing] = useState(false);
@@ -106,6 +156,7 @@ export default function WorkOrderModal({ bookingId, isOpen, onClose }: Props) {
     enabled: isOpen && tab === "history",
   });
   const booking = query.data;
+  const partUseScope = `work-order-part-use:${user?.orgId ?? "unknown"}:${user?.email ?? "unknown"}`;
   useEffect(() => {
     if (isOpen) {
       setTab("details");
@@ -122,7 +173,7 @@ export default function WorkOrderModal({ bookingId, isOpen, onClose }: Props) {
       setNotes(booking.notes ?? "");
       setChecklist(
         booking.checklist?.length
-          ? booking.checklist
+          ? normalizeChecklist(booking.checklist)
           : INSPECTION.map((i) => ({ ...i })),
       );
     }
@@ -141,12 +192,15 @@ export default function WorkOrderModal({ bookingId, isOpen, onClose }: Props) {
     },
   });
   const addPart = useMutation({
-    mutationFn: () =>
+    mutationFn: ({ bookingId, inventoryItemId, quantity, idempotencyKey }: PartUseRequest) =>
       api.post("/bookings/" + bookingId + "/parts", {
-        inventoryItemId: partId,
-        quantity: Number(quantity),
+        inventoryItemId,
+        quantity,
+        idempotencyKey,
       }),
-    onSuccess: () => {
+    onSuccess: (_result, request) => {
+      const { idempotencyKey, ...payload } = request;
+      clearIdempotencyKey(partUseScope, payload, idempotencyKey);
       setPartId("");
       setQuantity("1");
       setError("");
@@ -178,6 +232,18 @@ export default function WorkOrderModal({ bookingId, isOpen, onClose }: Props) {
   const parts = (inventory.data ?? []).filter(
     (p) => p.branchId === booking?.branchId && p.quantityOnHand > 0,
   );
+  const submitPartUse = () => {
+    if (!booking || !partId) return;
+    const payload = {
+      bookingId: booking.id,
+      inventoryItemId: partId,
+      quantity: Number(quantity),
+    };
+    addPart.mutate({
+      ...payload,
+      idempotencyKey: getIdempotencyKey(partUseScope, payload),
+    });
+  };
   return (
     <>
       <Modal
@@ -420,28 +486,51 @@ export default function WorkOrderModal({ bookingId, isOpen, onClose }: Props) {
                     }}
                   >
                     <p className="muted">
-                      Mark an item only after inspection. Record any failures or
-                      exceptions in the findings.
+                      Record each inspection result. Add details for follow-up
+                      work or exceptions in the findings.
                     </p>
                     <div className="inspection-list">
                       {checklist.map((item, index) => (
-                        <label key={item.id} className="inspection-item">
-                          <input
-                            type="checkbox"
+                        <div
+                          key={item.id}
+                          className="inspection-item"
+                          style={{ flexWrap: "wrap" }}
+                        >
+                          <span
+                            id={`checklist-label-${index}`}
+                            style={{ flex: "1 1 180px" }}
+                          >
+                            {item.label}
+                          </span>
+                          <select
+                            className={inputClass}
+                            style={{
+                              flex: "1 1 180px",
+                              width: "auto",
+                              minWidth: 0,
+                            }}
+                            aria-labelledby={`checklist-label-${index}`}
                             disabled={!open}
-                            checked={item.checked}
-                            onChange={(e) =>
+                            value={getInspectionOutcome(item)}
+                            onChange={(e) => {
+                              const outcome = e.target
+                                .value as InspectionOutcome;
                               setChecklist((list) =>
                                 list.map((i, n) =>
                                   n === index
-                                    ? { ...i, checked: e.target.checked }
+                                    ? withInspectionOutcome(i, outcome)
                                     : i,
                                 ),
-                              )
-                            }
-                          />
-                          <span>{item.label}</span>
-                        </label>
+                              );
+                            }}
+                          >
+                            {INSPECTION_OUTCOMES.map((outcome) => (
+                              <option key={outcome.value} value={outcome.value}>
+                                {outcome.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       ))}
                     </div>
                     <Field
@@ -510,7 +599,7 @@ export default function WorkOrderModal({ bookingId, isOpen, onClose }: Props) {
                         className="form-stack"
                         onSubmit={(e) => {
                           e.preventDefault();
-                          addPart.mutate();
+                          submitPartUse();
                         }}
                       >
                         {inventory.isError && (

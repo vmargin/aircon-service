@@ -2,6 +2,13 @@ import { BookingPriority, BookingStatus, PaymentStatus, Prisma, PrismaClient } f
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
+const DEMO_ORGANIZATION_NAME = 'ARCTIC Aircon Services · Demo';
+const DEMO_BRANCHES = [
+    { name: 'Makati Branch', location: 'Makati / BGC' },
+    { name: 'Quezon City Branch', location: 'Quezon City / Marikina' },
+    { name: 'Cavite Branch', location: 'Cavite' },
+    { name: 'Bulacan Branch', location: 'Bulacan' },
+];
 
 function guardLocalDemo() {
     const database = new URL(process.env.DATABASE_URL ?? '');
@@ -28,16 +35,30 @@ async function main() {
     guardLocalDemo();
     const password = await bcrypt.hash('demo1234', 10);
     await prisma.$transaction(async (tx) => {
-        // A fresh local database only. Reopening the app never rewrites data,
-        // resets passwords, or moves demo appointments to the current date.
+        // This command is guarded to the isolated local arctic_dev database.
+        // Reopening never rewrites records; for its exact demo organization it
+        // only adds any user-requested demo branches that are still missing.
         await tx.$queryRaw`SELECT pg_advisory_xact_lock(98422374)::text AS locked`;
         if (await tx.organization.count() > 0) {
-            console.log('Local database already contains data; demo seed skipped.');
+            const demoOrg = await tx.organization.findFirst({ where: { name: DEMO_ORGANIZATION_NAME } });
+            if (demoOrg) {
+                for (const branchData of DEMO_BRANCHES) {
+                    const existing = await tx.branch.findFirst({ where: { organizationId: demoOrg.id, name: branchData.name } });
+                    if (!existing) await tx.branch.create({ data: { ...branchData, organizationId: demoOrg.id } });
+                }
+            }
+            console.log(demoOrg
+                ? 'Existing local demo data kept; missing requested branch rows were added if needed.'
+                : 'Local database already contains data; demo seed skipped.');
             return;
         }
-        const org = await tx.organization.create({ data: { name: 'ARCTIC Aircon Services · Demo' } });
-        const makati = await tx.branch.create({ data: { name: 'Makati Branch', location: 'Makati / BGC', organizationId: org.id } });
-        const qc = await tx.branch.create({ data: { name: 'Quezon City Branch', location: 'Quezon City / Marikina', organizationId: org.id } });
+        const org = await tx.organization.create({ data: { name: DEMO_ORGANIZATION_NAME } });
+        const branches = new Map<string, Awaited<ReturnType<typeof tx.branch.create>>>();
+        for (const branchData of DEMO_BRANCHES) {
+            branches.set(branchData.name, await tx.branch.create({ data: { ...branchData, organizationId: org.id } }));
+        }
+        const makati = branches.get('Makati Branch')!;
+        const qc = branches.get('Quezon City Branch')!;
         const admin = await tx.user.create({ data: { email: 'admin@arctic.com', password, role: 'ADMIN', organizationId: org.id } });
         await tx.user.createMany({ data: [ { email: 'south@arctic.com', password, role: 'BRANCH_LEADER', organizationId: org.id, branchId: makati.id }, { email: 'north@arctic.com', password, role: 'BRANCH_LEADER', organizationId: org.id, branchId: qc.id } ] });
         const technicians = [];
@@ -120,7 +141,7 @@ async function main() {
             const client = day % 5;
             await tx.booking.create({ data: { serviceType: services[day % services.length], scheduledAt: manilaDate(day, 9 + day), customerId: customers[client].id, unitId: units[client].id, branchId: makati.id, technicianId: technicians[day % 4].id, status: BookingStatus.CONFIRMED, notes: 'Upcoming synthetic demo appointment.', checklist } });
         }
-        console.log('Synthetic local demo seeded: 2 branches, 6 technicians, 8 clients, units, stock, jobs and receipt history.');
+        console.log('Synthetic local demo seeded: 4 branches, 6 technicians, 8 clients, units, stock, jobs and receipt history.');
     }, { timeout: 60_000 });
 }
 

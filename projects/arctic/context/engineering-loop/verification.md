@@ -2,12 +2,16 @@
 
 ## Local proof
 
+- `node scripts/local.cjs setup` — isolated `arctic_dev` reported three migrations and no pending migration; the demo seed preserved existing records. Inventory and report branch selectors show Makati, Quezon City, Cavite, and Bulacan.
 - `npm run typecheck` — passed for backend and frontend.
-- `node scripts/local.cjs test` — all 6 suites and 35 tests passed against the isolated local PostgreSQL test database, including tenant, lifecycle, dispatch concurrency, inventory, receipt and reporting cases.
-- `npm run build` — passed; frontend bundle is 459.91KB (139.74KB gzip). Prisma emitted only its existing package.json configuration deprecation warning.
-- Playwright — dashboard and operational routes loaded from the local app. At a 320px viewport, the dashboard, calendar, jobs, clients, technicians, units, inventory, billing, reports and settings routes had no page-level horizontal overflow. Wide tables remained independently scrollable. Work-order and booking dialogs closed with Escape and returned focus to their trigger. Browser console reported no errors.
+- `npm test` — 5 suites and 26 tests passed; the repository's 1 database suite and 9 dependent tests are intentionally skipped without the isolated test database.
+- `node scripts/local.cjs test` — all 6 suites and 35 tests passed against isolated `arctic_test`, including tenant, lifecycle, dispatch concurrency, required idempotency keys, replay/conflict, inventory balance and audit, receipt, and reporting cases.
+- `npm run build` — passed; frontend bundle is 469.69KB (142.58KB gzip). Prisma emitted its existing `package.json#prisma` deprecation warning.
+- Playwright — the local authenticated app loaded in both themes. The preference survives page reload; representative text, navigation, button and status colors meet 4.5:1 contrast. The work-order checklist exposes Pending, Pass, Follow-up required, and Not applicable. All core routes (dashboard, calendar, service jobs, clients, technicians, units, inventory, invoices, reports, and settings) fit a 320px viewport with no page-level horizontal overflow; wide tables remain independently scrollable. The report lists all four branches and filters open balance age by branch while keeping all invoice issue dates in scope. Its age bands are issue-date-only, unknown balances are excluded and flagged, and it does not label invoices overdue. At 320px the report has no page overflow. Inventory dialog and mobile navigation kept focus inside while open, closed with Escape, and returned focus to their triggers. Browser console reported no errors or warnings.
+- Sauron code inspection — requirements align with the research and architecture records; branch/tenant checks, transaction locks, audit writes, append-only stock history, and additive migration boundaries remain in their existing server-owned layers. No critical or important implementation issues were found. The production database was not inspected or migrated; a deployment must apply the new additive migration before using the updated API.
+- The local launcher was corrected to build production frontend assets while keeping the API in development mode. `node scripts/local.cjs start` now serves the optimized 467KB bundle at `http://localhost:5000`.
 
-The local launcher used `.local/postgres` and preserved its existing demo data; its seed skipped because the database already contained records. No production database was seeded or reset.
+The local launcher uses `.local/postgres`; existing demo records were preserved and only missing named demo branches may be added. No production database was seeded or reset.
 
 ## Deployment boundary
 

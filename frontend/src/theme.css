@@ -1,0 +1,538 @@
+/* ARCTIC keeps its deep-teal reference palette as the default. */
+:root {
+  --chart-completed: #5eb9e5;
+  --chart-progress: #3a88bb;
+  --chart-scheduled: #648ea4;
+  --report-completed: #69c8a7;
+  --report-progress: #459cd2;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f3f7f9;
+  --surface: #ffffff;
+  --surface-inset: #f5f8fa;
+  --edge: #d7e3e8;
+  --text: #19343f;
+  --muted: #526b77;
+  --ice: #236f91;
+  --cyan: #147f9e;
+  --mint: #176e50;
+  --amber: #7d5016;
+  --red: #963b36;
+  --surface-hover: #eaf2f6;
+  --edge-strong: #bacdd6;
+  --chart-completed: #16799d;
+  --chart-progress: #317392;
+  --chart-scheduled: #6c8591;
+  --report-completed: #176c4e;
+  --report-progress: #276f92;
+  --color-slate-50: #f4f8fa;
+  --color-slate-100: #eaf1f4;
+  --color-slate-200: #dce7eb;
+  --color-slate-300: #b4c6ce;
+  --color-slate-400: #849aa4;
+  --color-slate-500: #617782;
+  --color-slate-600: #4e636d;
+  --color-slate-700: #344c57;
+  --color-slate-800: #223b46;
+  --color-slate-900: #19343f;
+  --color-white: #ffffff;
+}
+
+:root[data-theme="light"] body,
+:root[data-theme="light"] .app,
+:root[data-theme="light"] .login-page {
+  background: var(--bg);
+  color: var(--text);
+}
+
+:root[data-theme="light"] .app {
+  background:
+    radial-gradient(ellipse at 70% -5%, #ddecf2, transparent 45%),
+    var(--bg);
+}
+
+:root[data-theme="light"] .sidebar {
+  background: linear-gradient(160deg, #ffffff, #f5f9fb 75%);
+  border-color: var(--edge);
+}
+
+:root[data-theme="light"] .brand,
+:root[data-theme="light"] .page-header h1,
+:root[data-theme="light"] .panel-header h2,
+:root[data-theme="light"] .empty-state h3,
+:root[data-theme="light"] .login-form-wrap h2 {
+  color: var(--text);
+}
+
+:root[data-theme="light"] .brand-caption,
+:root[data-theme="light"] .nav-label,
+:root[data-theme="light"] .sidebar-tagline small,
+:root[data-theme="light"] .breadcrumb,
+:root[data-theme="light"] .account small,
+:root[data-theme="light"] .eyebrow,
+:root[data-theme="light"] .page-header p,
+:root[data-theme="light"] .panel-header p,
+:root[data-theme="light"] .metric-note,
+:root[data-theme="light"] .job-description,
+:root[data-theme="light"] .chart-axis,
+:root[data-theme="light"] .chart-column small,
+:root[data-theme="light"] .chart-summary small,
+:root[data-theme="light"] .dispatch-person p,
+:root[data-theme="light"] .dispatch-foot,
+:root[data-theme="light"] .client-cell small,
+:root[data-theme="light"] .attention-row small,
+:root[data-theme="light"] .payment-row small,
+:root[data-theme="light"] .app-footer,
+:root[data-theme="light"] .field-hint,
+:root[data-theme="light"] .detail-grid dt,
+:root[data-theme="light"] .empty-state,
+:root[data-theme="light"] .error-state p,
+:root[data-theme="light"] .modal-header p,
+:root[data-theme="light"] .search-result small,
+:root[data-theme="light"] .calendar-event small,
+:root[data-theme="light"] .calendar-meta,
+:root[data-theme="light"] .calendar-empty,
+:root[data-theme="light"] .login-story-content > p,
+:root[data-theme="light"] .login-benefits div,
+:root[data-theme="light"] .login-note,
+:root[data-theme="light"] .login-brand-footer,
+:root[data-theme="light"] .data-table td > small,
+:root[data-theme="light"] .workorder-heading p,
+:root[data-theme="light"] .history-entry small {
+  color: var(--muted);
+}
+
+:root[data-theme="light"] .breadcrumb span {
+  color: var(--muted);
+}
+
+:root[data-theme="light"] .nav-item {
+  color: #405b67;
+}
+
+:root[data-theme="light"] .nav-item:hover,
+:root[data-theme="light"] .icon-button:hover,
+:root[data-theme="light"] .search-result:hover {
+  color: var(--text);
+  background: var(--surface-hover);
+}
+
+:root[data-theme="light"] .nav-item.active {
+  color: #19495f;
+  background: linear-gradient(110deg, #dcecf3, #eaf3f7);
+  border-color: #c6dbe5;
+}
+
+:root[data-theme="light"] .sidebar-tagline,
+:root[data-theme="light"] .topbar,
+:root[data-theme="light"] .account,
+:root[data-theme="light"] .panel-header,
+:root[data-theme="light"] .today-job,
+:root[data-theme="light"] .dispatch-person,
+:root[data-theme="light"] .data-table th,
+:root[data-theme="light"] .data-table td,
+:root[data-theme="light"] .attention-row,
+:root[data-theme="light"] .payment-row,
+:root[data-theme="light"] .form-actions,
+:root[data-theme="light"] .modal-actions,
+:root[data-theme="light"] .work-order-summary,
+:root[data-theme="light"] .calendar-header,
+:root[data-theme="light"] .calendar-week-header,
+:root[data-theme="light"] .calendar-day,
+:root[data-theme="light"] .history-entry,
+:root[data-theme="light"] .inspection-item {
+  border-color: var(--edge);
+}
+
+:root[data-theme="light"] .topbar {
+  background: #ffffffed;
+}
+
+:root[data-theme="light"] .global-search,
+:root[data-theme="light"] .date-chip,
+:root[data-theme="light"] .btn-secondary,
+:root[data-theme="light"] .chart-controls,
+:root[data-theme="light"] .tab-bar button,
+:root[data-theme="light"] .calendar-day-header button,
+:root[data-theme="light"] .demo-card {
+  color: #35515d;
+  background: #f2f7f9;
+  border-color: var(--edge);
+}
+
+:root[data-theme="light"] .global-search,
+:root[data-theme="light"] .chart-controls {
+  color: var(--muted);
+}
+
+:root[data-theme="light"] .btn-primary {
+  color: #153544;
+  background: linear-gradient(180deg, #cceafd, #a9d6ed);
+  border-color: #a4cfe5;
+  box-shadow: inset 0 1px #ffffffa8, 0 2px 7px #1a57711a;
+}
+
+:root[data-theme="light"] .btn-primary:hover {
+  background: #d8effb;
+}
+
+:root[data-theme="light"] .btn-secondary:hover,
+:root[data-theme="light"] .chart-controls:hover,
+:root[data-theme="light"] .calendar-day-header button:hover {
+  background: #e7f0f4;
+}
+
+:root[data-theme="light"] .btn-danger {
+  color: #8b302e;
+  background: #fff2f0;
+  border-color: #e8c4c0;
+}
+
+:root[data-theme="light"] .text-link,
+:root[data-theme="light"] .text-button {
+  color: #176b8d;
+}
+
+:root[data-theme="light"] .text-link:hover,
+:root[data-theme="light"] .text-button:hover {
+  color: #104d68;
+}
+
+:root[data-theme="light"] .panel {
+  color: var(--text);
+  background: linear-gradient(135deg, #edf5f880, transparent 65%), #ffffff;
+  border-color: var(--edge);
+  box-shadow: 0 5px 18px #274a5b0c, inset 0 1px #ffffff;
+}
+
+:root[data-theme="light"] .metric {
+  background: linear-gradient(125deg, #ffffff, #f5f9fb 85%);
+}
+
+:root[data-theme="light"] .metric-icon {
+  color: #126c8b;
+  background: #dff0f6;
+  border-color: #c7e0ea;
+}
+
+:root[data-theme="light"] .metric-icon.green {
+  color: #176c4e;
+  background: #e0f2e9;
+  border-color: #c5e4d3;
+}
+
+:root[data-theme="light"] .metric-icon.amber {
+  color: #7d5016;
+  background: #f7eddb;
+  border-color: #ead7b4;
+}
+
+:root[data-theme="light"] .metric-icon.red {
+  color: #963b36;
+  background: #f8e6e3;
+  border-color: #eccdca;
+}
+
+:root[data-theme="light"] .metric-label,
+:root[data-theme="light"] .job-time,
+:root[data-theme="light"] .detail-grid dd,
+:root[data-theme="light"] .search-result,
+:root[data-theme="light"] .inspection-item,
+:root[data-theme="light"] .history-entry,
+:root[data-theme="light"] .calendar-day-header {
+  color: var(--text);
+}
+
+:root[data-theme="light"] .today-job:hover,
+:root[data-theme="light"] .data-table tbody tr:hover {
+  background: #eff6f8;
+}
+
+:root[data-theme="light"] .badge {
+  color: #405c68;
+  background: #edf3f6;
+  border-color: #d2e0e6;
+}
+
+:root[data-theme="light"] .status-completed,
+:root[data-theme="light"] .payment-paid,
+:root[data-theme="light"] .notice-success,
+:root[data-theme="light"] .notice.notice-success {
+  color: #195e46;
+  background: #e4f3eb;
+  border-color: #c6e3d3;
+}
+
+:root[data-theme="light"] .status-confirmed {
+  color: #245d82;
+  background: #e8f1f8;
+  border-color: #cbdfea;
+}
+
+:root[data-theme="light"] .status-on_site {
+  color: #185d7c;
+  background: #e2f1f7;
+  border-color: #c4e1eb;
+}
+
+:root[data-theme="light"] .status-pending,
+:root[data-theme="light"] .payment-partial,
+:root[data-theme="light"] .notice-warning {
+  color: #72501a;
+  background: #f8f0df;
+  border-color: #eadab9;
+}
+
+:root[data-theme="light"] .status-cancelled {
+  color: #536772;
+  background: #eef2f4;
+  border-color: #d8e1e5;
+}
+
+:root[data-theme="light"] .payment-unpaid,
+:root[data-theme="light"] .notice.error,
+:root[data-theme="light"] .error-message,
+:root[data-theme="light"] .notice-error,
+:root[data-theme="light"] .notice.notice-error {
+  color: #893b35;
+  background: #fbebea;
+  border-color: #edcfcc;
+}
+
+:root[data-theme="light"] .chart-bars,
+:root[data-theme="light"] .chart-legend {
+  border-color: var(--edge);
+}
+
+:root[data-theme="light"] .chart-bars {
+  background: repeating-linear-gradient(
+    to top,
+    transparent 0,
+    transparent 39px,
+    #54717e1a 40px,
+    transparent 41px
+  );
+}
+
+:root[data-theme="light"] .chart-stack {
+  border-color: #c5d9e1;
+}
+
+:root[data-theme="light"] .chart-completed {
+  background: linear-gradient(#46a6c9, #6ab3cd);
+}
+
+:root[data-theme="light"] .chart-progress {
+  background: var(--chart-progress);
+}
+
+:root[data-theme="light"] .chart-scheduled {
+  background: var(--chart-scheduled);
+}
+
+:root[data-theme="light"] .chart-legend {
+  color: var(--muted);
+}
+
+:root[data-theme="light"] .data-table th {
+  color: #49636e;
+  background: #f3f7f9;
+}
+
+:root[data-theme="light"] .data-table td {
+  color: var(--text);
+}
+
+:root[data-theme="light"] .table-chevron {
+  color: #56717d;
+}
+
+:root[data-theme="light"] .table-chevron:hover,
+:root[data-theme="light"] .tab-bar button.active,
+:root[data-theme="light"] .tab-bar button[aria-selected="true"] {
+  color: #194f68;
+  background: #e3eff4;
+  border-color: #bdd4df;
+}
+
+:root[data-theme="light"] .tab-count {
+  background: #244f6812;
+}
+
+:root[data-theme="light"] .attention-row svg {
+  color: #7d5016;
+}
+
+:root[data-theme="light"] .activity-dot {
+  background: #2d8db0;
+}
+
+:root[data-theme="light"] .field label {
+  color: #405b66;
+}
+
+:root[data-theme="light"] .field-input {
+  color: var(--text);
+  background: #ffffff;
+  border-color: #bdcfd7;
+}
+
+:root[data-theme="light"] .field-input:focus {
+  border-color: #297d9f;
+  box-shadow: 0 0 0 3px #2b86a322;
+}
+
+:root[data-theme="light"] .field-input::placeholder {
+  color: #687e88;
+}
+
+:root[data-theme="light"] .notice {
+  color: #72501a;
+  background: #f8f0df;
+  border-color: #eadab9;
+}
+
+:root[data-theme="light"] .arctic-modal {
+  color: var(--text);
+  background: linear-gradient(130deg, #ffffff, #f6f9fb);
+  border-color: #c7d8df;
+  box-shadow: 0 20px 70px #15384726;
+}
+
+:root[data-theme="light"] .arctic-modal::backdrop,
+:root[data-theme="light"] .drawer-dialog::backdrop,
+:root[data-theme="light"] .nav-backdrop {
+  background: #16354165;
+}
+
+:root[data-theme="light"] .modal-header,
+:root[data-theme="light"] .search-result,
+:root[data-theme="light"] .checkbox-row {
+  border-color: var(--edge);
+}
+
+:root[data-theme="light"] .search-result:hover {
+  background: #edf4f7;
+}
+
+:root[data-theme="light"] .calendar-day.today,
+:root[data-theme="light"] .calendar-day.is-today {
+  background: #e8f2f6;
+}
+
+:root[data-theme="light"] .calendar-event {
+  color: #244753;
+  background: #edf5f8;
+  border-color: #cfdee5;
+  border-left-color: #458bab;
+}
+
+:root[data-theme="light"] .calendar-event.event-completed {
+  background: #e6f3ec;
+  border-left-color: #338163;
+}
+
+:root[data-theme="light"] .calendar-event.event-on_site {
+  background: #e7f2f7;
+  border-left-color: #2f83a5;
+}
+
+:root[data-theme="light"] .calendar-event.event-pending {
+  background: #f8f0df;
+  border-left-color: #9a702b;
+}
+
+:root[data-theme="light"] .report-bar,
+:root[data-theme="light"] .progress-track {
+  background: #e3edf1;
+}
+
+:root[data-theme="light"] .report-bar > span {
+  background: linear-gradient(90deg, #397f9b, #7eb8cc);
+}
+
+:root[data-theme="light"] .progress-fill {
+  background: #4088a6;
+}
+
+:root[data-theme="light"] .progress-completed {
+  background: #378164;
+}
+
+:root[data-theme="light"] .progress-on_site {
+  background: #377f9d;
+}
+
+:root[data-theme="light"] .progress-cancelled {
+  background: #78909a;
+}
+
+:root[data-theme="light"] .login-page {
+  background:
+    radial-gradient(ellipse at 15% 0%, #dcecf1, transparent 65%),
+    var(--bg);
+}
+
+:root[data-theme="light"] .login-story,
+:root[data-theme="light"] .login-form-side {
+  background: transparent;
+  border-color: var(--edge);
+}
+
+:root[data-theme="light"] .login-story h1 span,
+:root[data-theme="light"] .login-benefits svg,
+:root[data-theme="light"] .login-brand-footer {
+  color: #267596;
+}
+
+:root[data-theme="light"] .login-circles {
+  border-color: #4e94ad38;
+  box-shadow:
+    0 0 0 60px #4e94ad0b,
+    0 0 0 120px #4e94ad08,
+    0 0 0 180px #4e94ad05;
+}
+
+:root[data-theme="light"] .demo-card {
+  background: #ffffff;
+  border-color: var(--edge);
+}
+
+:root[data-theme="light"] .demo-card p,
+:root[data-theme="light"] .demo-card strong {
+  color: #405b66;
+}
+
+:root[data-theme="light"] .skip-link {
+  color: #153544;
+  background: #cceafd;
+}
+
+:root[data-theme="light"] .local-tag {
+  color: #405b66;
+  border-color: var(--edge);
+}
+
+:root[data-theme="light"] .text-amber {
+  color: #765017;
+}
+
+:root[data-theme="light"] .invoice-total {
+  color: var(--text);
+  background: #edf4f7;
+}
+
+:root[data-theme="light"] .theme-toggle {
+  color: #355866;
+}
+
+:root[data-theme="light"] .theme-toggle[aria-pressed="true"] {
+  color: #155a78;
+  background: #e2f0f5;
+}
+
+:root[data-theme="light"] :focus-visible {
+  outline-color: #196f91;
+}
