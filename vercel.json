@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm run setup && npm run build",
+  "buildCommand": "npm run setup && npm run build && node scripts/deploy-vercel-migrations.cjs",
   "installCommand": "npm install && npm install --prefix backend && npm install --prefix frontend",
   "outputDirectory": "frontend/dist",
   "functions": {

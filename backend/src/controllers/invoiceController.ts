@@ -112,7 +112,13 @@ export const recordPayment = async (req: Request, res: Response) => {
         const financials = invoiceFinancials(invoice);
         if (financials.needsReview) throw new ConflictError('Historical partial payment amount is unknown. Reconcile this invoice before recording additional payments.');
         if (data.amount.gt(new Prisma.Decimal(financials.balance!))) throw new ValidationError('Payment exceeds the outstanding balance.');
-        await tx.payment.create({ data: { ...data, invoiceId: invoice.id } });
+        await tx.payment.create({ data: {
+            amount: data.amount,
+            method: data.method,
+            ...(data.reference !== undefined ? { reference: data.reference } : {}),
+            idempotencyKey: data.idempotencyKey,
+            invoice: { connect: { id: invoice.id } },
+        } });
         const nextPaid = new Prisma.Decimal(financials.amountPaid!).add(data.amount);
         const paid = nextPaid.eq(invoice.amount);
         const updated = await tx.invoice.update({ where: { id: invoice.id }, data: { ledgerEnabled: true, paymentStatus: paid ? PaymentStatus.PAID : PaymentStatus.PARTIAL, paymentMethod: data.method, paidAt: paid ? new Date() : null }, include: INVOICE_INCLUDE });
