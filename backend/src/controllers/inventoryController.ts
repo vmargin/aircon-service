@@ -54,7 +54,7 @@ export const createInventoryItem = async (req: Request, res: Response) => {
     const { branchId, ...itemData } = data;
     const item = await prisma.$transaction(async (tx) => {
         await assertBranchInScope(requireUser(req), branchId, tx);
-        const result = await tx.inventoryItem.create({ data: { ...itemData, branch: { connect: { id: branchId } } }, include: { branch: true } });
+        const result = await tx.inventoryItem.create({ data: { ...itemData, unitCost: data.unitCost!, branch: { connect: { id: branchId } } }, include: { branch: true } });
         if (data.quantityOnHand > 0) await tx.stockMovement.create({ data: { inventoryItemId: result.id, quantity: data.quantityOnHand, reason: 'Opening stock' } });
         await auditInTransaction(tx, req, 'INVENTORY_CREATE', 'inventory', result.id, result.branchId, `Registered ${result.name} (${result.quantityOnHand} ${result.unit})`);
         return result;
