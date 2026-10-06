@@ -1,4 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
+import type { Booking } from "../types";
 export { getAllList as getAll } from "./api";
 export { formatDate as manilaDate } from "./api";
 
@@ -51,4 +52,37 @@ export function jobNumber(id: string): string {
 }
 export function isOpenJob(status: string): boolean {
   return status !== "COMPLETED" && status !== "CANCELLED";
+}
+
+export type BookingServiceLocation = {
+  siteName: string | null;
+  address: string | null;
+  addressSource: "visit" | "service-site" | "customer-fallback" | "missing";
+  accessNotes: string | null;
+};
+
+export function bookingServiceLocation(booking: Booking): BookingServiceLocation {
+  const siteName = booking.serviceSite?.name?.trim() || null;
+  const accessNotes = booking.accessNotes?.trim() || null;
+  const visitAddress = booking.serviceAddress?.trim();
+  const siteAddress = booking.serviceSite?.address?.trim();
+  const customerAddress = booking.customer?.address?.trim();
+
+  if (visitAddress)
+    return { siteName, address: visitAddress, addressSource: "visit", accessNotes };
+  if (siteAddress)
+    return {
+      siteName,
+      address: siteAddress,
+      addressSource: "service-site",
+      accessNotes,
+    };
+  if (customerAddress)
+    return {
+      siteName,
+      address: customerAddress,
+      addressSource: "customer-fallback",
+      accessNotes,
+    };
+  return { siteName, address: null, addressSource: "missing", accessNotes };
 }

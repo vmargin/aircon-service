@@ -6,7 +6,7 @@ Improve the existing ARCTIC application while preserving its Git history, Postgr
 
 Extend customer → registered aircon unit → scheduled booking → field work order → inspection/diagnosis → parts → invoice → payment receipts → next service date.
 
-Preserve PENDING → CONFIRMED → ON_SITE → COMPLETED and cancellation from open states, invoice-before-completion, one invoice per booking, organization and branch access, Decimal money, and forward-only billing semantics. Close dispatch overlap/inactive-technician gaps, lock terminal jobs, record immutable payment receipts, guard stock atomically, and audit mutations. New unit must belong to the booking customer. Never infer an amount for a historical status-only PARTIAL invoice: surface review required. Legacy paid invoice amounts are known paid baselines.
+Preserve PENDING → CONFIRMED → ON_SITE → COMPLETED and cancellation from open states, one invoice per booking, organization and branch access, Decimal money, and forward-only billing semantics. Field work may be completed before the office issues its invoice; billing state must not hold the technician's work history open. Close dispatch overlap/inactive-technician gaps, lock terminal jobs, record immutable payment receipts, guard stock atomically, and audit mutations. New unit must belong to the booking customer. Never infer an amount for a historical status-only PARTIAL invoice: surface review required. Legacy paid invoice amounts are known paid baselines.
 
 ## Architecture and migration
 

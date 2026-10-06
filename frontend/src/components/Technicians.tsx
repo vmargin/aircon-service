@@ -229,36 +229,59 @@ export default function Technicians() {
                       </a>
                     )}
                   </div>
-                  <div className="dispatch-stat">
-                    <strong>{visits.length}</strong>
-                    <span className="muted">
-                      visits · {workload / 60} hours remaining
-                    </span>
-                  </div>
-                  {visits.length ? (
-                    <div className="dispatch-list">
-                      {visits.map((b) => (
-                        <button
-                          className="history-entry"
-                          key={b.id}
-                          onClick={() => setSelectedJob(b.id)}
-                        >
-                          <div>
-                            <strong>{b.customer?.name}</strong>
-                            <small>
-                              {manilaDate(b.scheduledAt, true)} ·{" "}
-                              {b.serviceType}
-                            </small>
-                          </div>
-                          <StatusBadge status={b.status} />
-                        </button>
-                      ))}
+                  {bookings.data === undefined ? (
+                    <div className="notice notice-warning" role="status">
+                      <CalendarDays size={18} />
+                      <p className="muted">
+                        {bookings.isError
+                          ? "Schedule unavailable. Visit count and workload are unknown."
+                          : "Loading the visit schedule…"}
+                      </p>
                     </div>
                   ) : (
-                    <div className="notice">
-                      <CalendarDays size={18} />
-                      <p className="muted">No visits on this date.</p>
-                    </div>
+                    <>
+                      {bookings.isError && (
+                        <p className="field-hint" role="status">
+                          Showing the last loaded schedule; it could not be refreshed.
+                        </p>
+                      )}
+                      {visits.length > 0 && (
+                        <div className="dispatch-stat">
+                          <strong>{visits.length}</strong>
+                          <span className="muted">
+                            {visits.length === 1 ? "scheduled visit" : "scheduled visits"}
+                            {workload > 0 && (
+                              <> · {workload / 60} {workload === 60 ? "hour" : "hours"} of open work</>
+                            )}
+                          </span>
+                        </div>
+                      )}
+                      {visits.length ? (
+                        <div className="dispatch-list">
+                          {visits.map((b) => (
+                            <button
+                              className="history-entry"
+                              key={b.id}
+                              onClick={() => setSelectedJob(b.id)}
+                            >
+                              <div>
+                                <strong>{b.customer?.name}</strong>
+                                <small>
+                                  {manilaDate(b.scheduledAt, true)} ·{" "}
+                                  {b.serviceType}
+                                </small>
+                              </div>
+                              <StatusBadge status={b.status} />
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="notice">
+                          <CalendarDays size={18} />
+                          <p className="muted">No visits scheduled on this date.</p>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </Card>
@@ -338,7 +361,7 @@ export default function Technicians() {
                 checked={active}
                 onChange={(e) => setActive(e.target.checked)}
               />
-              <span>Active and available for assignment</span>
+              <span>Active and eligible for assignment</span>
             </label>
           )}
           {error && (

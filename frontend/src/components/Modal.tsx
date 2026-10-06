@@ -6,14 +6,18 @@ const Modal = ({
   title,
   subtitle,
   children,
+  footer,
   maxWidth = "md",
+  className = "",
 }: {
   isOpen: boolean;
   onClose: () => void;
   title: string;
   subtitle?: string;
   children: React.ReactNode;
+  footer?: React.ReactNode;
   maxWidth?: "sm" | "md" | "lg";
+  className?: string;
 }) => {
   const ref = useRef<HTMLDialogElement>(null);
   const closeRef = useRef(onClose);
@@ -35,7 +39,7 @@ const Modal = ({
   return (
     <dialog
       ref={ref}
-      className={`arctic-modal modal-${maxWidth}`}
+      className={`arctic-modal modal-${maxWidth} ${className}`.trim()}
       aria-label={title}
       onCancel={(event) => {
         event.preventDefault();
@@ -59,7 +63,8 @@ const Modal = ({
             <X size={19} />
           </button>
         </header>
-        {children}
+        <div className="modal-scroll">{children}</div>
+        {footer && <footer className="modal-footer">{footer}</footer>}
       </div>
     </dialog>
   );

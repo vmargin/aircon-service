@@ -40,6 +40,20 @@ export interface Customer {
     _count?: { bookings: number };
 }
 
+export interface ServiceSite {
+    id: string;
+    customerId: string;
+    branchId: string;
+    customer?: Customer;
+    branch?: Branch;
+    name: string;
+    address: string;
+    contactName?: string | null;
+    phone?: string | null;
+    accessNotes?: string | null;
+    isActive: boolean;
+}
+
 export interface Unit {
     id: string;
     customerId: string;
@@ -54,6 +68,8 @@ export interface Unit {
     installedAt?: string | null;
     nextMaintenanceAt?: string | null;
     notes?: string | null;
+    serviceSiteId?: string | null;
+    serviceSite?: ServiceSite | null;
     bookings?: Booking[];
 }
 
@@ -79,6 +95,9 @@ export type InspectionOutcome = 'PENDING' | 'PASS' | 'FOLLOW_UP' | 'NOT_APPLICAB
 export interface InspectionItem {
     id: string;
     label: string;
+    type?: 'CHECK' | 'MEASUREMENT';
+    unitLabel?: string | null;
+    reading?: string | null;
     outcome?: InspectionOutcome;
     checked?: boolean;
 }
@@ -96,6 +115,14 @@ export interface Booking {
     branch?: Branch;
     technicianId?: string | null;
     technician?: Technician | null;
+    estimateRevisionId?: string | null;
+    estimateRevision?: EstimateRevision | null;
+    serviceRequest?: Pick<ServiceRequest, 'reportedIssue' | 'preferredWindowStart' | 'preferredWindowEnd' | 'accessNotes'> | null;
+    serviceSiteId?: string | null;
+    serviceSite?: ServiceSite | null;
+    serviceAddress?: string | null;
+    accessNotes?: string | null;
+    inspectionTemplateId?: string | null;
     notes?: string | null;
     invoice?: Invoice | null;
     createdAt: string;
@@ -125,8 +152,147 @@ export interface Invoice {
     amountPaid?: string | number | null;
     balance?: string | number | null;
     payments?: Payment[];
+    lineItems?: InvoiceLine[];
     needsReview?: boolean;
     legacyBaseline?: boolean;
+}
+
+export interface InvoiceLine {
+    id: string;
+    sourceLineId?: string | null;
+    description: string;
+    quantity: string | number;
+    unitPrice: string | number;
+    lineTotal: string | number;
+    sortOrder: number;
+}
+
+export type ServiceRequestStatus = 'NEW' | 'NEEDS_ASSESSMENT' | 'READY_TO_SCHEDULE' | 'CONVERTED' | 'CLOSED';
+export type EstimateStatus = 'DRAFT' | 'SENT' | 'APPROVED' | 'DECLINED';
+export type EstimateApprovalMethod = 'PHONE' | 'IN_PERSON' | 'EMAIL' | 'OTHER';
+
+export const ALLOWED_SERVICE_REQUEST_TRANSITIONS: Record<ServiceRequestStatus, ServiceRequestStatus[]> = {
+    NEW: ['NEEDS_ASSESSMENT', 'READY_TO_SCHEDULE', 'CLOSED'],
+    NEEDS_ASSESSMENT: ['READY_TO_SCHEDULE', 'CLOSED'],
+    READY_TO_SCHEDULE: ['NEEDS_ASSESSMENT', 'CLOSED'],
+    CONVERTED: [],
+    CLOSED: [],
+};
+
+export const SERVICE_REQUEST_STATUS_LABELS: Record<ServiceRequestStatus, string> = {
+    NEW: 'New',
+    NEEDS_ASSESSMENT: 'Needs assessment',
+    READY_TO_SCHEDULE: 'Ready to schedule',
+    CONVERTED: 'Converted',
+    CLOSED: 'Closed',
+};
+
+export interface EstimateLineItem {
+    id: string;
+    revisionId: string;
+    description: string;
+    quantity: string | number;
+    unitPrice: string | number;
+    lineTotal: string | number;
+    sortOrder: number;
+    createdAt: string;
+}
+
+export interface EstimateRevision {
+    id: string;
+    estimateId: string;
+    revisionNumber: number;
+    status: EstimateStatus;
+    notes?: string | null;
+    sentAt?: string | null;
+    approvedAt?: string | null;
+    approvalMethod?: EstimateApprovalMethod | null;
+    approvalContact?: string | null;
+    approvalNote?: string | null;
+    decisionNote?: string | null;
+    approvedByUserId?: string | null;
+    createdByUserId: string;
+    supersededAt?: string | null;
+    createdAt: string;
+    total: string;
+    lineItems: EstimateLineItem[];
+}
+
+export interface Estimate {
+    id: string;
+    serviceRequestId: string;
+    revisions: EstimateRevision[];
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface ServiceRequest {
+    id: string;
+    status: ServiceRequestStatus;
+    serviceType: string;
+    priority: 'NORMAL' | 'HIGH' | 'URGENT';
+    reportedIssue: string;
+    serviceAddress: string;
+    preferredWindowStart?: string | null;
+    preferredWindowEnd?: string | null;
+    accessNotes?: string | null;
+    internalNotes?: string | null;
+    organizationId: string;
+    branchId: string;
+    branch?: Branch;
+    customerId: string;
+    customer?: Customer;
+    serviceSiteId?: string | null;
+    serviceSite?: ServiceSite | null;
+    unitId?: string | null;
+    unit?: Unit | null;
+    createdByUserId: string;
+    booking?: Pick<Booking, 'id' | 'status' | 'scheduledAt'> | null;
+    estimate?: Estimate | null;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface InspectionTemplateItem {
+    id: string;
+    templateId: string;
+    label: string;
+    type: 'CHECK' | 'MEASUREMENT';
+    unitLabel?: string | null;
+    sortOrder: number;
+    createdAt: string;
+}
+
+export interface InspectionTemplate {
+    id: string;
+    name: string;
+    serviceType: string;
+    isActive: boolean;
+    organizationId: string;
+    createdByUserId: string;
+    items: InspectionTemplateItem[];
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface PartsUsageReportRow {
+    id: string;
+    quantity: number;
+    createdAt: string;
+    unitCost: string;
+    extendedCost: string;
+    inventoryItem: Pick<InventoryItem, 'name' | 'sku' | 'unit'>;
+    booking: Pick<Booking, 'id' | 'serviceType' | 'scheduledAt'> & {
+        customer: Pick<Customer, 'name'>;
+        branch: Pick<Branch, 'id' | 'name'>;
+    };
+}
+
+export interface MaintenanceDueReportRow extends Unit {
+    dueState: 'PAST_DUE' | 'DUE_TODAY' | 'UPCOMING';
+    customer: Customer;
+    serviceSite?: ServiceSite | null;
+    _count: { bookings: number };
 }
 
 /** Envelope returned by every list endpoint. */

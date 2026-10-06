@@ -1,6 +1,21 @@
 import { Router } from 'express';
 import { login, me } from '../controllers/authController';
 import {
+    approveEstimate,
+    convertServiceRequest,
+    createServiceRequest,
+    createServiceSite,
+    declineEstimate,
+    getServiceRequests,
+    getServiceSites,
+    saveServiceRequestEstimate,
+    sendEstimate,
+    updateServiceRequest,
+    updateServiceSite,
+} from '../controllers/serviceOpsController';
+import { createInspectionTemplate, getInspectionTemplates, updateInspectionTemplate } from '../controllers/inspectionTemplateController';
+import { getMaintenanceDueReport, getPartsUsageReport } from '../controllers/reportController';
+import {
     getBookings,
     createBooking,
     updateBooking,
@@ -51,6 +66,29 @@ router.post('/bookings/:id/parts', catchAsync(useBookingPart));
 router.get('/customers', catchAsync(getCustomers));
 router.post('/customers', catchAsync(createCustomer));
 router.patch('/customers/:id', catchAsync(updateCustomer));
+
+// Service locations and unscheduled intake
+router.get('/service-sites', catchAsync(getServiceSites));
+router.post('/service-sites', catchAsync(createServiceSite));
+router.patch('/service-sites/:id', catchAsync(updateServiceSite));
+router.get('/service-requests', catchAsync(getServiceRequests));
+router.post('/service-requests', catchAsync(createServiceRequest));
+router.patch('/service-requests/:id', catchAsync(updateServiceRequest));
+router.post('/service-requests/:id/estimate', catchAsync(saveServiceRequestEstimate));
+router.post('/service-requests/:id/convert', catchAsync(convertServiceRequest));
+router.post('/estimate-revisions/:id/send', catchAsync(sendEstimate));
+router.post('/estimate-revisions/:id/approve', catchAsync(approveEstimate));
+router.post('/estimate-revisions/:id/decline', catchAsync(declineEstimate));
+
+// Organization-wide inspection forms; only admins may author shared templates.
+router.get('/inspection-templates', catchAsync(getInspectionTemplates));
+router.post('/inspection-templates', catchAsync(createInspectionTemplate));
+router.patch('/inspection-templates/:id', catchAsync(updateInspectionTemplate));
+
+// Reports follow the scope of their source records. Maintenance dates are
+// organization-wide for admins and limited to branch-owned service activity otherwise.
+router.get('/reports/parts-usage', catchAsync(getPartsUsageReport));
+router.get('/reports/maintenance-due', catchAsync(getMaintenanceDueReport));
 
 // Invoices
 router.get('/invoices', catchAsync(getInvoices));

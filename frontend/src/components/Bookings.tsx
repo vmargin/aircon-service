@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowUpRight, Plus, Search } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
-import { getAll, jobNumber, manilaDate } from "../api/operational";
+import { Link, useSearchParams } from "react-router-dom";
+import {
+  bookingServiceLocation,
+  getAll,
+  jobNumber,
+  manilaDate,
+} from "../api/operational";
 import { Booking, BookingStatus, STATUS_LABELS } from "../types";
 import {
   Button,
@@ -20,17 +25,32 @@ import WorkOrderModal from "./WorkOrderModal";
 
 export default function Bookings() {
   const [params] = useSearchParams();
+  const attentionOnly = params.get("attention") === "1";
+  const pageSize =
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(max-width: 760px)").matches
+      ? 6
+      : 12;
   const [search, setSearch] = useState(params.get("q") ?? "");
   const [status, setStatus] = useState<"ALL" | BookingStatus>("ALL");
+  const [visibleCount, setVisibleCount] = useState(pageSize);
   const [newBooking, setNewBooking] = useState(false);
   const [selected, setSelected] = useState<string | null>(params.get("job"));
   useEffect(() => {
     setSearch(params.get("q") ?? "");
     setSelected(params.get("job"));
   }, [params]);
+  useEffect(() => {
+    setVisibleCount(pageSize);
+  }, [search, status, attentionOnly, pageSize]);
   const query = useQuery({
-    queryKey: ["bookings"],
-    queryFn: () => getAll<Booking>("/bookings"),
+    queryKey: ["bookings", { attention: attentionOnly }],
+    queryFn: () =>
+      getAll<Booking>(
+        "/bookings",
+        attentionOnly ? { attention: "1" } : undefined,
+      ),
   });
   const rows = query.data ?? [];
   const filtered = useMemo(
@@ -54,14 +74,19 @@ export default function Bookings() {
         .sort((a, b) => +new Date(b.scheduledAt) - +new Date(a.scheduledAt)),
     [rows, search, status],
   );
+  const visibleRows = filtered.slice(0, visibleCount);
   if (query.isLoading) return <Spinner label="Loading service jobs…" />;
   if (query.isError)
     return <ErrorState error={query.error} onRetry={() => query.refetch()} />;
   return (
     <div className="page-stack">
       <PageHeader
-        title="Service jobs"
-        subtitle="Every visit, from the first booking to the final receipt."
+        title={attentionOnly ? "Jobs requiring attention" : "Service jobs"}
+        subtitle={
+          attentionOnly
+            ? "Priority or overdue open jobs, unfinished checks, follow-up findings, and completed work without an invoice."
+            : "Every visit, from the first booking to the final receipt."
+        }
         action={
           <Button onClick={() => setNewBooking(true)}>
             <Plus size={16} /> New booking
@@ -69,6 +94,14 @@ export default function Bookings() {
         }
       />
       <Card>
+        {attentionOnly && (
+          <div className="attention-filter notice notice-warning" role="status">
+            Showing jobs that need dispatch, inspection follow-up, or billing attention.
+            <Link className="text-button" to="/bookings">
+              Clear filter
+            </Link>
+          </div>
+        )}
         <div className="page-toolbar">
           <div className="search-field">
             <Search size={17} />
@@ -80,7 +113,9 @@ export default function Bookings() {
               placeholder="Search client, equipment or job…"
             />
           </div>
-          <span className="muted">{filtered.length} jobs</span>
+          <span className="record-count muted" role="status" aria-live="polite">
+            Showing {visibleRows.length} of {filtered.length} jobs
+          </span>
         </div>
         <div className="tab-bar">
           {(
@@ -91,6 +126,7 @@ export default function Bookings() {
             <button
               key={s}
               className={status === s ? "active" : ""}
+              aria-pressed={status === s}
               onClick={() => setStatus(s)}
             >
               {s === "ALL" ? "All jobs" : STATUS_LABELS[s]}{" "}
@@ -106,15 +142,20 @@ export default function Bookings() {
       <Card>
         {!filtered.length ? (
           <EmptyState
-            title="No matching jobs"
-            message="Adjust your filters or schedule a new service visit."
+            title={attentionOnly ? "No jobs need attention" : "No matching jobs"}
+            message={
+              attentionOnly
+                ? "No open high-priority or overdue jobs are in your authorized branch scope."
+                : "Adjust your filters or schedule a new service visit."
+            }
             action={
               <Button onClick={() => setNewBooking(true)}>New booking</Button>
             }
           />
         ) : (
-          <div className="table-wrap">
-            <table className="data-table">
+          <>
+          <div className="table-wrap record-table-wrap">
+            <table id="service-job-table" className="data-table">
               <thead>
                 <tr>
                   <th>Client / location</th>
@@ -129,7 +170,9 @@ export default function Bookings() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((b) => (
+                {visibleRows.map((b) => {
+                  const location = bookingServiceLocation(b);
+                  return (
                   <tr key={b.id}>
                     <td>
                       <button
@@ -138,7 +181,15 @@ export default function Bookings() {
                       >
                         {b.customer?.name ?? "Client"}
                       </button>
-                      <small>{b.customer?.address || b.branch?.name}</small>
+                      <small>
+                        {location.siteName && <>Site: {location.siteName} · </>}
+                        {location.addressSource === "customer-fallback" &&
+                          "Customer address fallback: "}
+                        {location.address ?? "No service address saved"}
+                      </small>
+                      {location.accessNotes && (
+                        <small>Access notes: {location.accessNotes}</small>
+                      )}
                     </td>
                     <td>
                       <strong>{b.serviceType}</strong>
@@ -178,10 +229,111 @@ export default function Bookings() {
                       </button>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
+          <div
+            id="service-job-cards"
+            className="record-card-list"
+            role="list"
+            aria-label="Service job results"
+          >
+            {visibleRows.map((b) => {
+              const location = bookingServiceLocation(b);
+              const clientName = b.customer?.name ?? "Client";
+              return (
+                <article className="record-card" role="listitem" key={b.id}>
+                  <div className="record-card-heading">
+                    <div className="record-card-heading-main">
+                      <button
+                        type="button"
+                        className="record-card-link"
+                        onClick={() => setSelected(b.id)}
+                        aria-label={`Open work order for ${clientName}, ${jobNumber(b.id)}`}
+                      >
+                        {clientName}
+                      </button>
+                      <small className="mono">{jobNumber(b.id)}</small>
+                    </div>
+                    <StatusBadge status={b.status} />
+                  </div>
+                  <p className="record-card-subtitle">
+                    {b.serviceType} · {b.unit?.name ?? "Equipment not linked"}
+                  </p>
+                  {b.priority && b.priority !== "NORMAL" && (
+                    <p className="record-card-priority text-amber">
+                      {b.priority.toLowerCase()} priority
+                    </p>
+                  )}
+                  <dl className="record-card-details">
+                    <div>
+                      <dt>Service site</dt>
+                      <dd>
+                        {location.siteName && `${location.siteName} · `}
+                        {location.addressSource === "customer-fallback" &&
+                          "Customer address fallback: "}
+                        {location.address ?? "No service address saved"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Branch</dt>
+                      <dd>{b.branch?.name ?? "Branch not assigned"}</dd>
+                    </div>
+                    <div>
+                      <dt>Visit</dt>
+                      <dd>
+                        {manilaDate(b.scheduledAt, true)} · {b.durationMinutes ?? 120} min · Manila
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Technician</dt>
+                      <dd>{b.technician?.name ?? "Unassigned"}</dd>
+                    </div>
+                    <div>
+                      <dt>Billing</dt>
+                      <dd>
+                        {b.invoice ? (
+                          <PaymentBadge status={b.invoice.paymentStatus} />
+                        ) : (
+                          "Not billed"
+                        )}
+                      </dd>
+                    </div>
+                  </dl>
+                  {location.accessNotes && (
+                    <p className="record-card-note">
+                      <strong>Access notes:</strong> {location.accessNotes}
+                    </p>
+                  )}
+                  <Button
+                    variant="secondary"
+                    onClick={() => setSelected(b.id)}
+                    aria-label={`Open job for ${clientName}`}
+                  >
+                    <ArrowUpRight size={16} /> Open job
+                  </Button>
+                </article>
+              );
+            })}
+          </div>
+          {visibleRows.length < filtered.length && (
+            <div className="record-load-more">
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  setVisibleCount((count) =>
+                    Math.min(count + pageSize, filtered.length),
+                  )
+                }
+                aria-controls="service-job-table service-job-cards"
+              >
+                Show next {Math.min(pageSize, filtered.length - visibleRows.length)} jobs
+              </Button>
+            </div>
+          )}
+          </>
         )}
       </Card>
       <BookingModal isOpen={newBooking} onClose={() => setNewBooking(false)} />

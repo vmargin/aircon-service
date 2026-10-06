@@ -1,10 +1,21 @@
 /* ARCTIC keeps its deep-teal reference palette as the default. */
 :root {
+  --motion-short: 160ms;
+  --motion-standard: 200ms;
+  --motion-continuous: 1s;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --chart-completed: #5eb9e5;
   --chart-progress: #3a88bb;
   --chart-scheduled: #648ea4;
   --report-completed: #69c8a7;
   --report-progress: #459cd2;
+}
+
+.app {
+  background:
+    radial-gradient(ellipse 920px 360px at 70% 0%, #19435165 0%, transparent 100%),
+    var(--bg);
 }
 
 :root[data-theme="light"] {
@@ -49,7 +60,7 @@
 
 :root[data-theme="light"] .app {
   background:
-    radial-gradient(ellipse at 70% -5%, #ddecf2, transparent 45%),
+    radial-gradient(ellipse 920px 360px at 70% 0%, #ddecf2 0%, transparent 100%),
     var(--bg);
 }
 
@@ -198,6 +209,11 @@
 :root[data-theme="light"] .text-link:hover,
 :root[data-theme="light"] .text-button:hover {
   color: #104d68;
+}
+
+:root[data-theme="light"] .text-button.text-danger,
+:root[data-theme="light"] .text-button.text-danger:hover {
+  color: var(--red);
 }
 
 :root[data-theme="light"] .panel {
@@ -426,22 +442,21 @@
   color: #244753;
   background: #edf5f8;
   border-color: #cfdee5;
-  border-left-color: #458bab;
 }
 
 :root[data-theme="light"] .calendar-event.event-completed {
   background: #e6f3ec;
-  border-left-color: #338163;
+  border-color: #338163;
 }
 
 :root[data-theme="light"] .calendar-event.event-on_site {
   background: #e7f2f7;
-  border-left-color: #2f83a5;
+  border-color: #2f83a5;
 }
 
 :root[data-theme="light"] .calendar-event.event-pending {
   background: #f8f0df;
-  border-left-color: #9a702b;
+  border-color: #9a702b;
 }
 
 :root[data-theme="light"] .report-bar,

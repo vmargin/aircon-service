@@ -17,7 +17,8 @@ import {
   manilaDate,
   manilaDay,
 } from "../api/operational";
-import { Booking, Customer, Unit } from "../types";
+import { Booking, Customer, ServiceSite, Unit } from "../types";
+import { useAuth } from "../auth/AuthContext";
 import {
   Button,
   Card,
@@ -34,6 +35,7 @@ import WorkOrderModal from "./WorkOrderModal";
 
 const emptyForm = {
   customerId: "",
+  serviceSiteId: "",
   name: "",
   brand: "",
   model: "",
@@ -55,6 +57,7 @@ const isDue = (unit: Unit) =>
 
 export default function Units() {
   const client = useQueryClient();
+  const { isAdmin } = useAuth();
   const [search, setSearch] = useState("");
   const [params, setParams] = useSearchParams();
   const dueOnly = params.get("due") === "1";
@@ -76,6 +79,10 @@ export default function Units() {
   const customers = useQuery({
     queryKey: ["customers"],
     queryFn: () => getAll<Customer>("/customers"),
+  });
+  const sites = useQuery({
+    queryKey: ["service-sites", "active"],
+    queryFn: () => getAll<ServiceSite>("/service-sites"),
   });
   const history = useQuery({
     queryKey: ["bookings", "unit-history", historyUnit?.id],
@@ -107,6 +114,7 @@ export default function Units() {
       unit
         ? {
             customerId: unit.customerId,
+            serviceSiteId: unit.serviceSiteId ?? "",
             name: unit.name,
             brand: unit.brand ?? "",
             model: unit.model ?? "",
@@ -141,6 +149,9 @@ export default function Units() {
         unit.serialNumber,
         unit.location,
       ].some((value) => value?.toLowerCase().includes(search.toLowerCase())),
+  );
+  const siteChoices = (sites.data ?? []).filter(
+    (site) => site.customerId === form.customerId && site.isActive,
   );
   const dueCount = all.filter(isDue).length;
   if (units.isLoading) return <Spinner label="Loading registered units…" />;
@@ -230,6 +241,9 @@ export default function Units() {
                   {unit.customer?.name ?? "Client"}
                   {unit.location ? " · " + unit.location : ""}
                 </p>
+                {unit.serviceSite?.name && (
+                  <p className="muted">Service site · {unit.serviceSite.name}</p>
+                )}
                 <dl className="detail-grid">
                   <div>
                     <dt>Equipment</dt>
@@ -305,12 +319,17 @@ export default function Units() {
               {customers.error.message}
             </p>
           )}
+          {sites.isError && (
+            <p className="notice notice-error" role="alert">
+              Could not load service sites: {sites.error.message}
+            </p>
+          )}
           <div className="form-grid">
             <Field label="Client">
               <select
                 className={inputClass}
                 value={form.customerId}
-                onChange={(e) => update("customerId", e.target.value)}
+                onChange={(e) => setForm((current) => ({ ...current, customerId: e.target.value, serviceSiteId: "" }))}
                 required
                 disabled={customers.isLoading}
               >
@@ -318,6 +337,25 @@ export default function Units() {
                 {customers.data?.map((customer) => (
                   <option key={customer.id} value={customer.id}>
                     {customer.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field
+              label="Service site"
+              hint={isAdmin ? "Optional for organization records." : "Choose a site in your branch so this unit stays in your service scope."}
+            >
+              <select
+                className={inputClass}
+                value={form.serviceSiteId}
+                onChange={(event) => update("serviceSiteId", event.target.value)}
+                required={!isAdmin}
+                disabled={!form.customerId || sites.isLoading || sites.isError}
+              >
+                <option value="">{isAdmin ? "No assigned site" : "Choose a service site"}</option>
+                {siteChoices.map((site) => (
+                  <option key={site.id} value={site.id}>
+                    {site.name} · {site.address}
                   </option>
                 ))}
               </select>
@@ -450,7 +488,7 @@ export default function Units() {
             <Button
               type="submit"
               loading={save.isPending}
-              disabled={!customers.data?.length}
+              disabled={!customers.data?.length || (!isAdmin && (!siteChoices.length || sites.isLoading || sites.isError))}
             >
               {editing ? "Save unit" : "Register unit"}
             </Button>

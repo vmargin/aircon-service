@@ -15,6 +15,7 @@ import {
   Clock3,
   Receipt,
   Activity,
+  ChevronDown,
   AirVent,
   MapPin,
 } from "lucide-react";
@@ -83,15 +84,19 @@ function Metric({
   note,
   icon: Icon,
   tone = "",
+  actionTo,
+  actionLabel,
 }: {
   label: string;
   value: number;
   note: string;
   icon: typeof CalendarDays;
   tone?: string;
+  actionTo?: string;
+  actionLabel?: string;
 }) {
-  return (
-    <Card className="metric">
+  const card = (
+    <Card className={`metric ${actionTo ? "metric-actionable" : ""}`}>
       <div className={`metric-icon ${tone}`}>
         <Icon size={21} />
       </div>
@@ -101,8 +106,25 @@ function Metric({
         <p className={`metric-note ${tone === "green" ? "green" : ""}`}>
           {note}
         </p>
+        {actionTo && (
+          <span className="metric-action">
+            {actionLabel ?? "Open list"}
+            <ArrowUpRight size={14} aria-hidden="true" />
+          </span>
+        )}
       </div>
     </Card>
+  );
+  return actionTo ? (
+    <Link
+      className="metric-link"
+      to={actionTo}
+      aria-label={`${actionLabel ?? "Open"}: ${value} high-priority or overdue open jobs`}
+    >
+      {card}
+    </Link>
+  ) : (
+    card
   );
 }
 function PanelTitle({
@@ -136,6 +158,13 @@ export default function Dashboard() {
   const [selected, setSelected] = useState<string | null>(null);
   const [filter, setFilter] = useState<"ALL" | BookingStatus>("ALL");
   const [chartRange, setChartRange] = useState(6);
+  const [moreOperationsOpen, setMoreOperationsOpen] = useState(() => {
+    const isNarrow =
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(max-width: 760px)").matches;
+    return !isNarrow;
+  });
   const query = useQuery({
     queryKey: ["overview"],
     queryFn: async () => (await api.get<Overview>("/overview")).data,
@@ -154,6 +183,7 @@ export default function Dashboard() {
     (job) => filter === "ALL" || job.status === filter,
   );
   const activeTech = data.technicians.filter((t) => t.todayJobs > 0);
+  const followUpCount = data.lowStock.length + data.dueUnits.length;
   const hour = Number(
     new Intl.DateTimeFormat("en-PH", {
       hour: "numeric",
@@ -208,9 +238,11 @@ export default function Dashboard() {
         <Metric
           label="Requires attention"
           value={summary.attentionJobs}
-          note="Priority or overdue open jobs"
+          note="Priority, overdue, incomplete checks, or unbilled work"
           icon={TriangleAlert}
           tone="red"
+          actionTo="/bookings?attention=1"
+          actionLabel="Review attention queue"
         />
       </div>
       <div className="dashboard-top">
@@ -256,7 +288,9 @@ export default function Dashboard() {
           )}
           <div className="dispatch-foot">
             <Clock3 size={12} />
-            {jobs.length} scheduled visits · All times in Manila
+            {jobs.length}{" "}
+            {jobs.length === 1 ? "scheduled visit" : "scheduled visits"} · All
+            times in Manila
             <Link
               to="/bookings"
               className="text-link"
@@ -383,11 +417,11 @@ export default function Dashboard() {
                   <p>
                     {tech.todayJobs > 0
                       ? `${tech.todayJobs} ${tech.todayJobs === 1 ? "job" : "jobs"} today`
-                      : "Available for assignment"}{" "}
+                      : "No jobs scheduled today"}{" "}
                     · {tech.branch?.name ?? "Branch"}
                   </p>
                 </div>
-                <span className="dispatch-state" />
+                <span className="dispatch-state" aria-hidden="true" />
               </Link>
             ))}
             {!data.technicians.length && (
@@ -399,20 +433,36 @@ export default function Dashboard() {
           </div>
           <div className="dispatch-foot">
             <MapPin size={12} />
-            {activeTech.length} technicians scheduled today
+            {activeTech.length}{" "}
+            {activeTech.length === 1 ? "technician" : "technicians"} assigned
+            today
           </div>
         </Card>
-        <Card>
-          <div className="panel-header job-board-header">
-            <h2>
-              <ClipboardList />
-              Service job board
-            </h2>
-            <div className="tab-bar">
+        <details className="panel dashboard-job-board">
+          <summary className="dashboard-job-board-summary">
+            <span className="dashboard-job-board-title">
+              <ClipboardList size={17} aria-hidden="true" />
+              <span>
+                <strong>Service job board</strong>
+                <small>
+                  {jobs.length === 1
+                    ? "1 service visit today"
+                    : `${jobs.length} service visits today`} · Expand to filter by status
+                </small>
+              </span>
+            </span>
+            <ChevronDown size={18} aria-hidden="true" />
+          </summary>
+          <div className="dashboard-job-board-content">
+            <div
+              className="tab-bar"
+              role="group"
+              aria-label="Filter service jobs by status"
+            >
               {(
                 [
                   { key: "ALL", label: "All jobs" },
-                  { key: "CONFIRMED", label: "Scheduled" },
+                  { key: "CONFIRMED", label: "Confirmed" },
                   { key: "ON_SITE", label: "On site" },
                   { key: "COMPLETED", label: "Completed" },
                 ] as Array<{ key: "ALL" | BookingStatus; label: string }>
@@ -432,7 +482,6 @@ export default function Dashboard() {
                 </button>
               ))}
             </div>
-          </div>
           <div className="table-wrap">
             <table className="data-table">
               <thead>
@@ -514,13 +563,32 @@ export default function Dashboard() {
               <ArrowUpRight size={12} />
             </Link>
           </div>
-        </Card>
+          </div>
+        </details>
       </div>
+      <details
+        className="dashboard-secondary"
+        open={moreOperationsOpen}
+        onToggle={(event) =>
+          setMoreOperationsOpen(event.currentTarget.open)
+        }
+      >
+        <summary className="dashboard-secondary-summary">
+          <span>
+            <strong>More operations</strong>
+            <small>
+              {followUpCount
+                ? `${followUpCount} stock or maintenance follow-ups`
+                : "Stock and maintenance are clear"} · billing · recent activity
+            </small>
+          </span>
+          <ChevronDown size={18} aria-hidden="true" />
+        </summary>
       <div className="dashboard-bottom">
         <Card>
-          <PanelTitle icon={TriangleAlert} title="Needs your attention">
+          <PanelTitle icon={TriangleAlert} title="Stock and maintenance">
             <Link className="text-link" to="/units?due=1">
-              View reminders
+              View maintenance
               <ArrowUpRight size={12} />
             </Link>
           </PanelTitle>
@@ -632,6 +700,7 @@ export default function Dashboard() {
           )}
         </Card>
       </div>
+      </details>
       <BookingModal isOpen={newBooking} onClose={() => setNewBooking(false)} />
       <WorkOrderModal
         bookingId={selected}

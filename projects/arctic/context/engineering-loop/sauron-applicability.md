@@ -8,7 +8,7 @@ Checked 2026-10-05 for the existing `aircon-service` repository at `056f824`. Sc
 - `sauron status` reports registered runtime adapters and a 165-skill catalog. This verifies local registration, not live model runtimes or agent execution.
 - `sauron list-skills` was used to select the task-matched capabilities below.
 - `sauron init --dry-run` preserved the existing config and reported existing generated adapters unchanged; it simulated a missing VS Code settings file and wrote nothing. The generated adapter files in this checkout are untracked, so no bulk runtime sync was run.
-- `sauron add ... --dry-run` checked seven relevant catalog skills and confirmed their destinations without copying files. Global copies already exist under `C:\Users\margi\.agents\skills`.
+- `sauron add ... --dry-run` checked seven relevant catalog skills and confirmed their destinations without copying files. Global copies already exist in the current user's `.agents/skills` directory.
 - `sauron diff` cannot compare skill pins because this repo has no `sauron-skills.lock.json`.
 - `sauron trace-report` reports no `.sauron/traces.json`. No Sauron Fellowship execution is claimed. Jarvis separately routed the web research to a bounded Luna worker; that worker did not edit the repository.
 
@@ -41,3 +41,9 @@ The research requirements R1–R10 in `research.md` map to existing customer/uni
 - [x] Branch authorization and existing service/payment invariants remain unchanged; checklist and inventory mutations retain server-side validation and audit records.
 - [x] Typecheck, unit/integration suites, production build, and Playwright smoke checks pass after the final inventory and responsive-toolbar changes.
 - [x] Only the requested feature branch is pushed; production and `master` remain untouched.
+
+## Verification refresh — 2026-10-06
+
+- Sauron CLI v1.3.0 `fitness --dry-run` reports `fitness=pass findings=0`. `status` verifies the local adapter/catalog registration only; `trace-report` finds no `.sauron/traces.json`. This is not evidence of a live Fellowship run.
+- The existing app's service lifecycle now permits an on-site job to be completed before the office issues the one invoice. This follows the researched request-to-work-history-to-invoice flow; `architecture-blueprint.md`, the API regression suite, and README now agree. No payment or historical partial-invoice behavior changed.
+- Final branch-scope and service-site ownership checks are covered by the isolated PostgreSQL API tests. See `verification.md` for the exact current commands and the Prisma DLL build limitation.

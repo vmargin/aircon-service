@@ -7,10 +7,10 @@ import {
   CreditCard,
   Wallet,
 } from "lucide-react";
-import { formatCurrency } from "../api/api";
-import { getAll, manilaDay } from "../api/operational";
+import { formatCurrency, formatDate } from "../api/api";
+import { getAll, jobNumber, manilaDay } from "../api/operational";
 import { useAuth } from "../auth/AuthContext";
-import { Booking, BookingStatus, Branch, Invoice, STATUS_LABELS } from "../types";
+import { Booking, BookingStatus, Branch, Customer, Invoice, ServiceSite, STATUS_LABELS, Unit } from "../types";
 import {
   Button,
   Card,
@@ -34,6 +34,28 @@ const RECEIVABLE_AGE_BANDS = [
   { label: "61–90 days", min: 61, max: 90 },
   { label: "91+ days", min: 91, max: Number.POSITIVE_INFINITY },
 ];
+type ReportTab = "billing" | "parts" | "maintenance";
+type PartsUsageRow = {
+  id: string;
+  createdAt: string;
+  quantity: number | string;
+  unitCost: string | number;
+  extendedCost: string | number;
+  inventoryItem: { name: string; sku: string; unit: string };
+  booking: {
+    id: string;
+    serviceType: string;
+    scheduledAt: string;
+    customer: Pick<Customer, "name">;
+    branch: Pick<Branch, "id" | "name">;
+  };
+};
+type MaintenanceDueRow = Unit & {
+  customer: Pick<Customer, "name">;
+  serviceSite: (Pick<ServiceSite, "id" | "name" | "address"> & { branchId: string }) | null;
+  dueState: "PAST_DUE" | "DUE_TODAY" | "UPCOMING";
+  _count: { bookings: number };
+};
 const before = (days: number) =>
   manilaDay(new Date(Date.now() - days * 86400000));
 const csvCell = (value: unknown) => {
@@ -41,6 +63,7 @@ const csvCell = (value: unknown) => {
   return '"' + (/^[=+@-]/.test(s) ? "'" : "") + s.replaceAll('"', '""') + '"';
 };
 export default function Reports() {
+  const [reportTab, setReportTab] = useState<ReportTab>("billing");
   const [range, setRange] = useState("30");
   const [from, setFrom] = useState(before(29));
   const [to, setTo] = useState(manilaDay());
@@ -58,6 +81,21 @@ export default function Reports() {
   const invoices = useQuery({
     queryKey: ["invoices"],
     queryFn: () => getAll<Invoice>("/invoices"),
+  });
+  const reportParams = {
+    ...(from ? { from } : {}),
+    ...(to ? { to } : {}),
+    ...(branchId ? { branchId } : {}),
+  };
+  const partsUsage = useQuery({
+    queryKey: ["reports", "parts-usage", from, to, branchId],
+    queryFn: () => getAll<PartsUsageRow>("/reports/parts-usage", reportParams),
+    enabled: reportTab === "parts",
+  });
+  const maintenanceDue = useQuery({
+    queryKey: ["reports", "maintenance-due", from, to, branchId],
+    queryFn: () => getAll<MaintenanceDueRow>("/reports/maintenance-due", reportParams),
+    enabled: reportTab === "maintenance",
   });
   const inRange = (value: string) => {
     const day = manilaDay(value);
@@ -305,12 +343,19 @@ export default function Reports() {
           </div>
         </div>
       </Card>
+      <Card>
+        <div className="tab-bar" role="tablist" aria-label="Report views">
+          <button type="button" role="tab" aria-selected={reportTab === "billing"} aria-controls="report-billing" className={reportTab === "billing" ? "active" : ""} onClick={() => setReportTab("billing")}>Jobs & billing</button>
+          <button type="button" role="tab" aria-selected={reportTab === "parts"} aria-controls="report-parts" className={reportTab === "parts" ? "active" : ""} onClick={() => setReportTab("parts")}>Parts usage</button>
+          <button type="button" role="tab" aria-selected={reportTab === "maintenance"} aria-controls="report-maintenance" className={reportTab === "maintenance" ? "active" : ""} onClick={() => setReportTab("maintenance")}>Maintenance due</button>
+        </div>
+      </Card>
       {invalid ? (
         <p role="alert" className="notice notice-error">
           The start date must be on or before the end date.
         </p>
-      ) : (
-        <>
+      ) : reportTab === "billing" ? (
+        <section id="report-billing" role="tabpanel" aria-label="Jobs and billing report" className="page-stack">
           <div className="metric-grid">
             {[
               {
@@ -505,7 +550,81 @@ export default function Reports() {
               <EmptyState title="No technician activity in this period" />
             )}
           </Card>
-        </>
+        </section>
+      ) : reportTab === "parts" ? (
+        <section id="report-parts" role="tabpanel" aria-label="Parts usage report" className="page-stack">
+          {partsUsage.isLoading ? (
+            <Spinner label="Loading parts usage…" />
+          ) : partsUsage.isError ? (
+            <ErrorState error={partsUsage.error} onRetry={() => void partsUsage.refetch()} />
+          ) : (
+            <Card>
+              <div className="panel-header">
+                <div>
+                  <h3>Parts used on service jobs</h3>
+                  <span className="muted">Recorded inventory cost, not a customer selling price.</span>
+                </div>
+                <strong>{formatCurrency((partsUsage.data ?? []).reduce((sum, row) => sum + cents(row.extendedCost), 0) / 100)}</strong>
+              </div>
+              {(partsUsage.data ?? []).length ? (
+                <div className="table-wrap">
+                  <table className="data-table">
+                    <thead><tr><th scope="col">Work order</th><th scope="col">Used</th><th scope="col">Client / branch</th><th scope="col">Part</th><th scope="col">Qty</th><th scope="col">Unit cost</th><th scope="col">Total cost</th></tr></thead>
+                    <tbody>{partsUsage.data?.map((row) => (
+                      <tr key={row.id}>
+                        <td><strong>{jobNumber(row.booking.id)}</strong><small>{row.booking.serviceType}</small></td>
+                        <td>{formatDate(row.createdAt, true)}</td>
+                        <td>{row.booking.customer.name}<small>{row.booking.branch.name}</small></td>
+                        <td>{row.inventoryItem.name}<small>{row.inventoryItem.sku}</small></td>
+                        <td>{row.quantity} {row.inventoryItem.unit}</td>
+                        <td>{formatCurrency(row.unitCost)}</td>
+                        <td>{formatCurrency(row.extendedCost)}</td>
+                      </tr>
+                    ))}</tbody>
+                  </table>
+                </div>
+              ) : (
+                <EmptyState title="No parts recorded in this range" message="Parts appear here after they are recorded against a service job." />
+              )}
+            </Card>
+          )}
+        </section>
+      ) : (
+        <section id="report-maintenance" role="tabpanel" aria-label="Maintenance due report" className="page-stack">
+          {maintenanceDue.isLoading ? (
+            <Spinner label="Loading maintenance due report…" />
+          ) : maintenanceDue.isError ? (
+            <ErrorState error={maintenanceDue.error} onRetry={() => void maintenanceDue.refetch()} />
+          ) : (
+            <Card>
+              <div className="panel-header">
+                <div>
+                  <h3>Explicitly scheduled maintenance</h3>
+                  <span className="muted">Dates come from the unit record; no service interval is inferred.</span>
+                </div>
+                <span className="muted">{maintenanceDue.data?.length ?? 0} units</span>
+              </div>
+              {(maintenanceDue.data ?? []).length ? (
+                <div className="table-wrap">
+                  <table className="data-table">
+                    <thead><tr><th scope="col">Due</th><th scope="col">Status</th><th scope="col">Client / unit</th><th scope="col">Service site</th><th scope="col">Recorded visits</th></tr></thead>
+                    <tbody>{maintenanceDue.data?.map((unit) => (
+                      <tr key={unit.id}>
+                        <td>{unit.nextMaintenanceAt ? formatDate(unit.nextMaintenanceAt) : "—"}</td>
+                        <td><span className={`badge ${unit.dueState === "PAST_DUE" ? "status-cancelled" : unit.dueState === "DUE_TODAY" ? "status-pending" : "status-confirmed"}`}>{unit.dueState.replaceAll("_", " ")}</span></td>
+                        <td><strong>{unit.customer.name}</strong><small>{unit.name} · {[unit.brand, unit.model].filter(Boolean).join(" ") || unit.type}</small></td>
+                        <td>{unit.serviceSite?.name ?? "Branch attributed by service history"}</td>
+                        <td>{unit._count.bookings}</td>
+                      </tr>
+                    ))}</tbody>
+                  </table>
+                </div>
+              ) : (
+                <EmptyState title="No saved service dates due" message="Set the next-maintenance date on a unit to include it in this report." />
+              )}
+            </Card>
+          )}
+        </section>
       )}
     </div>
   );

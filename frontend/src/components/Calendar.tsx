@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { getAll, manilaDay } from "../api/operational";
-import { Booking, Technician } from "../types";
+import { Booking, STATUS_LABELS, Technician } from "../types";
 import {
   Button,
   Card,
@@ -28,7 +28,13 @@ const time = (value: string) =>
     minute: "2-digit",
   }).format(new Date(value));
 export default function Calendar() {
-  const [view, setView] = useState<"day" | "week" | "month">("week");
+  const [view, setView] = useState<"day" | "week" | "month">(() => {
+    const isNarrow =
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(max-width: 760px)").matches;
+    return isNarrow ? "day" : "week";
+  });
   const [day, setDay] = useState(manilaDay());
   const [technician, setTechnician] = useState("");
   const [newSchedule, setNewSchedule] = useState("");
@@ -96,6 +102,7 @@ export default function Calendar() {
               <button
                 key={v}
                 className={view === v ? "active" : ""}
+                aria-pressed={view === v}
                 onClick={() => setView(v)}
               >
                 {v[0].toUpperCase() + v.slice(1)}
@@ -148,8 +155,19 @@ export default function Calendar() {
         </div>
       </Card>
       <Card>
+        {view === "week" && (
+          <p className="calendar-scroll-hint">
+            Scroll horizontally to see the rest of the week.
+          </p>
+        )}
         <div className="calendar-scroll">
-          <div className={"calendar-grid calendar-" + view}>
+          <div
+            className={
+              "calendar-grid calendar-" +
+              view +
+              (view === "day" ? " calendar-day-view" : "")
+            }
+          >
             {days.map((d) => {
               const visits = rows
                 .filter((b) => manilaDay(b.scheduledAt) === d)
@@ -205,6 +223,9 @@ export default function Calendar() {
                         <strong>{b.customer?.name ?? "Client"}</strong>
                         <span>
                           {time(b.scheduledAt)} · {b.durationMinutes ?? 120} min
+                        </span>
+                        <span className="calendar-event-status">
+                          {STATUS_LABELS[b.status]}
                         </span>
                         <small>
                           {b.serviceType}

@@ -23,3 +23,12 @@ The PostgreSQL migration is additive and is included with the code. Production m
 - `origin/master` remains at `e34d30bbb5751b35b625775a53d5c1aa1121e9c2`. No production deployment or production database change was made.
 
 The production JWT-secret guard was also covered by tests: a short production secret makes health and application routes return 503, including in the serverless app path.
+
+## Final verification refresh — 2026-10-06
+
+- The current branch is `codex/aircon-service-operations`, based on the existing repository. The local app at `http://localhost:5000` remained running; no production migration, seed, or deployment was performed.
+- `npm.cmd run typecheck` passed for backend and frontend. `npm.cmd test` passed 29 unit tests; 12 database tests were skipped in that mode. `npm.cmd run test:integration` passed all 7 suites and 41 tests against isolated `127.0.0.1:5433/arctic_test`; Prisma reported five migrations applied and no pending migrations.
+- `npm.cmd run build --prefix frontend` passed (Vite reports a 541.76 kB JavaScript chunk, 159.35 kB gzip). A direct backend TypeScript emit passed. The full backend package build stopped at `prisma generate` with Windows `EPERM` renaming `query_engine-windows.dll.node`; the running app was left untouched.
+- Playwright verified the authenticated service desk, all four branch options, the new-request dialog at desktop and 320px without page-level horizontal overflow, and the theme toggle in both modes with light mode restored. An on-site job marked Not billed exposed both Complete job and Create invoice. No form was submitted; browser console had no errors or warnings.
+- Added integration cases cover branch-leader request/booking writes for same-branch history and rejection of foreign/ambiguous units, branch-limited maintenance reporting, unit/site reassignment guards after history exists, site-linked unit updates, and completion before invoicing. All passed in the isolated run.
+- Sauron CLI `fitness --dry-run` passed with zero findings. `trace-report` found no trace file; no traced Fellowship execution is claimed. `git diff --check` passed; Git emitted only line-ending normalization warnings.

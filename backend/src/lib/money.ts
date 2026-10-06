@@ -30,9 +30,18 @@ export function invoiceFinancials(invoice: Pick<Invoice, 'amount' | 'paymentStat
     };
 }
 
-export function serializeInvoice<T extends Invoice & { payments: Payment[] }>(invoice: T) {
+export function serializeInvoice<T extends Invoice & {
+    payments: Payment[];
+    lineItems?: Array<{ quantity: Prisma.Decimal; unitPrice: Prisma.Decimal; lineTotal: Prisma.Decimal }>;
+}>(invoice: T) {
     return {
         ...invoice, amount: invoice.amount.toFixed(2), ...invoiceFinancials(invoice),
         payments: invoice.payments.map((payment) => ({ ...payment, amount: payment.amount.toFixed(2) })),
+        ...(invoice.lineItems ? { lineItems: invoice.lineItems.map((line) => ({
+            ...line,
+            quantity: line.quantity.toFixed(3),
+            unitPrice: line.unitPrice.toFixed(2),
+            lineTotal: line.lineTotal.toFixed(2),
+        })) } : {}),
     };
 }

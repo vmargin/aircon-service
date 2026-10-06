@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ClipboardCheck, Pencil, Plus, Receipt } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -6,6 +6,7 @@ import api, { formatCurrency } from "../api/api";
 import { clearIdempotencyKey, getIdempotencyKey } from "../api/idempotency";
 import { useAuth } from "../auth/AuthContext";
 import {
+  bookingServiceLocation,
   getAll,
   invalidateOperations,
   isOpenJob,
@@ -134,6 +135,8 @@ export default function WorkOrderModal({ bookingId, isOpen, onClose }: Props) {
   const [invoicing, setInvoicing] = useState(false);
   const [diagnosis, setDiagnosis] = useState("");
   const [notes, setNotes] = useState("");
+  const [draftDirty, setDraftDirty] = useState(false);
+  const draftDirtyRef = useRef(false);
   const [checklist, setChecklist] = useState<InspectionItem[]>([]);
   const [partId, setPartId] = useState("");
   const [quantity, setQuantity] = useState("1");
@@ -156,6 +159,7 @@ export default function WorkOrderModal({ bookingId, isOpen, onClose }: Props) {
     enabled: isOpen && tab === "history",
   });
   const booking = query.data;
+  const serviceLocation = booking ? bookingServiceLocation(booking) : null;
   const partUseScope = `work-order-part-use:${user?.orgId ?? "unknown"}:${user?.email ?? "unknown"}`;
   useEffect(() => {
     if (isOpen) {
@@ -165,10 +169,12 @@ export default function WorkOrderModal({ bookingId, isOpen, onClose }: Props) {
       setError("");
       setSaved("");
       setPartId("");
+      draftDirtyRef.current = false;
+      setDraftDirty(false);
     }
   }, [isOpen, bookingId]);
   useEffect(() => {
-    if (booking) {
+    if (booking && !draftDirtyRef.current) {
       setDiagnosis(booking.diagnosis ?? "");
       setNotes(booking.notes ?? "");
       setChecklist(
@@ -178,10 +184,29 @@ export default function WorkOrderModal({ bookingId, isOpen, onClose }: Props) {
       );
     }
   }, [booking]);
+  const markDraftDirty = () => {
+    draftDirtyRef.current = true;
+    setDraftDirty(true);
+  };
+  const clearDraftDirty = () => {
+    draftDirtyRef.current = false;
+    setDraftDirty(false);
+  };
+  const requestClose = () => {
+    if (
+      draftDirtyRef.current &&
+      !window.confirm("Discard your unsaved work order changes?")
+    )
+      return false;
+    clearDraftDirty();
+    onClose();
+    return true;
+  };
   const mutation = useMutation({
     mutationFn: (body: Record<string, unknown>) =>
       api.patch("/bookings/" + bookingId, body),
     onSuccess: () => {
+      clearDraftDirty();
       setError("");
       setSaved("Work order saved.");
       invalidateOperations(client);
@@ -213,6 +238,7 @@ export default function WorkOrderModal({ bookingId, isOpen, onClose }: Props) {
     mutationFn: () => api.delete("/bookings/" + bookingId),
     onSuccess: () => {
       invalidateOperations(client);
+      clearDraftDirty();
       onClose();
     },
     onError: (err: Error) => setError(err.message),
@@ -248,10 +274,93 @@ export default function WorkOrderModal({ bookingId, isOpen, onClose }: Props) {
     <>
       <Modal
         isOpen={isOpen && !editing && !invoicing}
-        onClose={onClose}
+        onClose={requestClose}
         title="Work order"
         subtitle={bookingId ? jobNumber(bookingId) : ""}
         maxWidth="lg"
+        footer={
+          booking && tab === "details" ? (
+            <div className="workorder-modal-actions">
+              {open && (
+                <div
+                  className="workorder-footer-primary"
+                  role="group"
+                  aria-label="Save findings and progress visit"
+                >
+                  <Button
+                    type="submit"
+                    form="workorder-findings-form"
+                    loading={mutation.isPending}
+                  >
+                    <Check size={16} /> Save findings
+                  </Button>
+                  {transitions
+                    .filter((status) => status !== "CANCELLED")
+                    .map((status) => (
+                      <Button
+                        key={status}
+                        type="button"
+                        disabled={draftDirty}
+                        loading={mutation.isPending}
+                        onClick={() => move(status)}
+                      >
+                        {status === "CONFIRMED"
+                          ? "Confirm booking"
+                          : status === "ON_SITE"
+                            ? "Start visit"
+                            : "Complete job"}
+                      </Button>
+                    ))}
+                </div>
+              )}
+              {open && (
+                <details className="workorder-footer-more">
+                  <summary>More visit actions</summary>
+                  <div
+                    className="workorder-footer-more-actions"
+                    role="group"
+                    aria-label="Other visit actions"
+                  >
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled={draftDirty}
+                      onClick={() => setEditing(true)}
+                    >
+                      <Pencil size={15} /> Edit visit
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="danger"
+                      disabled={draftDirty}
+                      onClick={() => move("CANCELLED")}
+                      loading={mutation.isPending}
+                    >
+                      Cancel visit
+                    </Button>
+                    {!booking.invoice && !booking.parts?.length && (
+                      <button
+                        type="button"
+                        className="text-button text-danger workorder-delete-action"
+                        disabled={remove.isPending || draftDirty}
+                        onClick={() => {
+                          if (
+                            window.confirm(
+                              "Permanently delete this unbilled booking? Cancel the visit instead to retain its history.",
+                            )
+                          )
+                            remove.mutate();
+                        }}
+                      >
+                        Delete booking
+                      </button>
+                    )}
+                  </div>
+                </details>
+              )}
+            </div>
+          ) : null
+        }
       >
         {query.isLoading ? (
           <Spinner label="Opening work order…" />
@@ -267,20 +376,45 @@ export default function WorkOrderModal({ bookingId, isOpen, onClose }: Props) {
                 <div>
                   <h3>{booking.customer?.name ?? "Client"}</h3>
                   <p className="muted">
-                    {booking.customer?.address ?? booking.branch?.name}
-                  </p>
-                  <p className="muted">
                     {booking.unit?.name ?? "No registered unit"} ·{" "}
                     {booking.serviceType}
                   </p>
                 </div>
                 <StatusBadge status={booking.status} />
               </div>
-              <div className="tab-bar">
+              <section className="workorder-location" aria-label="Service location">
+                <h4>Service location</h4>
+                {serviceLocation?.siteName && (
+                  <p>
+                    <strong>Site:</strong> {serviceLocation.siteName}
+                  </p>
+                )}
+                <p>
+                  <strong>
+                    {serviceLocation?.addressSource === "customer-fallback"
+                      ? "Customer address fallback:"
+                      : serviceLocation?.addressSource === "service-site"
+                        ? "Service-site address:"
+                        : "Visit address:"}
+                  </strong>{" "}
+                  {serviceLocation?.address ?? "No service address saved for this visit."}
+                </p>
+                {serviceLocation?.accessNotes && (
+                  <p>
+                    <strong>Access notes:</strong> {serviceLocation.accessNotes}
+                  </p>
+                )}
+              </section>
+              <div
+                className="tab-bar"
+                role="group"
+                aria-label="Work order sections"
+              >
                 {["details", "checklist", "parts", "history"].map((t) => (
                   <button
                     key={t}
                     className={tab === t ? "active" : ""}
+                    aria-pressed={tab === t}
                     onClick={() => {
                       setTab(t);
                       setSaved("");
@@ -302,6 +436,12 @@ export default function WorkOrderModal({ bookingId, isOpen, onClose }: Props) {
                     {saved}
                   </p>
                 )}
+                {draftDirty && (
+                  <p className="notice notice-warning" role="status">
+                    Save your findings before changing the visit status, editing
+                    the visit or recording parts.
+                  </p>
+                )}
                 {tab === "details" && (
                   <>
                     <dl className="detail-grid">
@@ -309,7 +449,7 @@ export default function WorkOrderModal({ bookingId, isOpen, onClose }: Props) {
                         <dt>Scheduled</dt>
                         <dd>
                           {manilaDate(booking.scheduledAt, true)}
-                          <small>
+                          <small className="workorder-schedule-meta">
                             Manila · {booking.durationMinutes ?? 120} minutes
                           </small>
                         </dd>
@@ -338,8 +478,52 @@ export default function WorkOrderModal({ bookingId, isOpen, onClose }: Props) {
                         </dd>
                       </div>
                     </dl>
+                    {booking.serviceRequest && (
+                      <section className="notice" aria-label="Service request context">
+                        <strong>Customer-reported issue</strong>
+                        <p>{booking.serviceRequest.reportedIssue}</p>
+                        {booking.serviceRequest.preferredWindowStart && booking.serviceRequest.preferredWindowEnd && (
+                          <small>
+                            Preferred arrival · {manilaDate(booking.serviceRequest.preferredWindowStart, true)} to {manilaDate(booking.serviceRequest.preferredWindowEnd, true)} Manila
+                          </small>
+                        )}
+                        {booking.serviceRequest.accessNotes && (
+                          <p><strong>Request access notes:</strong> {booking.serviceRequest.accessNotes}</p>
+                        )}
+                      </section>
+                    )}
+                    {booking.estimateRevision?.status === "APPROVED" && (
+                      <section className="form-stack" aria-label="Approved estimate scope">
+                        <div className="panel-header">
+                          <div>
+                            <h3>Approved scope · Revision {booking.estimateRevision.revisionNumber}</h3>
+                            {booking.estimateRevision.notes && <p className="muted">{booking.estimateRevision.notes}</p>}
+                          </div>
+                          <strong>{formatCurrency(booking.estimateRevision.total)}</strong>
+                        </div>
+                        <div className="table-wrap">
+                          <table className="data-table">
+                            <thead>
+                              <tr><th scope="col">Work or material</th><th scope="col">Qty</th><th scope="col">Unit price</th><th scope="col">Approved amount</th></tr>
+                            </thead>
+                            <tbody>
+                              {booking.estimateRevision.lineItems.map((line) => (
+                                <tr key={line.id}>
+                                  <td>{line.description}</td>
+                                  <td>{line.quantity}</td>
+                                  <td>{formatCurrency(line.unitPrice)}</td>
+                                  <td>{formatCurrency(line.lineTotal)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </section>
+                    )}
                     <form
+                      id="workorder-findings-form"
                       className="form-stack"
+                      onChange={markDraftDirty}
                       onSubmit={(e) => {
                         e.preventDefault();
                         mutation.mutate({
@@ -374,11 +558,6 @@ export default function WorkOrderModal({ bookingId, isOpen, onClose }: Props) {
                           onChange={(e) => setNotes(e.target.value)}
                         />
                       </Field>
-                      {open && (
-                        <Button type="submit" loading={mutation.isPending}>
-                          <Check size={16} /> Save findings
-                        </Button>
-                      )}
                     </form>
                     {booking.invoice ? (
                       <div className="notice">
@@ -403,7 +582,9 @@ export default function WorkOrderModal({ bookingId, isOpen, onClose }: Props) {
                         <Link
                           className="text-button"
                           to="/financials"
-                          onClick={onClose}
+                          onClick={(event) => {
+                            if (!requestClose()) event.preventDefault();
+                          }}
                         >
                           Open billing and receipts →
                         </Link>
@@ -412,71 +593,19 @@ export default function WorkOrderModal({ bookingId, isOpen, onClose }: Props) {
                       booking.status !== "CANCELLED" && (
                         <Button
                           variant="secondary"
+                          disabled={draftDirty}
                           onClick={() => setInvoicing(true)}
                         >
                           <Receipt size={16} /> Create invoice
                         </Button>
                       )
                     )}
-                    {open && (
-                      <div className="workorder-actions">
-                        <Button
-                          variant="secondary"
-                          onClick={() => setEditing(true)}
-                        >
-                          <Pencil size={15} /> Edit visit
-                        </Button>
-                        {transitions
-                          .filter((s) => s !== "CANCELLED")
-                          .map((s) => (
-                            <Button
-                              key={s}
-                              disabled={s === "COMPLETED" && !booking.invoice}
-                              loading={mutation.isPending}
-                              onClick={() => move(s)}
-                            >
-                              {s === "CONFIRMED"
-                                ? "Confirm booking"
-                                : s === "ON_SITE"
-                                  ? "Start visit"
-                                  : "Complete job"}
-                            </Button>
-                          ))}
-                        <Button
-                          variant="danger"
-                          onClick={() => move("CANCELLED")}
-                          loading={mutation.isPending}
-                        >
-                          Cancel visit
-                        </Button>
-                      </div>
-                    )}
-                    {booking.status === "ON_SITE" && !booking.invoice && (
-                      <p className="muted">
-                        Issue an invoice before completing this job.
-                      </p>
-                    )}
-                    {open && !booking.invoice && !booking.parts?.length && (
-                      <button
-                        className="text-button text-danger"
-                        disabled={remove.isPending}
-                        onClick={() => {
-                          if (
-                            window.confirm(
-                              "Permanently delete this unbilled booking? Cancel the visit instead to retain its history.",
-                            )
-                          )
-                            remove.mutate();
-                        }}
-                      >
-                        Delete booking
-                      </button>
-                    )}
                   </>
                 )}
                 {tab === "checklist" && (
                   <form
                     className="form-stack"
+                    onChange={markDraftDirty}
                     onSubmit={(e) => {
                       e.preventDefault();
                       mutation.mutate({
@@ -502,6 +631,37 @@ export default function WorkOrderModal({ bookingId, isOpen, onClose }: Props) {
                           >
                             {item.label}
                           </span>
+                          {item.type === "MEASUREMENT" && (
+                            <Field
+                              label={`Reading · ${item.unitLabel?.trim() || "Unit not set"}`}
+                              htmlFor={`checklist-reading-${index}`}
+                            >
+                              <input
+                                id={`checklist-reading-${index}`}
+                                type="text"
+                                inputMode="decimal"
+                                maxLength={80}
+                                className={inputClass}
+                                style={{
+                                  flex: "1 1 150px",
+                                  width: "auto",
+                                  minWidth: 0,
+                                }}
+                                value={item.reading ?? ""}
+                                disabled={!open}
+                                onChange={(event) => {
+                                  const reading = event.target.value;
+                                  setChecklist((list) =>
+                                    list.map((current, itemIndex) =>
+                                      itemIndex === index
+                                        ? { ...current, reading: reading || null }
+                                        : current,
+                                    ),
+                                  );
+                                }}
+                              />
+                            </Field>
+                          )}
                           <select
                             className={inputClass}
                             style={{
@@ -639,7 +799,7 @@ export default function WorkOrderModal({ bookingId, isOpen, onClose }: Props) {
                         <Button
                           type="submit"
                           loading={addPart.isPending}
-                          disabled={!partId}
+                          disabled={!partId || draftDirty}
                         >
                           <Plus size={16} /> Record part use
                         </Button>

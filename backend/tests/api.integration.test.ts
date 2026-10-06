@@ -16,6 +16,7 @@ integration('HTTP domain integration (isolated PostgreSQL)', () => {
     let origin: string;
     let admin: string;
     let leader: string;
+    let otherLeader: string;
     let branchless: string;
     let orgId: string;
     let otherOrgId: string;
@@ -64,10 +65,11 @@ integration('HTTP domain integration (isolated PostgreSQL)', () => {
         const users = await Promise.all([
             db.user.create({ data: { email: `admin-${fixture}@example.com`, password: hashed, role: 'ADMIN', organizationId: orgId } }),
             db.user.create({ data: { email: `leader-${fixture}@example.com`, password: hashed, role: 'BRANCH_LEADER', organizationId: orgId, branchId } }),
+            db.user.create({ data: { email: `other-leader-${fixture}@example.com`, password: hashed, role: 'BRANCH_LEADER', organizationId: orgId, branchId: otherBranchId } }),
             db.user.create({ data: { email: `branchless-${fixture}@example.com`, password: hashed, role: 'BRANCH_LEADER', organizationId: orgId } }),
         ]);
         const sign = (user: typeof users[number]) => jwt.sign({ userId: user.id, orgId: user.organizationId, role: user.role, branchId: user.branchId } satisfies AuthUser, secret);
-        admin = sign(users[0]); leader = sign(users[1]); branchless = sign(users[2]);
+        admin = sign(users[0]); leader = sign(users[1]); otherLeader = sign(users[2]); branchless = sign(users[3]);
         const customer = await db.customer.create({ data: { name: 'Test Client', phone: '09170000001', organizationId: orgId } });
         const other = await db.customer.create({ data: { name: 'Other Client', phone: '09170000002', organizationId: orgId } });
         customerId = customer.id; otherCustomerId = other.id;
@@ -97,10 +99,18 @@ integration('HTTP domain integration (isolated PostgreSQL)', () => {
             await db.payment.deleteMany({ where: { invoice: { booking: scope } } });
             await db.stockMovement.deleteMany({ where: { inventoryItem: scope } });
             await db.partUsage.deleteMany({ where: { booking: scope } });
+            await db.invoiceLine.deleteMany({ where: { invoice: { booking: scope } } });
+            await db.estimateLineItem.deleteMany({ where: { revision: { estimate: { serviceRequest: { organizationId: orgId } } } } });
             await db.invoice.deleteMany({ where: { booking: scope } });
             await db.booking.deleteMany({ where: scope });
+            await db.estimateRevision.deleteMany({ where: { estimate: { serviceRequest: { organizationId: orgId } } } });
+            await db.estimate.deleteMany({ where: { serviceRequest: { organizationId: orgId } } });
+            await db.serviceRequest.deleteMany({ where: { organizationId: orgId } });
+            await db.inspectionTemplateItem.deleteMany({ where: { template: { organizationId: orgId } } });
+            await db.inspectionTemplate.deleteMany({ where: { organizationId: orgId } });
             await db.inventoryItem.deleteMany({ where: scope });
             await db.unit.deleteMany({ where: { organizationId: orgId } });
+            await db.serviceSite.deleteMany({ where: { organizationId: orgId } });
             await db.technician.deleteMany({ where: scope });
             await db.auditLog.deleteMany({ where: { user: { organizationId: orgId } } });
             await db.user.deleteMany({ where: { organizationId: orgId } });
@@ -143,7 +153,6 @@ integration('HTTP domain integration (isolated PostgreSQL)', () => {
         expect((await request(`/bookings/${mainBooking}`, { status: 'ON_SITE' }, 'PATCH')).status).toBe(400);
         expect((await request(`/bookings/${mainBooking}`, { status: 'CONFIRMED' }, 'PATCH')).status).toBe(200);
         expect((await request(`/bookings/${mainBooking}`, { status: 'ON_SITE' }, 'PATCH')).status).toBe(200);
-        expect((await request(`/bookings/${mainBooking}`, { status: 'COMPLETED' }, 'PATCH')).status).toBe(400);
         const outcomes = [
             { id: 'visual', label: 'Inspect indoor and outdoor units', outcome: 'PENDING' },
             { id: 'filter', label: 'Inspect air filter', outcome: 'PASS' },
@@ -295,6 +304,10 @@ integration('HTTP domain integration (isolated PostgreSQL)', () => {
     });
 
     it('issues one invoice per job and derives exact partial receipts with idempotency', async () => {
+        expect((await request(`/bookings/${mainBooking}`, { status: 'COMPLETED' }, 'PATCH')).status).toBe(200);
+        const completedBeforeBilling = await request(`/bookings/${mainBooking}`, undefined, 'GET');
+        expect(completedBeforeBilling.data).toMatchObject({ status: 'COMPLETED', invoice: null });
+        expect((await request(`/bookings/${mainBooking}`, undefined, 'DELETE')).status).toBe(400);
         const created = await request('/invoices', { bookingId: mainBooking, amount: 100.10 });
         expect(created.status).toBe(201);
         invoiceId = created.data.id;
@@ -350,4 +363,381 @@ integration('HTTP domain integration (isolated PostgreSQL)', () => {
         expect((await request('/activity')).data.data.some((entry: any) => entry.action === 'PART_USE')).toBe(true);
         expect((await request('/bookings?limit=-1')).status).toBe(400);
     });
+
+    it('scopes unit reads, edits, and maintenance reminders to attributable branch assets', async () => {
+        const dueAt = new Date(Date.now() + 2 * 24 * 60 * 60_000);
+        const [localSite, foreignSite] = await Promise.all([
+            db.serviceSite.create({ data: { name: 'Local site', address: 'Makati', customerId, organizationId: orgId, branchId } }),
+            db.serviceSite.create({ data: { name: 'Foreign site', address: 'Quezon City', customerId, organizationId: orgId, branchId: otherBranchId } }),
+        ]);
+        const [localUnit, foreignUnit, historyUnit, unattributedUnit, ambiguousUnit] = await Promise.all([
+            db.unit.create({ data: { name: 'Local site unit', brand: 'Daikin', customerId, organizationId: orgId, serviceSiteId: localSite.id, nextMaintenanceAt: dueAt } }),
+            db.unit.create({ data: { name: 'Foreign site unit', brand: 'Carrier', customerId, organizationId: orgId, serviceSiteId: foreignSite.id, nextMaintenanceAt: dueAt } }),
+            db.unit.create({ data: { name: 'Legacy local unit', brand: 'Mitsubishi', customerId, organizationId: orgId, nextMaintenanceAt: dueAt } }),
+            db.unit.create({ data: { name: 'Unattributed unit', brand: 'LG', customerId, organizationId: orgId, nextMaintenanceAt: dueAt } }),
+            db.unit.create({ data: { name: 'Shared history unit', brand: 'Panasonic', customerId, organizationId: orgId, nextMaintenanceAt: dueAt } }),
+        ]);
+        const createUnitHistory = (unitId: string, historyBranchId: string) => db.booking.create({
+            data: {
+                unitId,
+                branchId: historyBranchId,
+                customerId,
+                serviceType: 'Historical maintenance',
+                scheduledAt: dueAt,
+            },
+        });
+        await Promise.all([
+            createUnitHistory(historyUnit.id, branchId),
+            createUnitHistory(ambiguousUnit.id, branchId),
+            createUnitHistory(ambiguousUnit.id, otherBranchId),
+        ]);
+
+        const localList = await request(`/units?customerId=${customerId}`, undefined, 'GET', leader);
+        const localIds = localList.data.data.map((unit: any) => unit.id);
+        expect(localList.status).toBe(200);
+        expect(localIds).toContain(localUnit.id);
+        expect(localIds).toContain(historyUnit.id);
+        expect(localIds).not.toContain(foreignUnit.id);
+        expect(localIds).not.toContain(unattributedUnit.id);
+        expect(localIds).not.toContain(ambiguousUnit.id);
+        expect(localList.data.pagination.total).toBe(localList.data.data.length);
+        expect(localList.data.data.find((unit: any) => unit.id === historyUnit.id)._count.bookings).toBe(1);
+
+        const foreignList = await request(`/units?customerId=${customerId}`, undefined, 'GET', otherLeader);
+        expect(foreignList.data.data.map((unit: any) => unit.id)).toContain(foreignUnit.id);
+        expect(foreignList.data.data.map((unit: any) => unit.id)).not.toContain(historyUnit.id);
+        const adminList = await request(`/units?customerId=${customerId}`);
+        expect(adminList.data.data.map((unit: any) => unit.id)).toEqual(expect.arrayContaining([
+            localUnit.id, foreignUnit.id, historyUnit.id, unattributedUnit.id, ambiguousUnit.id,
+        ]));
+
+        const deniedDetach = await request(`/units/${foreignUnit.id}`, { name: 'Tampered unit', serviceSiteId: null }, 'PATCH', leader);
+        expect(deniedDetach.status).toBe(404);
+        await expect(db.unit.findUniqueOrThrow({ where: { id: foreignUnit.id } })).resolves.toMatchObject({
+            name: 'Foreign site unit', serviceSiteId: foreignSite.id,
+        });
+        expect((await request(`/units/${historyUnit.id}`, { notes: 'Updated without attribution', serviceSiteId: null }, 'PATCH', leader)).status).toBe(400);
+        const attributedUpdate = await request(`/units/${historyUnit.id}`, { notes: 'Branch verified', serviceSiteId: localSite.id }, 'PATCH', leader);
+        expect(attributedUpdate.status).toBe(200);
+        expect(attributedUpdate.data).toMatchObject({ notes: 'Branch verified', serviceSiteId: localSite.id });
+
+        const missingSiteCreate = await request('/units', {
+            customerId, name: 'Missing site unit', brand: 'Test',
+        }, 'POST', leader);
+        expect(missingSiteCreate.status).toBe(400);
+        const foreignSiteCreate = await request('/units', {
+            customerId, name: 'Wrong site unit', brand: 'Test', serviceSiteId: foreignSite.id,
+        }, 'POST', leader);
+        expect(foreignSiteCreate.status).toBe(400);
+
+        const dueDate = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit',
+        }).format(dueAt);
+        const localMaintenance = await request(`/reports/maintenance-due?from=${dueDate}&to=${dueDate}`, undefined, 'GET', leader);
+        const localMaintenanceIds = localMaintenance.data.data.map((unit: any) => unit.id);
+        expect(localMaintenance.status).toBe(200);
+        expect(localMaintenanceIds).toEqual(expect.arrayContaining([localUnit.id, historyUnit.id]));
+        expect(localMaintenanceIds).not.toContain(foreignUnit.id);
+        expect(localMaintenanceIds).not.toContain(unattributedUnit.id);
+        expect(localMaintenanceIds).not.toContain(ambiguousUnit.id);
+        expect((await request(`/reports/maintenance-due?from=${dueDate}&to=${dueDate}&branchId=${otherBranchId}`, undefined, 'GET', leader)).status).toBe(403);
+
+        const invalidForeignBooking = await request('/bookings', bookingBody({
+            unitId: foreignUnit.id,
+            scheduledAt: '2030-03-01T01:00:00.000Z',
+        }), 'POST', leader);
+        const invalidAmbiguousBooking = await request('/bookings', bookingBody({
+            unitId: ambiguousUnit.id,
+            scheduledAt: '2030-03-01T04:00:00.000Z',
+        }), 'POST', leader);
+        expect(invalidForeignBooking.status).toBe(400);
+        expect(invalidAmbiguousBooking.status).toBe(400);
+
+        const validBranchBooking = await request('/bookings', bookingBody({
+            unitId: historyUnit.id,
+            scheduledAt: '2030-03-01T01:00:00.000Z',
+        }), 'POST', leader);
+        expect(validBranchBooking.status).toBe(201);
+        const rejectedUnitChange = await request(`/bookings/${validBranchBooking.data.id}`, { unitId: ambiguousUnit.id }, 'PATCH', leader);
+        expect(rejectedUnitChange.status).toBe(400);
+        await expect(db.booking.findUniqueOrThrow({ where: { id: validBranchBooking.data.id } })).resolves.toMatchObject({ unitId: historyUnit.id });
+
+        const alternateSite = await db.serviceSite.create({
+            data: { name: 'Second local site', address: 'Makati Avenue', accessNotes: 'Use the side entrance', customerId, organizationId: orgId, branchId },
+        });
+        const alternateUnit = await db.unit.create({
+            data: { name: 'Second local unit', brand: 'Daikin', customerId, organizationId: orgId, serviceSiteId: alternateSite.id },
+        });
+        const acceptedUnitChange = await request(`/bookings/${validBranchBooking.data.id}`, { unitId: alternateUnit.id }, 'PATCH', leader);
+        expect(acceptedUnitChange.status).toBe(200);
+        expect(acceptedUnitChange.data).toMatchObject({
+            unitId: alternateUnit.id,
+            serviceSiteId: alternateSite.id,
+            serviceAddress: alternateSite.address,
+            accessNotes: alternateSite.accessNotes,
+        });
+
+        const requestBody = {
+            branchId, customerId, unitId: historyUnit.id,
+            serviceType: 'Diagnostic', reportedIssue: 'Unit needs a branch-scoped assessment',
+        };
+        const validBranchRequest = await request('/service-requests', requestBody, 'POST', leader);
+        expect(validBranchRequest.status).toBe(201);
+        expect((await request('/service-requests', { ...requestBody, unitId: foreignUnit.id }, 'POST', leader)).status).toBe(400);
+        expect((await request('/service-requests', { ...requestBody, unitId: ambiguousUnit.id }, 'POST', leader)).status).toBe(400);
+        expect((await request(`/service-requests/${validBranchRequest.data.id}`, { unitId: ambiguousUnit.id }, 'PATCH', leader)).status).toBe(400);
+
+        expect((await request(`/units/${historyUnit.id}`, { serviceSiteId: foreignSite.id }, 'PATCH')).status).toBe(409);
+        expect((await request(`/units/${ambiguousUnit.id}`, { serviceSiteId: localSite.id }, 'PATCH')).status).toBe(409);
+
+        const localDue = (await request('/overview', undefined, 'GET', leader)).data.dueUnits.map((unit: any) => unit.id);
+        const foreignDue = (await request('/overview', undefined, 'GET', otherLeader)).data.dueUnits.map((unit: any) => unit.id);
+        const adminDue = (await request('/overview')).data.dueUnits.map((unit: any) => unit.id);
+        expect(localDue).toEqual(expect.arrayContaining([localUnit.id, historyUnit.id]));
+        expect(localDue).not.toContain(foreignUnit.id);
+        expect(localDue).not.toContain(unattributedUnit.id);
+        expect(localDue).not.toContain(ambiguousUnit.id);
+        expect(foreignDue).toContain(foreignUnit.id);
+        expect(foreignDue).not.toContain(historyUnit.id);
+        expect(adminDue).toEqual(expect.arrayContaining([
+            localUnit.id, foreignUnit.id, historyUnit.id, unattributedUnit.id, ambiguousUnit.id,
+        ]));
+    });
+
+    it('filters the attention queue using the dashboard rule within branch scope', async () => {
+        const marker = randomUUID();
+        const createAttentionBooking = (data: {
+            branchId: string;
+            priority: 'NORMAL' | 'HIGH' | 'URGENT';
+            status: 'PENDING' | 'CONFIRMED' | 'COMPLETED';
+            scheduledAt: Date;
+            checklist?: Prisma.InputJsonValue;
+        }) => db.booking.create({
+            data: {
+                ...data,
+                serviceType: 'Attention ' + marker,
+                customerId,
+                technicianId: null,
+            },
+        });
+        const past = new Date(Date.now() - 24 * 60 * 60_000);
+        const future = new Date(Date.now() + 24 * 60 * 60_000);
+        const [highPriority, overdue, normalFuture, billedCompleted, otherBranchHigh, incomplete, followUp, unbilled] = await Promise.all([
+            createAttentionBooking({ branchId, priority: 'URGENT', status: 'CONFIRMED', scheduledAt: future }),
+            createAttentionBooking({ branchId, priority: 'NORMAL', status: 'PENDING', scheduledAt: past }),
+            createAttentionBooking({ branchId, priority: 'NORMAL', status: 'PENDING', scheduledAt: future }),
+            createAttentionBooking({ branchId, priority: 'HIGH', status: 'COMPLETED', scheduledAt: past }),
+            createAttentionBooking({ branchId: otherBranchId, priority: 'HIGH', status: 'CONFIRMED', scheduledAt: future }),
+            createAttentionBooking({ branchId, priority: 'NORMAL', status: 'CONFIRMED', scheduledAt: future, checklist: [{ id: 'pending', label: 'Drain check', outcome: 'PENDING', checked: false }] }),
+            createAttentionBooking({ branchId, priority: 'NORMAL', status: 'COMPLETED', scheduledAt: past, checklist: [{ id: 'follow-up', label: 'Leak observation', outcome: 'FOLLOW_UP', checked: false }] }),
+            createAttentionBooking({ branchId, priority: 'NORMAL', status: 'COMPLETED', scheduledAt: future }),
+        ]);
+        await Promise.all([billedCompleted, followUp].map((booking) => db.invoice.create({
+            data: { bookingId: booking.id, amount: new Prisma.Decimal('100.00'), paymentStatus: 'UNPAID' },
+        })));
+        const adminQueue = await request('/bookings?attention=1&q=' + marker);
+        const branchQueue = await request('/bookings?attention=1&q=' + marker, undefined, 'GET', leader);
+        const adminIds = adminQueue.data.data.map((booking: any) => booking.id);
+        const branchIds = branchQueue.data.data.map((booking: any) => booking.id);
+
+        expect(adminQueue.status).toBe(200);
+        expect(adminIds.sort()).toEqual(
+            [highPriority.id, overdue.id, otherBranchHigh.id, incomplete.id, followUp.id, unbilled.id].sort(),
+        );
+        expect(branchQueue.status).toBe(200);
+        expect(branchIds.sort()).toEqual(
+            [highPriority.id, overdue.id, incomplete.id, followUp.id, unbilled.id].sort(),
+        );
+        expect((await request('/bookings?attention=true')).status).toBe(400);
+        expect(adminIds).not.toContain(normalFuture.id);
+        expect(adminIds).not.toContain(billedCompleted.id);
+    });
+    it('connects service intake, approved estimates, work orders, inspections, billing, and reports', async () => {
+        const siteResponse = await request('/service-sites', {
+            customerId,
+            branchId,
+            name: 'Makati Office',
+            address: '120 Ayala Avenue, Makati',
+            accessNotes: 'Check in at the lobby desk',
+        });
+        expect(siteResponse.status).toBe(201);
+        const siteId = siteResponse.data.id;
+
+        await db.unit.update({ where: { id: unitId }, data: { serviceSiteId: siteId } });
+        const requestBody = {
+            branchId,
+            customerId,
+            serviceSiteId: siteId,
+            unitId,
+            serviceType: 'Routine Maintenance',
+            reportedIssue: 'Indoor unit is not cooling evenly',
+            priority: 'HIGH',
+            preferredWindowStart: '2030-02-05T00:00:00.000Z',
+            preferredWindowEnd: '2030-02-05T02:00:00.000Z',
+            internalNotes: 'Call before arrival',
+        };
+        const siteMismatch = await request('/service-requests', { ...requestBody, customerId: otherCustomerId, unitId: null });
+        expect(siteMismatch.status).toBe(400);
+        expect((await request('/service-requests', { ...requestBody, branchId: otherBranchId }, 'POST', leader)).status).toBe(403);
+
+        const templateInput = {
+            name: 'Routine maintenance ' + randomUUID(),
+            serviceType: 'Routine Maintenance',
+            items: [
+                { label: 'Supply air temperature', type: 'MEASUREMENT', unitLabel: '°C' },
+                { label: 'Inspect condensate drain', type: 'CHECK' },
+            ],
+        };
+        expect((await request('/inspection-templates', templateInput, 'POST', leader)).status).toBe(403);
+        const template = await request('/inspection-templates', templateInput);
+        expect(template.status).toBe(201);
+
+        const created = await request('/service-requests', requestBody);
+        expect(created.status).toBe(201);
+        const requestId = created.data.id;
+        expect(created.data).toMatchObject({
+            status: 'NEW',
+            serviceAddress: '120 Ayala Avenue, Makati',
+            serviceSite: { id: siteId },
+            unit: { id: unitId },
+        });
+        const otherBranchRequest = await request('/service-requests', {
+            ...requestBody,
+            branchId: otherBranchId,
+            serviceSiteId: null,
+            unitId: null,
+            serviceAddress: '5 Tomas Morato Avenue, Quezon City',
+        });
+        expect(otherBranchRequest.status).toBe(201);
+        const branchRequests = await request('/service-requests?limit=200', undefined, 'GET', leader);
+        expect(branchRequests.data.data.map((item: any) => item.id)).toContain(requestId);
+        expect(branchRequests.data.data.map((item: any) => item.id)).not.toContain(otherBranchRequest.data.id);
+        expect((await request('/service-requests/' + otherBranchRequest.data.id, { internalNotes: 'cross-branch edit' }, 'PATCH', leader)).status).toBe(404);
+
+        expect((await request('/service-requests/' + requestId, { status: 'NEEDS_ASSESSMENT' }, 'PATCH')).status).toBe(200);
+        expect((await request('/service-requests/' + requestId, { status: 'NEW' }, 'PATCH')).status).toBe(400);
+        const estimate = await request('/service-requests/' + requestId + '/estimate', {
+            notes: 'Agreed scope for this service visit',
+            lineItems: [
+                { description: 'Cleaning and inspection', quantity: '1.250', unitPrice: '800.00' },
+                { description: 'Drain treatment', quantity: '1', unitPrice: '125.50' },
+            ],
+        });
+        expect(estimate.status).toBe(201);
+        expect(estimate.data.total).toBe('1125.50');
+        expect((await request('/estimate-revisions/' + estimate.data.id + '/send', {})).data.status).toBe('SENT');
+        const approved = await request('/estimate-revisions/' + estimate.data.id + '/approve', {
+            method: 'PHONE',
+            contact: 'Test Client',
+            note: 'Approval recorded by staff',
+        });
+        expect(approved.status).toBe(200);
+        const requestsAfterApproval = await request('/service-requests?limit=200');
+        expect(requestsAfterApproval.data.data.find((item: any) => item.id === requestId).status).toBe('READY_TO_SCHEDULE');
+        expect((await request('/service-requests/' + requestId, { status: 'CONVERTED' }, 'PATCH')).status).toBe(400);
+
+        const foreignSite = await request('/service-sites', {
+            customerId,
+            branchId: otherBranchId,
+            name: 'Other branch site',
+            address: '5 Tomas Morato Avenue, Quezon City',
+        });
+        const movedSite = await request('/service-sites', {
+            customerId,
+            branchId,
+            name: 'Makati Office · Updated location',
+            address: '22 Makati Avenue, Makati',
+            accessNotes: 'Call security before arrival',
+        });
+        await db.unit.update({ where: { id: unitId }, data: { serviceSiteId: movedSite.data.id } });
+        const blockedConversion = await request('/service-requests/' + requestId + '/convert', {
+            scheduledAt: '2030-02-05T01:00:00.000Z', technicianId, durationMinutes: 120,
+        });
+        expect(blockedConversion.status).toBe(400);
+        expect((await request('/service-requests/' + requestId, { serviceSiteId: foreignSite.data.id }, 'PATCH')).status).toBe(400);
+        const repairedRequest = await request('/service-requests/' + requestId, { serviceSiteId: movedSite.data.id }, 'PATCH');
+        expect(repairedRequest.status).toBe(200);
+        expect(repairedRequest.data).toMatchObject({
+            serviceSiteId: movedSite.data.id,
+            serviceAddress: '22 Makati Avenue, Makati',
+            accessNotes: 'Call security before arrival',
+            unit: { id: unitId, serviceSiteId: movedSite.data.id },
+        });
+        expect((await request(`/service-sites/${movedSite.data.id}`, { branchId: otherBranchId }, 'PATCH')).status).toBe(409);
+        expect((await request(`/units/${unitId}`, { serviceSiteId: foreignSite.data.id }, 'PATCH')).status).toBe(409);
+
+        const conversion = await request('/service-requests/' + requestId + '/convert', {
+            scheduledAt: '2030-02-05T01:00:00.000Z',
+            technicianId,
+            durationMinutes: 120,
+            inspectionTemplateId: template.data.id,
+        });
+        expect(conversion.status).toBe(201);
+        const bookingId = conversion.data.id;
+        expect(conversion.data).toMatchObject({ status: 'PENDING', estimateRevisionId: estimate.data.id });
+        expect(conversion.data.serviceRequest).toMatchObject({
+            reportedIssue: 'Indoor unit is not cooling evenly',
+            preferredWindowStart: '2030-02-05T00:00:00.000Z',
+            preferredWindowEnd: '2030-02-05T02:00:00.000Z',
+            accessNotes: 'Call security before arrival',
+        });
+        expect(conversion.data.estimateRevision.total).toBe('1125.50');
+        expect(conversion.data.estimateRevision.lineItems[0]).toMatchObject({ quantity: '1.250', lineTotal: '1000.00' });
+        expect(conversion.data.checklist).toEqual([
+            expect.objectContaining({ label: 'Supply air temperature', type: 'MEASUREMENT', unitLabel: '°C', reading: '', outcome: 'PENDING' }),
+            expect.objectContaining({ label: 'Inspect condensate drain', type: 'CHECK', outcome: 'PENDING' }),
+        ]);
+
+        const editedTemplate = await request('/inspection-templates/' + template.data.id, {
+            items: [{ label: 'New template item', type: 'CHECK' }],
+        }, 'PATCH');
+        expect(editedTemplate.status).toBe(200);
+        const bookingAfterTemplateEdit = await request('/bookings/' + bookingId);
+        expect(bookingAfterTemplateEdit.data.checklist[0].label).toBe('Supply air temperature');
+        expect(bookingAfterTemplateEdit.data.serviceRequest.reportedIssue).toBe('Indoor unit is not cooling evenly');
+
+        const part = await request('/inventory', {
+            branchId,
+            name: 'Test capacitor',
+            sku: 'CAP-' + randomUUID(),
+            quantityOnHand: 3,
+            reorderLevel: 1,
+            unitCost: '25.50',
+        });
+        expect(part.status).toBe(201);
+        const used = await request('/bookings/' + bookingId + '/parts', {
+            inventoryItemId: part.data.id,
+            quantity: 1,
+            idempotencyKey: randomUUID(),
+        });
+        expect(used.status).toBe(201);
+        const partsReport = await request('/reports/parts-usage?branchId=' + branchId);
+        expect(partsReport.status).toBe(200);
+        expect(partsReport.data.data.some((row: any) => row.booking.id === bookingId && row.extendedCost === '25.50')).toBe(true);
+        expect((await request('/reports/parts-usage?branchId=' + otherBranchId)).data.data.some((row: any) => row.booking.id === bookingId)).toBe(false);
+
+        expect((await request('/invoices', { bookingId, amount: '1.00' })).status).toBe(400);
+        const invoice = await request('/invoices', { bookingId });
+        expect(invoice.status).toBe(201);
+        expect(invoice.data).toMatchObject({
+            amount: '1125.50',
+            estimateRevisionId: estimate.data.id,
+            lineItems: [
+                expect.objectContaining({ description: 'Cleaning and inspection', quantity: '1.250', lineTotal: '1000.00' }),
+                expect.objectContaining({ description: 'Drain treatment', lineTotal: '125.50' }),
+            ],
+        });
+        expect(invoice.data.lineItems.every((line: any) => line.sourceLineId)).toBe(true);
+
+        await db.unit.update({ where: { id: unitId }, data: { nextMaintenanceAt: new Date('2030-02-05T00:00:00.000Z') } });
+        const due = await request('/reports/maintenance-due?from=2030-02-05&to=2030-02-05');
+        expect(due.status).toBe(200);
+        expect(due.data).toMatchObject({ branchAttribution: 'ORGANIZATION_WIDE', through: '2030-02-05' });
+        const dueUnit = due.data.data.find((item: any) => item.id === unitId);
+        expect(dueUnit).toMatchObject({ id: unitId, dueState: 'UPCOMING', customer: { id: customerId } });
+        expect((await request('/bookings/' + bookingId, { status: 'CONFIRMED' }, 'PATCH')).status).toBe(200);
+        expect((await request('/bookings/' + bookingId, { status: 'ON_SITE' }, 'PATCH')).status).toBe(200);
+        expect((await request('/bookings/' + bookingId, { status: 'COMPLETED' }, 'PATCH')).status).toBe(200);
+    });
+
 });

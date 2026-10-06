@@ -213,7 +213,7 @@ export default function Inventory() {
         }
       />
       {low > 0 && (
-        <div className="notice notice-warning">
+        <div className="notice notice-warning inventory-alert" role="status">
           <AlertTriangle size={18} />
           <span>
             <strong>

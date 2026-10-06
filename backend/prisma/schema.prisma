@@ -32,39 +32,75 @@ enum BookingPriority {
   URGENT
 }
 
+enum ServiceRequestStatus {
+  NEW
+  NEEDS_ASSESSMENT
+  READY_TO_SCHEDULE
+  CONVERTED
+  CLOSED
+}
+
+enum EstimateStatus {
+  DRAFT
+  SENT
+  APPROVED
+  DECLINED
+}
+
+enum EstimateApprovalMethod {
+  PHONE
+  IN_PERSON
+  EMAIL
+  OTHER
+}
+
+enum InspectionItemType {
+  CHECK
+  MEASUREMENT
+}
+
 model Organization {
-  id        String     @id @default(uuid())
-  name      String     @unique
-  branches  Branch[]
-  users     User[]
-  customers Customer[]
-  units     Unit[]
+  id                  String               @id @default(uuid())
+  name                String               @unique
+  branches            Branch[]
+  users               User[]
+  customers           Customer[]
+  units               Unit[]
+  serviceSites        ServiceSite[]
+  serviceRequests     ServiceRequest[]
+  inspectionTemplates InspectionTemplate[]
 }
 
 model Branch {
-  id             String       @id @default(uuid())
-  name           String
-  location       String?
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  organizationId String
-  users          User[]
-  technicians    Technician[]
-  bookings       Booking[]
-  inventory      InventoryItem[]
+  id              String           @id @default(uuid())
+  name            String
+  location        String?
+  organization    Organization     @relation(fields: [organizationId], references: [id])
+  organizationId  String
+  users           User[]
+  technicians     Technician[]
+  bookings        Booking[]
+  inventory       InventoryItem[]
+  serviceRequests ServiceRequest[]
+  serviceSites    ServiceSite[]
 
   @@index([organizationId])
 }
 
 model User {
-  id             String       @id @default(uuid())
-  email          String       @unique
-  password       String
-  role           UserRole     @default(BRANCH_LEADER)
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  organizationId String
-  branch         Branch?      @relation(fields: [branchId], references: [id])
-  branchId       String?
-  auditLogs      AuditLog[]
+  id                         String               @id @default(uuid())
+  email                      String               @unique
+  password                   String
+  role                       UserRole             @default(BRANCH_LEADER)
+  organization               Organization         @relation(fields: [organizationId], references: [id])
+  organizationId             String
+  branch                     Branch?              @relation(fields: [branchId], references: [id])
+  branchId                   String?
+  auditLogs                  AuditLog[]
+  serviceRequestsCreated     ServiceRequest[]     @relation("ServiceRequestCreator")
+  estimateRevisionsCreated   EstimateRevision[]   @relation("EstimateRevisionCreator")
+  estimateApprovals          EstimateRevision[]   @relation("EstimateRevisionApprover")
+  inspectionTemplatesCreated InspectionTemplate[] @relation("InspectionTemplateCreator")
 
   @@index([organizationId])
   @@index([branchId])
@@ -72,13 +108,13 @@ model User {
 }
 
 model Technician {
-  id       String    @id @default(uuid())
-  name     String
-  phone    String?
-  branch   Branch    @relation(fields: [branchId], references: [id])
-  branchId String
-  bookings Booking[]
-  isActive Boolean   @default(true)
+  id        String    @id @default(uuid())
+  name      String
+  phone     String?
+  branch    Branch    @relation(fields: [branchId], references: [id])
+  branchId  String
+  bookings  Booking[]
+  isActive  Boolean   @default(true)
   specialty String?
 
   @@index([branchId])
@@ -86,45 +122,84 @@ model Technician {
 }
 
 model Customer {
-  id             String       @id @default(uuid())
-  name           String
-  phone          String
-  address        String?
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  organizationId String
-  bookings       Booking[]
-  units          Unit[]
-  email          String?
-  type           String       @default("Residential")
-  contactPerson  String?
+  id              String           @id @default(uuid())
+  name            String
+  phone           String
+  address         String?
+  organization    Organization     @relation(fields: [organizationId], references: [id])
+  organizationId  String
+  bookings        Booking[]
+  units           Unit[]
+  serviceSites    ServiceSite[]
+  serviceRequests ServiceRequest[]
+  email           String?
+  type            String           @default("Residential")
+  contactPerson   String?
 
   @@unique([organizationId, phone])
   @@index([organizationId])
   @@index([phone])
 }
 
+/// A customer's physical service location. Address is intentionally separate
+/// from the legacy customer address and from a booking's address snapshot.
+model ServiceSite {
+  id              String           @id @default(uuid())
+  name            String
+  address         String
+  contactName     String?
+  phone           String?
+  accessNotes     String?
+  isActive        Boolean          @default(true)
+  customerId      String
+  customer        Customer         @relation(fields: [customerId], references: [id])
+  organizationId  String
+  organization    Organization     @relation(fields: [organizationId], references: [id])
+  branchId        String?
+  branch          Branch?          @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  units           Unit[]
+  bookings        Booking[]
+  serviceRequests ServiceRequest[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([organizationId, customerId])
+  @@index([branchId, isActive])
+  @@index([customerId, isActive])
+}
+
 model Booking {
-  id           String        @id @default(uuid())
-  serviceType  String // e.g., "Cleaning", "Repair", "Installation"
-  status       BookingStatus @default(PENDING)
-  scheduledAt  DateTime
-  customer     Customer      @relation(fields: [customerId], references: [id])
-  customerId   String
-  branch       Branch        @relation(fields: [branchId], references: [id])
-  branchId     String
-  technician   Technician?   @relation(fields: [technicianId], references: [id])
-  technicianId String?
-  notes        String?
-  invoice      Invoice?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  durationMinutes Int         @default(120)
-  priority     BookingPriority @default(NORMAL)
-  diagnosis    String?
-  checklist    Json          @default("[]")
-  unit         Unit?         @relation(fields: [unitId], references: [id])
-  unitId       String?
-  parts        PartUsage[]
+  id                   String              @id @default(uuid())
+  serviceType          String // e.g., "Cleaning", "Repair", "Installation"
+  status               BookingStatus       @default(PENDING)
+  scheduledAt          DateTime
+  customer             Customer            @relation(fields: [customerId], references: [id])
+  customerId           String
+  branch               Branch              @relation(fields: [branchId], references: [id])
+  branchId             String
+  technician           Technician?         @relation(fields: [technicianId], references: [id])
+  technicianId         String?
+  notes                String?
+  invoice              Invoice?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  durationMinutes      Int                 @default(120)
+  priority             BookingPriority     @default(NORMAL)
+  diagnosis            String?
+  checklist            Json                @default("[]")
+  unit                 Unit?               @relation(fields: [unitId], references: [id])
+  unitId               String?
+  serviceSite          ServiceSite?        @relation(fields: [serviceSiteId], references: [id])
+  serviceSiteId        String?
+  serviceAddress       String?
+  accessNotes          String?
+  serviceRequest       ServiceRequest?     @relation(fields: [serviceRequestId], references: [id])
+  serviceRequestId     String?             @unique
+  inspectionTemplate   InspectionTemplate? @relation(fields: [inspectionTemplateId], references: [id])
+  inspectionTemplateId String?
+  estimateRevision     EstimateRevision?   @relation("BookingAcceptedEstimate", fields: [estimateRevisionId], references: [id])
+  estimateRevisionId   String?             @unique
+  parts                PartUsage[]
 
   @@index([scheduledAt])
   @@index([status])
@@ -135,43 +210,49 @@ model Booking {
 }
 
 model Invoice {
-  id            String        @id @default(uuid())
+  id                 String            @id @default(uuid())
   /// Money must never be a float — Decimal(12,2) is exact to the cent.
   /// Prisma serialises this to a JSON string; the frontend wraps reads in Number().
-  amount        Decimal       @db.Decimal(12, 2)
-  paymentStatus PaymentStatus @default(UNPAID)
-  paymentMethod String? // "CASH", "E_WALLET", "BANK", "CHEQUE"
-  booking       Booking       @relation(fields: [bookingId], references: [id])
-  bookingId     String        @unique
-  issuedAt      DateTime      @default(now())
-  paidAt        DateTime?
+  amount             Decimal           @db.Decimal(12, 2)
+  paymentStatus      PaymentStatus     @default(UNPAID)
+  paymentMethod      String? // "CASH", "E_WALLET", "BANK", "CHEQUE"
+  booking            Booking           @relation(fields: [bookingId], references: [id])
+  bookingId          String            @unique
+  issuedAt           DateTime          @default(now())
+  paidAt             DateTime?
   /// False for pre-upgrade invoices: preserve their historical payment semantics.
-  ledgerEnabled Boolean       @default(false)
-  payments      Payment[]
+  ledgerEnabled      Boolean           @default(false)
+  payments           Payment[]
+  lineItems          InvoiceLine[]
+  estimateRevision   EstimateRevision? @relation("InvoiceEstimateSource", fields: [estimateRevisionId], references: [id])
+  estimateRevisionId String?           @unique
 
   @@index([paymentStatus])
   @@index([issuedAt])
 }
 
 model Unit {
-  id                String       @id @default(uuid())
+  id                String           @id @default(uuid())
   name              String
   brand             String
   model             String?
   serialNumber      String?
-  type              String       @default("Split type")
+  type              String           @default("Split type")
   capacity          String?
   location          String?
   installedAt       DateTime?
   nextMaintenanceAt DateTime?
   notes             String?
   customerId        String
-  customer          Customer     @relation(fields: [customerId], references: [id])
+  customer          Customer         @relation(fields: [customerId], references: [id])
+  serviceSiteId     String?
+  serviceSite       ServiceSite?     @relation(fields: [serviceSiteId], references: [id], onDelete: SetNull)
   organizationId    String
-  organization      Organization @relation(fields: [organizationId], references: [id])
+  organization      Organization     @relation(fields: [organizationId], references: [id])
   bookings          Booking[]
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  serviceRequests   ServiceRequest[]
 
   @@index([organizationId])
   @@index([customerId])
@@ -212,15 +293,15 @@ model PartUsage {
 }
 
 model StockMovement {
-  id                      String        @id @default(uuid())
-  inventoryItemId         String
-  inventoryItem           InventoryItem @relation(fields: [inventoryItemId], references: [id])
-  quantity                Int
-  reason                  String
-  bookingId               String?
-  idempotencyKey          String?       @unique
-  idempotencyPayloadHash  String?       @db.VarChar(64)
-  createdAt               DateTime      @default(now())
+  id                     String        @id @default(uuid())
+  inventoryItemId        String
+  inventoryItem          InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  quantity               Int
+  reason                 String
+  bookingId              String?
+  idempotencyKey         String?       @unique
+  idempotencyPayloadHash String?       @db.VarChar(64)
+  createdAt              DateTime      @default(now())
 
   @@index([inventoryItemId, createdAt])
 }
@@ -253,4 +334,141 @@ model AuditLog {
   @@index([resourceType, resourceId])
   @@index([branchId])
   @@index([createdAt])
+}
+
+model ServiceRequest {
+  id                   String               @id @default(uuid())
+  status               ServiceRequestStatus @default(NEW)
+  serviceType          String
+  priority             BookingPriority      @default(NORMAL)
+  reportedIssue        String
+  serviceAddress       String
+  preferredWindowStart DateTime?
+  preferredWindowEnd   DateTime?
+  accessNotes          String?
+  internalNotes        String?
+  organizationId       String
+  organization         Organization         @relation(fields: [organizationId], references: [id])
+  branchId             String
+  branch               Branch               @relation(fields: [branchId], references: [id])
+  customerId           String
+  customer             Customer             @relation(fields: [customerId], references: [id])
+  serviceSiteId        String?
+  serviceSite          ServiceSite?         @relation(fields: [serviceSiteId], references: [id], onDelete: SetNull)
+  unitId               String?
+  unit                 Unit?                @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  createdByUserId      String
+  createdBy            User                 @relation("ServiceRequestCreator", fields: [createdByUserId], references: [id])
+  booking              Booking?
+  estimate             Estimate?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  @@index([organizationId, status, createdAt])
+  @@index([branchId, status, createdAt])
+  @@index([customerId, createdAt])
+  @@index([serviceSiteId])
+  @@index([unitId])
+}
+
+model Estimate {
+  id               String             @id @default(uuid())
+  serviceRequestId String             @unique
+  serviceRequest   ServiceRequest     @relation(fields: [serviceRequestId], references: [id])
+  revisions        EstimateRevision[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+model EstimateRevision {
+  id               String                  @id @default(uuid())
+  estimateId       String
+  estimate         Estimate                @relation(fields: [estimateId], references: [id])
+  revisionNumber   Int
+  status           EstimateStatus          @default(DRAFT)
+  notes            String?
+  sentAt           DateTime?
+  approvedAt       DateTime?
+  approvalMethod   EstimateApprovalMethod?
+  approvalContact  String?
+  approvalNote     String?
+  decisionNote     String?
+  approvedByUserId String?
+  approvedBy       User?                   @relation("EstimateRevisionApprover", fields: [approvedByUserId], references: [id])
+  createdByUserId  String
+  createdBy        User                    @relation("EstimateRevisionCreator", fields: [createdByUserId], references: [id])
+  supersededAt     DateTime?
+  lineItems        EstimateLineItem[]
+  booking          Booking?                @relation("BookingAcceptedEstimate")
+  invoice          Invoice?                @relation("InvoiceEstimateSource")
+  createdAt        DateTime                @default(now())
+
+  @@unique([estimateId, revisionNumber])
+  @@index([estimateId, status, revisionNumber])
+  @@index([approvedByUserId])
+}
+
+model EstimateLineItem {
+  id          String           @id @default(uuid())
+  revisionId  String
+  revision    EstimateRevision @relation(fields: [revisionId], references: [id])
+  description String
+  quantity    Decimal          @db.Decimal(10, 3)
+  unitPrice   Decimal          @db.Decimal(12, 2)
+  lineTotal   Decimal          @db.Decimal(12, 2)
+  sortOrder   Int
+  invoiceLine InvoiceLine?     @relation("InvoiceLineSource")
+  createdAt   DateTime         @default(now())
+
+  @@unique([revisionId, sortOrder])
+  @@index([revisionId])
+}
+
+model InvoiceLine {
+  id           String            @id @default(uuid())
+  invoiceId    String
+  invoice      Invoice           @relation(fields: [invoiceId], references: [id])
+  sourceLineId String?           @unique
+  sourceLine   EstimateLineItem? @relation("InvoiceLineSource", fields: [sourceLineId], references: [id])
+  description  String
+  quantity     Decimal           @db.Decimal(10, 3)
+  unitPrice    Decimal           @db.Decimal(12, 2)
+  lineTotal    Decimal           @db.Decimal(12, 2)
+  sortOrder    Int
+  createdAt    DateTime          @default(now())
+
+  @@unique([invoiceId, sortOrder])
+  @@index([invoiceId])
+}
+
+model InspectionTemplate {
+  id              String                   @id @default(uuid())
+  name            String
+  serviceType     String
+  isActive        Boolean                  @default(true)
+  organizationId  String
+  organization    Organization             @relation(fields: [organizationId], references: [id])
+  createdByUserId String
+  createdBy       User                     @relation("InspectionTemplateCreator", fields: [createdByUserId], references: [id])
+  items           InspectionTemplateItem[]
+  bookings        Booking[]
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+
+  @@unique([organizationId, name])
+  @@index([organizationId, serviceType, isActive])
+}
+
+model InspectionTemplateItem {
+  id         String             @id @default(uuid())
+  templateId String
+  template   InspectionTemplate @relation(fields: [templateId], references: [id])
+  label      String
+  type       InspectionItemType @default(CHECK)
+  unitLabel  String?
+  sortOrder  Int
+  createdAt  DateTime           @default(now())
+
+  @@unique([templateId, sortOrder])
+  @@index([templateId])
 }

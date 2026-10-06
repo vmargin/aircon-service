@@ -17,8 +17,10 @@ import {
 import {
   Snowflake,
   LayoutDashboard,
+  Inbox,
   CalendarDays,
   ClipboardList,
+  ClipboardCheck,
   Users,
   Wrench,
   AirVent,
@@ -49,9 +51,12 @@ import Calendar from "./components/Calendar";
 import Units from "./components/Units";
 import Inventory from "./components/Inventory";
 import Settings from "./components/Settings";
+import ServiceDesk from "./components/ServiceDesk";
+import InspectionTemplates from "./components/InspectionTemplates";
 import WorkOrderModal from "./components/WorkOrderModal";
 import Modal from "./components/Modal";
 import { Avatar } from "./components/Visuals";
+import { jobNumber } from "./api/operational";
 import { Spinner, ErrorState } from "./components/ui";
 
 const queryClient = new QueryClient({
@@ -72,13 +77,23 @@ function readThemePreference(): ThemeMode {
   }
 }
 
-const NAV = [
+type NavEntry = {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  adminOnly?: boolean;
+};
+type NavGroup = { section: string; entries: NavEntry[] };
+
+const NAV: NavGroup[] = [
   {
     section: "SERVICE",
     entries: [
       { to: "/", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/service-desk", label: "Service desk", icon: Inbox },
       { to: "/calendar", label: "Calendar", icon: CalendarDays },
       { to: "/bookings", label: "Service jobs", icon: ClipboardList },
+      { to: "/inspection-templates", label: "Inspection templates", icon: ClipboardCheck, adminOnly: true },
     ],
   },
   {
@@ -125,7 +140,7 @@ function SearchDialog({
     .filter(
       (j) =>
         !q ||
-        [j.id, j.customer?.name, j.serviceType, j.notes].some((v) =>
+        [j.id, jobNumber(j.id), j.customer?.name, j.serviceType, j.notes].some((v) =>
           v?.toLowerCase().includes(q),
         ),
     )
@@ -143,17 +158,18 @@ function SearchDialog({
     <Modal
       isOpen={open}
       onClose={onClose}
-      title="Find your next action"
-      subtitle="Search service jobs and clients"
+      title="Search service jobs and clients"
+      subtitle="Search by work-order ID, client, service, or phone"
+      className="search-dialog"
     >
       <div className="search-modal-content">
         <label className="sr-only" htmlFor="global-query">
-          Search jobs and clients
+          Search service jobs and clients
         </label>
         <input
           id="global-query"
           className="field-input"
-          placeholder="Client, job ID, service or phone…"
+          placeholder="Client, WO-XXXXXXXX, service or phone…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           autoFocus
@@ -177,7 +193,7 @@ function SearchDialog({
                 <div>
                   {job.customer?.name}
                   <small>
-                    {job.serviceType} · {job.id.slice(0, 8).toUpperCase()}
+                    {job.serviceType} · {jobNumber(job.id)}
                   </small>
                 </div>
                 <ChevronRight size={16} />
@@ -218,7 +234,7 @@ function SidebarContent({
   onNavigate: () => void;
   onClose?: () => void;
 }) {
-  const { logout } = useAuth();
+  const { logout, isAdmin } = useAuth();
   return (
     <>
       {onClose && (
@@ -236,25 +252,28 @@ function SidebarContent({
       </NavLink>
       <div className="brand-caption">AIRCON SERVICE MANAGEMENT</div>
       <nav aria-label="Main navigation">
-        {NAV.map((group) => (
-          <div className="nav-group" key={group.section}>
-            <p className="nav-label">{group.section}</p>
-            {group.entries.map(({ to, label, icon: Icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={to === "/"}
-                onClick={onNavigate}
-                className={({ isActive }) =>
-                  `nav-item ${isActive ? "active" : ""}`
-                }
-              >
-                <Icon />
-                {label}
-              </NavLink>
-            ))}
-          </div>
-        ))}
+        {NAV.map((group) => {
+          const entries = group.entries.filter((entry) => !entry.adminOnly || isAdmin);
+          return entries.length ? (
+            <div className="nav-group" key={group.section}>
+              <p className="nav-label">{group.section}</p>
+              {entries.map(({ to, label, icon: Icon }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={to === "/"}
+                  onClick={onNavigate}
+                  className={({ isActive }) =>
+                    `nav-item ${isActive ? "active" : ""}`
+                  }
+                >
+                  <Icon />
+                  {label}
+                </NavLink>
+              ))}
+            </div>
+          ) : null;
+        })}
       </nav>
       <div className="sidebar-bottom">
         <NavLink
@@ -323,6 +342,7 @@ function AppLayout({
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     dialog.showModal();
+    dialog.querySelector<HTMLButtonElement>(".sidebar-mobile-close")?.focus();
     return () => {
       dialog.close();
       document.body.style.overflow = previousOverflow;
@@ -390,7 +410,7 @@ function AppLayout({
             >
               <Search size={15} />
               <span>Search jobs, clients…</span>
-              <kbd>⌘ K</kbd>
+              <kbd>Ctrl / ⌘ K</kbd>
             </button>
           </div>
           <div className="topbar-right">
@@ -473,6 +493,10 @@ function LoginRoute() {
   const { user, loading } = useAuth();
   return loading ? <Spinner /> : user ? <Navigate to="/" replace /> : <Login />;
 }
+function AdminInspectionTemplates() {
+  const { isAdmin } = useAuth();
+  return isAdmin ? <InspectionTemplates /> : <Navigate to="/" replace />;
+}
 export default function App() {
   const [theme, setTheme] = useState<ThemeMode>(readThemePreference);
   useLayoutEffect(() => {
@@ -501,6 +525,8 @@ export default function App() {
               element={<RequireAuth theme={theme} onToggleTheme={toggleTheme} />}
             >
               <Route path="/" element={<Dashboard />} />
+              <Route path="/service-desk" element={<ServiceDesk />} />
+              <Route path="/inspection-templates" element={<AdminInspectionTemplates />} />
               <Route path="/bookings" element={<Bookings />} />
               <Route
                 path="/jobs"

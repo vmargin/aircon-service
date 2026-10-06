@@ -11,6 +11,8 @@ import {
   Booking,
   Branch,
   Customer,
+  InspectionTemplate,
+  ServiceSite,
   SERVICE_TYPES,
   Technician,
   Unit,
@@ -41,6 +43,10 @@ export default function BookingModal({
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+  const [serviceSiteId, setServiceSiteId] = useState("");
+  const [serviceAddress, setServiceAddress] = useState("");
+  const [accessNotes, setAccessNotes] = useState("");
+  const [inspectionTemplateId, setInspectionTemplateId] = useState("");
   const [branchId, setBranchId] = useState("");
   const [unitId, setUnitId] = useState("");
   const [technicianId, setTechnicianId] = useState("");
@@ -49,6 +55,8 @@ export default function BookingModal({
   const [durationMinutes, setDuration] = useState("120");
   const [priority, setPriority] = useState("NORMAL");
   const [notes, setNotes] = useState("");
+  const [dirty, setDirty] = useState(false);
+  const [optionalDetailsOpen, setOptionalDetailsOpen] = useState(false);
   const [error, setError] = useState("");
   const customers = useQuery({
     queryKey: ["customers"],
@@ -70,6 +78,16 @@ export default function BookingModal({
     queryFn: () => getAll<Unit>("/units"),
     enabled: isOpen,
   });
+  const sites = useQuery({
+    queryKey: ["service-sites", customerId],
+    queryFn: () => getAll<ServiceSite>("/service-sites", { customerId }),
+    enabled: isOpen && mode === "existing" && Boolean(customerId),
+  });
+  const templates = useQuery({
+    queryKey: ["inspection-templates"],
+    queryFn: () => getAll<InspectionTemplate>("/inspection-templates"),
+    enabled: isOpen && !booking,
+  });
   useEffect(() => {
     if (!isOpen) return;
     setCustomerId(booking?.customerId ?? initialCustomerId ?? "");
@@ -77,6 +95,10 @@ export default function BookingModal({
     setName("");
     setPhone("");
     setAddress("");
+    setServiceSiteId(booking?.serviceSiteId ?? "");
+    setServiceAddress(booking?.serviceAddress ?? "");
+    setAccessNotes(booking?.accessNotes ?? "");
+    setInspectionTemplateId("");
     setUnitId(booking?.unitId ?? "");
     setTechnicianId(booking?.technicianId ?? "");
     setServiceType(booking?.serviceType ?? SERVICE_TYPES[0]);
@@ -88,6 +110,8 @@ export default function BookingModal({
     setDuration(String(booking?.durationMinutes ?? 120));
     setPriority(booking?.priority ?? "NORMAL");
     setNotes(booking?.notes ?? "");
+    setOptionalDetailsOpen(Boolean(booking?.accessNotes || booking?.notes));
+    setDirty(false);
     setError("");
     setBranchId(booking?.branchId ?? (!isAdmin ? (user?.branchId ?? "") : ""));
   }, [
@@ -108,6 +132,18 @@ export default function BookingModal({
   const customerUnits = (units.data ?? []).filter(
     (u) => u.customerId === customerId,
   );
+  const customerSites = sites.data ?? [];
+  const selectedUnit = customerUnits.find((unit) => unit.id === unitId);
+  const linkedSiteId = selectedUnit?.serviceSiteId ?? "";
+  const serviceTemplates = (templates.data ?? []).filter(
+    (template) => template.serviceType === serviceType,
+  );
+  const requestClose = () => {
+    if (dirty && !window.confirm("Discard your unsaved booking changes?"))
+      return;
+    setDirty(false);
+    onClose();
+  };
   const mutation = useMutation({
     mutationFn: async () => {
       let resolved = customerId;
@@ -133,48 +169,119 @@ export default function BookingModal({
         notes: notes.trim(),
         serviceType,
       };
-      if (booking) return api.patch("/bookings/" + booking.id, body);
-      return api.post("/bookings", { ...body, customerId: resolved, branchId });
+      const location = {
+        serviceSiteId: serviceSiteId || null,
+        serviceAddress: serviceAddress.trim() || null,
+        accessNotes: accessNotes.trim() || null,
+      };
+      if (booking)
+        return api.patch("/bookings/" + booking.id, { ...body, ...location });
+      return api.post("/bookings", {
+        ...body,
+        ...location,
+        customerId: resolved,
+        branchId,
+        inspectionTemplateId: inspectionTemplateId || null,
+      });
     },
     onSuccess: () => {
       invalidateOperations(client);
+      setDirty(false);
       onClose();
     },
     onError: (err: Error) => setError(err.message),
   });
-  const loadError =
-    customers.error || branches.error || technicians.error || units.error;
+  const blockingLoadError =
+    (mode === "existing" && customers.isError && !customers.data
+      ? customers.error
+      : null) ??
+    (isAdmin && !booking && !branchId && branches.isError
+      ? branches.error
+      : null);
+  const optionalLoadError =
+    technicians.isError ||
+    units.isError ||
+    (mode === "existing" && Boolean(customerId) && sites.isError) ||
+    (!booking && templates.isError) ||
+    (mode === "existing" && customers.isError && !blockingLoadError) ||
+    (isAdmin && !booking && branches.isError && Boolean(branchId));
+  const retryLoadErrors = () => {
+    if (mode === "existing" && customers.isError) void customers.refetch();
+    if (isAdmin && !booking && branches.isError) void branches.refetch();
+    if (technicians.isError) void technicians.refetch();
+    if (units.isError) void units.refetch();
+    if (mode === "existing" && customerId && sites.isError)
+      void sites.refetch();
+    if (!booking && templates.isError) void templates.refetch();
+  };
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={requestClose}
       title={booking ? "Edit booking" : "New booking"}
       subtitle="Plan the visit, equipment and technician in one place."
+      footer={
+        <div className="booking-modal-actions">
+          <Button type="button" variant="secondary" onClick={requestClose}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form="booking-modal-form"
+            loading={mutation.isPending}
+            disabled={Boolean(blockingLoadError)}
+          >
+            Save booking
+          </Button>
+        </div>
+      }
     >
       <form
+        id="booking-modal-form"
         className="form-stack panel-body"
+        onChange={() => setDirty(true)}
         onSubmit={(e) => {
           e.preventDefault();
           setError("");
           mutation.mutate();
         }}
       >
-        {loadError && (
+        {blockingLoadError && (
           <ErrorState
-            error={loadError}
-            onRetry={() => {
-              void customers.refetch();
-              void branches.refetch();
-              void technicians.refetch();
-              void units.refetch();
-            }}
+            error={blockingLoadError}
+            onRetry={retryLoadErrors}
           />
         )}
+        {!blockingLoadError && optionalLoadError && (
+          <div className="notice notice-warning form-load-warning" role="status">
+            <p>
+              Some saved choices could not load. You can still save with a visit
+              address, leave the unit or checklist unselected, and assign a
+              technician later.
+            </p>
+            <Button
+              type="button"
+              variant="secondary"
+              className="btn-small"
+              onClick={retryLoadErrors}
+            >
+              Retry choices
+            </Button>
+          </div>
+        )}
+        <section
+          className="booking-section"
+          aria-labelledby="booking-client-heading"
+        >
+          <h3 id="booking-client-heading" className="booking-section-heading">
+            Client and service site
+          </h3>
         {!booking && (
-          <div className="tab-bar">
+          <div className="tab-bar" role="group" aria-label="Client type">
             <button
               type="button"
               className={mode === "existing" ? "active" : ""}
+              aria-pressed={mode === "existing"}
               onClick={() => setMode("existing")}
             >
               Existing client
@@ -182,6 +289,7 @@ export default function BookingModal({
             <button
               type="button"
               className={mode === "new" ? "active" : ""}
+              aria-pressed={mode === "new"}
               onClick={() => {
                 setMode("new");
                 setUnitId("");
@@ -237,6 +345,9 @@ export default function BookingModal({
               onChange={(e) => {
                 setCustomerId(e.target.value);
                 setUnitId("");
+                setServiceSiteId("");
+                setServiceAddress("");
+                setAccessNotes("");
               }}
             >
               <option value="">Select a client</option>
@@ -249,17 +360,82 @@ export default function BookingModal({
           </Field>
         )}
         <div className="form-grid">
+          {mode === "existing" && customerId && (
+            <Field
+              label="Service site"
+              htmlFor="booking-service-site"
+              hint={
+                sites.isError
+                  ? "Saved sites could not load. Enter the visit address below."
+                  : linkedSiteId
+                  ? "This equipment is linked to the selected service site."
+                  : "Optional. Sites are limited to the selected client."
+              }
+            >
+              <select
+                id="booking-service-site"
+                className={inputClass}
+                value={serviceSiteId}
+                disabled={sites.isLoading || Boolean(linkedSiteId)}
+                onChange={(event) => {
+                  const nextSiteId = event.target.value;
+                  const site = customerSites.find(
+                    (candidate) => candidate.id === nextSiteId,
+                  );
+                  setServiceSiteId(nextSiteId);
+                  setServiceAddress(site?.address ?? "");
+                  setAccessNotes(site?.accessNotes ?? "");
+                  if (site?.accessNotes) setOptionalDetailsOpen(true);
+                }}
+              >
+                <option value="">Use a visit address</option>
+                {serviceSiteId &&
+                  !customerSites.some((site) => site.id === serviceSiteId) && (
+                    <option value={serviceSiteId}>
+                      {selectedUnit?.serviceSite?.name ??
+                        booking?.serviceSite?.name ??
+                        "Saved service site"}
+                    </option>
+                  )}
+                {customerSites.map((site) => (
+                  <option key={site.id} value={site.id}>
+                    {site.name} · {site.address}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
           <Field
             label="Equipment"
             htmlFor="booking-unit"
-            hint="Optional. Register units from the Equipment page."
+            hint="Optional. Register units from Aircon units."
           >
             <select
               id="booking-unit"
               className={inputClass}
               value={unitId}
               disabled={mode === "new" || !customerId}
-              onChange={(e) => setUnitId(e.target.value)}
+              onChange={(event) => {
+                const nextUnitId = event.target.value;
+                const nextUnit = customerUnits.find(
+                  (unit) => unit.id === nextUnitId,
+                );
+                const nextSite =
+                  nextUnit?.serviceSite ??
+                  customerSites.find(
+                    (site) => site.id === nextUnit?.serviceSiteId,
+                  );
+                setUnitId(nextUnitId);
+                setServiceSiteId(nextUnit?.serviceSiteId ?? "");
+                if (nextSite) {
+                  setServiceAddress(nextSite.address);
+                  setAccessNotes(nextSite.accessNotes ?? "");
+                  if (nextSite.accessNotes) setOptionalDetailsOpen(true);
+                } else if (serviceSiteId) {
+                  setServiceAddress("");
+                  setAccessNotes("");
+                }
+              }}
             >
               <option value="">No unit selected</option>
               {customerUnits.map((u) => (
@@ -269,12 +445,43 @@ export default function BookingModal({
               ))}
             </select>
           </Field>
+        </div>
+        <Field
+          label="Service address"
+          htmlFor="booking-service-address"
+          hint={
+            serviceSiteId
+              ? "Using the saved service site address."
+              : "Enter where the technician will perform the visit."
+          }
+        >
+          <input
+            id="booking-service-address"
+            maxLength={500}
+            className={inputClass}
+            value={serviceAddress}
+            readOnly={Boolean(serviceSiteId)}
+            onChange={(event) => setServiceAddress(event.target.value)}
+          />
+        </Field>
+        </section>
+        <section
+          className="booking-section"
+          aria-labelledby="booking-schedule-heading"
+        >
+          <h3 id="booking-schedule-heading" className="booking-section-heading">
+            Schedule and dispatch
+          </h3>
+          <div className="form-grid">
           <Field label="Service type" htmlFor="booking-service">
             <select
               id="booking-service"
               className={inputClass}
               value={serviceType}
-              onChange={(e) => setServiceType(e.target.value)}
+              onChange={(event) => {
+                setServiceType(event.target.value);
+                setInspectionTemplateId("");
+              }}
             >
               {SERVICE_TYPES.map((s) => (
                 <option key={s}>{s}</option>
@@ -300,7 +507,11 @@ export default function BookingModal({
             >
               {[30, 60, 90, 120, 180, 240, 360, 480].map((d) => (
                 <option key={d} value={d}>
-                  {d < 60 ? d + " minutes" : d / 60 + " hours"}
+                  {d < 60
+                    ? d + " minutes"
+                    : d === 60
+                      ? "1 hour"
+                      : d / 60 + " hours"}
                 </option>
               ))}
             </select>
@@ -357,35 +568,73 @@ export default function BookingModal({
               <option value="URGENT">Urgent</option>
             </select>
           </Field>
-        </div>
-        <Field label="Visit notes" htmlFor="booking-notes">
-          <textarea
-            id="booking-notes"
-            rows={3}
-            maxLength={2000}
-            className={inputClass}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Symptoms, access instructions or client requests"
-          />
-        </Field>
+          </div>
+        </section>
+        <details
+          className="booking-optional"
+          open={optionalDetailsOpen}
+          onToggle={(event) => setOptionalDetailsOpen(event.currentTarget.open)}
+        >
+          <summary>
+            <strong>Optional service details</strong>
+            <small>Access notes, inspection checklist and visit notes</small>
+          </summary>
+          <div className="form-stack booking-optional-fields">
+            <Field
+              label="Access notes"
+              htmlFor="booking-access-notes"
+              hint="Gate, parking or entry instructions for the technician."
+            >
+              <textarea
+                id="booking-access-notes"
+                rows={2}
+                maxLength={1000}
+                className={inputClass}
+                value={accessNotes}
+                onChange={(event) => setAccessNotes(event.target.value)}
+              />
+            </Field>
+            {!booking && (
+              <Field
+                label="Inspection checklist"
+                htmlFor="booking-template"
+                hint="Optional. Choose a template explicitly; none is selected automatically."
+              >
+                <select
+                  id="booking-template"
+                  className={inputClass}
+                  value={inspectionTemplateId}
+                  onChange={(event) =>
+                    setInspectionTemplateId(event.target.value)
+                  }
+                >
+                  <option value="">No checklist template</option>
+                  {serviceTemplates.map((template) => (
+                    <option key={template.id} value={template.id}>
+                      {template.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            )}
+            <Field label="Visit notes" htmlFor="booking-notes">
+              <textarea
+                id="booking-notes"
+                rows={3}
+                maxLength={2000}
+                className={inputClass}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Symptoms or client requests"
+              />
+            </Field>
+          </div>
+        </details>
         {error && (
           <p className="notice notice-error" role="alert">
             {error}
           </p>
         )}
-        <div className="form-actions">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            loading={mutation.isPending}
-            disabled={Boolean(loadError)}
-          >
-            Save booking
-          </Button>
-        </div>
       </form>
     </Modal>
   );

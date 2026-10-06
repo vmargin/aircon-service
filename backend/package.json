@@ -19,7 +19,7 @@
     "setup": "prisma generate && prisma migrate deploy && prisma db seed"
   },
   "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "ts-node prisma/seed-demo.ts"
   },
   "author": "Arctic Aircon",
   "license": "MIT",

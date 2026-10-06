@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CreditCard, Printer, Receipt, Search } from "lucide-react";
 import api, { formatCurrency } from "../api/api";
@@ -26,8 +26,15 @@ const cents = (amount: string | number | null | undefined) =>
   Math.round(Number(amount ?? 0) * 100);
 export default function Financials() {
   const client = useQueryClient();
+  const pageSize =
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(max-width: 760px)").matches
+      ? 6
+      : 12;
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"ALL" | PaymentStatus | "REVIEW">("ALL");
+  const [visibleCount, setVisibleCount] = useState(pageSize);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [collect, setCollect] = useState(false);
   const [amount, setAmount] = useState("");
@@ -60,6 +67,10 @@ export default function Financials() {
         .toLowerCase()
         .includes(search.trim().toLowerCase()),
   );
+  const visibleRows = rows.slice(0, visibleCount);
+  useEffect(() => {
+    setVisibleCount(pageSize);
+  }, [search, status, pageSize]);
   const beginPayment = () => {
     if (!selected || selected.needsReview) return;
     setCollect(true);
@@ -151,14 +162,18 @@ export default function Financials() {
               placeholder="Search client or invoice…"
             />
           </div>
+          <span className="record-count muted" role="status" aria-live="polite">
+            Showing {visibleRows.length} of {rows.length} invoices
+          </span>
         </div>
         <div className="tab-bar">
           {(["ALL", "UNPAID", "PARTIAL", "PAID", "REVIEW"] as const).map(
             (s) => (
               <button
-                key={s}
-                className={status === s ? "active" : ""}
-                onClick={() => setStatus(s)}
+              key={s}
+              className={status === s ? "active" : ""}
+              aria-pressed={status === s}
+              onClick={() => setStatus(s)}
               >
                 {s === "ALL"
                   ? "All invoices"
@@ -176,8 +191,9 @@ export default function Financials() {
       </Card>
       <Card>
         {rows.length ? (
-          <div className="table-wrap">
-            <table className="data-table">
+          <>
+          <div className="table-wrap record-table-wrap">
+            <table id="invoice-table" className="data-table">
               <thead>
                 <tr>
                   <th>Invoice / client</th>
@@ -191,7 +207,7 @@ export default function Financials() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((i) => (
+                {visibleRows.map((i) => (
                   <tr key={i.id}>
                     <td>
                       <button
@@ -234,6 +250,85 @@ export default function Financials() {
               </tbody>
             </table>
           </div>
+          <div
+            id="invoice-cards"
+            className="record-card-list"
+            role="list"
+            aria-label="Invoice results"
+          >
+            {visibleRows.map((i) => (
+              <article className="record-card" role="listitem" key={i.id}>
+                <div className="record-card-heading">
+                  <div className="record-card-heading-main">
+                    <button
+                      type="button"
+                      className="record-card-link"
+                      onClick={() => openInvoice(i)}
+                      aria-label={`View invoice for ${i.booking?.customer?.name ?? "client"}`}
+                    >
+                      {i.booking?.customer?.name ?? "Client"}
+                    </button>
+                    <small className="mono">
+                      {"INV-" + i.id.slice(-8).toUpperCase()}
+                    </small>
+                  </div>
+                  {i.needsReview ? (
+                    <span className="badge badge-amber">Needs review</span>
+                  ) : (
+                    <PaymentBadge status={i.paymentStatus} />
+                  )}
+                </div>
+                <p className="record-card-subtitle">
+                  {i.booking?.serviceType ?? "Service invoice"}
+                  {i.booking?.branch?.name && ` · ${i.booking.branch.name}`}
+                </p>
+                <dl className="record-card-details">
+                  <div>
+                    <dt>Issued</dt>
+                    <dd>{manilaDate(i.issuedAt)}</dd>
+                  </div>
+                  <div>
+                    <dt>Amount</dt>
+                    <dd>{formatCurrency(i.amount)}</dd>
+                  </div>
+                  <div>
+                    <dt>Paid</dt>
+                    <dd>
+                      {i.needsReview ? "Unknown" : formatCurrency(i.amountPaid)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Balance</dt>
+                    <dd>
+                      {i.needsReview ? "Unknown" : formatCurrency(i.balance)}
+                    </dd>
+                  </div>
+                </dl>
+                <Button
+                  variant="secondary"
+                  onClick={() => openInvoice(i)}
+                >
+                  View invoice
+                </Button>
+              </article>
+            ))}
+          </div>
+          {visibleRows.length < rows.length && (
+            <div className="record-load-more">
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  setVisibleCount((count) =>
+                    Math.min(count + pageSize, rows.length),
+                  )
+                }
+                aria-controls="invoice-table invoice-cards"
+              >
+                Show next {Math.min(pageSize, rows.length - visibleRows.length)} invoices
+              </Button>
+            </div>
+          )}
+          </>
         ) : (
           <EmptyState
             title="No invoices match"

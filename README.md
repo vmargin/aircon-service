@@ -53,11 +53,13 @@ business software.
 | Page | What you can do |
 | --- | --- |
 | **Dashboard** | Review today's jobs, dispatch, service trends, and attention items. |
+| **Service desk** | Track unscheduled requests, service sites, estimate revisions, approval, and request-to-work-order handoff. |
 | **Calendar / service jobs** | Schedule work, assign technicians, advance the ordered lifecycle, and open field work orders. |
-| **Clients / aircon units** | Keep customer and equipment details, service history, and explicit next-maintenance dates together. |
+| **Clients / aircon units** | Keep customer sites, equipment details, service history, and explicit next-maintenance dates together. |
+| **Inspection templates** | Let organization admins configure checks and measurements for future work orders. |
 | **Parts inventory** | Track branch stock, low-stock levels, restocks, adjustments, and parts used on a work order. |
 | **Invoices & payments** | Issue one invoice per job and record separate dated receipts with exact amounts. |
-| **Reports** | Filter visits and billing by date and branch, review service/technician summaries, see open balances grouped by days since invoice issue, and export billing CSV. Age bands do not imply a due date or overdue status. |
+| **Reports** | Filter visits, billing, parts usage, and saved maintenance dates by date and branch; review service/technician summaries and open balances; export billing CSV. Age bands do not imply a due date or overdue status. |
 | **Theme** | Switch between the deep-teal dark theme and the cool light theme; the browser saves the choice. |
 
 ### Rules the API enforces
@@ -67,6 +69,8 @@ business software.
 - **Booking lifecycle.** `PENDING → CONFIRMED → ON_SITE → COMPLETED`, with
   cancellation allowed from any open state. Completed and cancelled are final,
   so a job can't skip dispatch or be reopened.
+- Field work may be completed before billing. A completed job can still receive
+  its one invoice afterward, and the completed service record cannot be deleted.
 - **A technician can only be assigned to their own branch's jobs.**
 - **One invoice per booking**, amounts stored as `Decimal(12,2)` (never floats).
 - **Payment only moves forward.** `UNPAID → PARTIAL → PAID`, and `PAID` is
@@ -98,8 +102,10 @@ start:  npm run db:deploy --prefix backend && npm start
 ```
 
 The start command applies migrations, then boots the server, which serves both
-the API and the frontend on the same port. Seed the demo users once with
-`npm run db:seed --prefix backend`.
+the API and the frontend on the same port. Do not run the demo seed against a
+hosted or production database. Create production accounts through the
+organization's separately approved provisioning process; `db:seed` is guarded
+for the isolated local `arctic_dev` demo database only.
 
 Check `/health` after deploying — it returns `MISCONFIGURED` and names any
 missing variable rather than failing silently.
@@ -113,15 +119,15 @@ npm run typecheck                    # both packages
 npm test                             # backend unit tests
 npm run build                        # production build of both
 npm run db:studio --prefix backend   # browse the database
-npm run db:reset --prefix backend    # wipe, re-migrate, re-seed
+npm run test:integration             # isolated .local arctic_test database
 ```
 
 ## Layout
 
 ```
 backend/
-  prisma/schema.prisma    # data model, single squashed migration
-  prisma/seed.ts          # idempotent demo data
+  prisma/schema.prisma    # data model and additive migration history
+  prisma/seed-demo.ts     # guarded, additive local demo data
   src/routes/             # all endpoints, one file
   src/controllers/        # request handling + validation (zod)
   src/lib/tenancy.ts      # the org/branch scoping rules
@@ -136,6 +142,7 @@ frontend/
 
 ## Deliberately not built yet
 
-Public/customer-facing booking, inventory tracking, technician mobile app,
-email/SMS notifications, PDF invoice export. The database and API are shaped to
-allow them, but nothing half-finished ships in this repo.
+Public/customer-facing booking, advanced inventory purchasing/transfers/truck
+stock, technician mobile app, email/SMS notifications, and PDF invoice export.
+Branch stock, job part usage, service requests, estimates, work orders, invoices,
+and payment records are implemented in this app.

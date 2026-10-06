@@ -2,12 +2,12 @@ import { Request, Response } from 'express';
 import { BookingStatus, Prisma } from '@prisma/client';
 import prisma from '../db/prisma';
 import { requireUser } from '../middleware/auth';
-import { branchScopedWhere, isBranchScoped } from '../lib/tenancy';
+import { branchScopedUnitWhere, branchScopedWhere, isBranchScoped } from '../lib/tenancy';
 import { BOOKING_INCLUDE, serializeBooking } from '../lib/bookingView';
 import { serializeInvoice } from '../lib/money';
 import { invoiceScopedWhere } from './invoiceController';
 import { parsePagination, toPage } from '../lib/pagination';
-import { TERMINAL_STATUSES } from '../lib/dispatch';
+import { attentionBookingWhere } from '../lib/bookingAttention';
 
 export function manilaDay(date = new Date()) {
     const day = new Date(date.getTime() + 8 * 60 * 60_000).toISOString().slice(0, 10);
@@ -42,7 +42,7 @@ export const getOverview = async (req: Request, res: Response) => {
     const [allGroups, todayGroups, attentionJobs, todayJobs, technicians, ledgerTotals, receipts, legacyPaid, legacyUnpaid, reviewCount, activity, inventory, dueUnits, recentInvoices, monthJobs, monthReceipts] = await Promise.all([
         prisma.booking.groupBy({ by: ['status'], where: scope, _count: { _all: true } }),
         prisma.booking.groupBy({ by: ['status'], where: dayWhere, _count: { _all: true } }),
-        prisma.booking.count({ where: { ...scope, status: { notIn: TERMINAL_STATUSES }, OR: [{ priority: { in: ['HIGH', 'URGENT'] } }, { scheduledAt: { lt: now } }] } }),
+        prisma.booking.count({ where: { ...scope, ...attentionBookingWhere(now) } }),
         prisma.booking.findMany({ where: dayWhere, include: BOOKING_INCLUDE, orderBy: { scheduledAt: 'asc' }, take: 200 }),
         prisma.technician.findMany({ where: { ...scope, isActive: true }, include: { branch: true, _count: { select: { bookings: { where: { scheduledAt: { gte: start, lt: end }, status: { not: BookingStatus.CANCELLED } } } } } }, orderBy: { name: 'asc' }, take: 200 }),
         prisma.invoice.aggregate({ where: { ...invoiceScope, ledgerEnabled: true }, _sum: { amount: true } }),
@@ -52,7 +52,14 @@ export const getOverview = async (req: Request, res: Response) => {
         prisma.invoice.count({ where: { ...invoiceScope, ledgerEnabled: false, paymentStatus: 'PARTIAL' } }),
         prisma.auditLog.findMany({ where: { user: { organizationId: user.orgId }, ...(branchId ? { branchId } : {}) }, include: { user: { select: { email: true } } }, orderBy: { createdAt: 'desc' }, take: 8 }),
         prisma.inventoryItem.findMany({ where: { ...scope, quantityOnHand: { lte: prisma.inventoryItem.fields.reorderLevel } }, include: { branch: true }, orderBy: { quantityOnHand: 'asc' }, take: 8 }),
-        prisma.unit.findMany({ where: { organizationId: user.orgId, nextMaintenanceAt: { lte: new Date(end.getTime() + 7 * 24 * 60 * 60_000) } }, include: { customer: true }, orderBy: { nextMaintenanceAt: 'asc' }, take: 8 }),
+        prisma.unit.findMany({
+            where: {
+                organizationId: user.orgId,
+                nextMaintenanceAt: { lte: new Date(end.getTime() + 7 * 24 * 60 * 60_000) },
+                ...(isBranchScoped(user) ? { AND: [branchScopedUnitWhere(user)] } : {}),
+            },
+            include: { customer: true }, orderBy: { nextMaintenanceAt: 'asc' }, take: 8,
+        }),
         prisma.invoice.findMany({ where: invoiceScope, include: { payments: true, booking: { include: { customer: true, branch: true } } }, orderBy: { issuedAt: 'desc' }, take: 6 }),
         prisma.$queryRaw<{ key: string; completed: bigint; scheduled: bigint; inProgress: bigint }[]>`
             SELECT to_char(b."scheduledAt" AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Manila', 'YYYY-MM') AS key,

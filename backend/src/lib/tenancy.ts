@@ -1,7 +1,7 @@
 import prisma from '../db/prisma';
 import { UserRole, Prisma } from '@prisma/client';
 import { AuthUser } from '../types';
-import { ForbiddenError, NotFoundError } from '../middleware/errorHandler';
+import { ForbiddenError, NotFoundError, ValidationError } from '../middleware/errorHandler';
 
 /**
  * TENANT SCOPING HELPERS
@@ -29,6 +29,74 @@ export function branchScopedWhere(user: AuthUser) {
     return isBranchScoped(user)
         ? { branchId: user.branchId, branch: { organizationId: user.orgId } }
         : { branch: { organizationId: user.orgId } };
+}
+
+/**
+ * Unit records have no branch column. A linked branch-owned service site is
+ * authoritative; a unit without one is visible to a branch only when its
+ * recorded service activity points exclusively to that branch.
+ */
+export function branchScopedUnitWhere(user: AuthUser): Prisma.UnitWhereInput {
+    if (!isBranchScoped(user)) return {};
+
+    const { branchId, orgId } = user;
+    return {
+        OR: [
+            { serviceSite: { is: { organizationId: orgId, branchId } } },
+            {
+                AND: [
+                    {
+                        OR: [
+                            { serviceSiteId: null },
+                            { serviceSite: { is: { organizationId: orgId, branchId: null } } },
+                        ],
+                    },
+                    {
+                        OR: [
+                            { bookings: { some: { branchId } } },
+                            { serviceRequests: { some: { organizationId: orgId, branchId } } },
+                        ],
+                    },
+                    { bookings: { none: { branchId: { not: branchId } } } },
+                    { serviceRequests: { none: { branchId: { not: branchId } } } },
+                ],
+            },
+        ],
+    };
+}
+
+/** Keep a service-site ownership change from racing a new unit/job assignment. */
+export async function lockServiceSiteForLink(db: Prisma.TransactionClient, serviceSiteId: string) {
+    await db.$queryRaw`SELECT "id" FROM "ServiceSite" WHERE "id" = ${serviceSiteId} FOR SHARE`;
+}
+
+/** Resolve a customer's unit only when it is visible under the caller's branch rules. */
+export async function assertUnitInScope(
+    user: AuthUser,
+    customerId: string,
+    unitId: string | null | undefined,
+    db: Prisma.TransactionClient = prisma,
+) {
+    if (!unitId) return null;
+    await db.$queryRaw`SELECT "id" FROM "Unit" WHERE "id" = ${unitId} FOR SHARE`;
+
+    const where: Prisma.UnitWhereInput = {
+        id: unitId,
+        organizationId: user.orgId,
+        customerId,
+        ...branchScopedUnitWhere(user),
+    };
+    let unit = await db.unit.findFirst({ where });
+    if (!unit) throw new ValidationError('Choose a unit registered to this customer and service branch.');
+
+    // A site can move while the first read is in flight. Lock it, then re-read
+    // the unit scope so a stale branch assignment cannot be linked to new work.
+    if (unit.serviceSiteId) {
+        await lockServiceSiteForLink(db, unit.serviceSiteId);
+        unit = await db.unit.findFirst({ where });
+        if (!unit) throw new ValidationError('Choose a unit registered to this customer and service branch.');
+    }
+    return unit;
 }
 
 /**
