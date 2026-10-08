@@ -271,21 +271,25 @@ export default function Inventory() {
         {!rows.length ? (
           <EmptyState
             title={
-              lowOnly
-                ? "Stock levels are healthy"
-                : search
-                  ? "No matching parts"
+              search
+                ? "No matching parts"
+                : lowOnly
+                  ? scoped.length === 0
+                    ? "No parts recorded for this branch"
+                    : "No low-stock parts"
                   : "Build your parts catalog"
             }
             message={
-              lowOnly
-                ? "No matching items are at or below their reorder level."
-                : search
-                  ? "Try another part name or SKU."
+              search
+                ? "Try another part name or SKU."
+                : lowOnly
+                  ? scoped.length === 0
+                    ? "Add parts to this branch to track stock and receive low-stock alerts."
+                    : "Recorded parts are above their reorder levels."
                   : "Add stock to record parts used on work orders."
             }
             action={
-              !search && !lowOnly ? (
+              !search && (!lowOnly || scoped.length === 0) ? (
                 <Button onClick={open}>Add inventory item</Button>
               ) : undefined
             }

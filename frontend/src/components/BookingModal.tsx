@@ -324,7 +324,7 @@ export default function BookingModal({
                 onChange={(e) => setPhone(e.target.value)}
               />
             </Field>
-            <Field label="Service address" htmlFor="booking-client-address">
+            <Field label="Client address" htmlFor="booking-client-address">
               <input
                 id="booking-client-address"
                 maxLength={300}

@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { databaseUrlForRuntime } from './databaseUrl';
 
 /**
  * PRISMA CLIENT SINGLETON
@@ -8,7 +9,11 @@ import { PrismaClient } from '@prisma/client';
  * connection pool exhaustion.
  */
 
+const isServerless = process.env.VERCEL === '1' || Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME);
+const datasourceUrl = databaseUrlForRuntime(process.env.DATABASE_URL, isServerless);
+
 const prisma = new PrismaClient({
+    ...(datasourceUrl ? { datasourceUrl } : {}),
     log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
 });
 

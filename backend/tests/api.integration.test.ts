@@ -666,13 +666,21 @@ integration('HTTP domain integration (isolated PostgreSQL)', () => {
         expect((await request(`/service-sites/${movedSite.data.id}`, { branchId: otherBranchId }, 'PATCH')).status).toBe(409);
         expect((await request(`/units/${unitId}`, { serviceSiteId: foreignSite.data.id }, 'PATCH')).status).toBe(409);
 
-        const conversion = await request('/service-requests/' + requestId + '/convert', {
+        const conversionBody = {
             scheduledAt: '2030-02-05T01:00:00.000Z',
             technicianId,
             durationMinutes: 120,
             inspectionTemplateId: template.data.id,
-        });
-        expect(conversion.status).toBe(201);
+        };
+        const conversionAttempts = await Promise.all([
+            request('/service-requests/' + requestId + '/convert', conversionBody),
+            request('/service-requests/' + requestId + '/convert', conversionBody),
+        ]);
+        expect(conversionAttempts.map((attempt: any) => attempt.status).sort((a: number, b: number) => a - b)).toEqual([200, 201]);
+        const conversion = conversionAttempts.find((attempt: any) => attempt.status === 201)!;
+        const replay = conversionAttempts.find((attempt: any) => attempt.status === 200)!;
+        expect(replay.data.id).toBe(conversion.data.id);
+        expect(await db.booking.count({ where: { serviceRequestId: requestId } })).toBe(1);
         const bookingId = conversion.data.id;
         expect(conversion.data).toMatchObject({ status: 'PENDING', estimateRevisionId: estimate.data.id });
         expect(conversion.data.serviceRequest).toMatchObject({

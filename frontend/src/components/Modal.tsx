@@ -9,6 +9,7 @@ const Modal = ({
   footer,
   maxWidth = "md",
   className = "",
+  initialFocusRef,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -18,6 +19,7 @@ const Modal = ({
   footer?: React.ReactNode;
   maxWidth?: "sm" | "md" | "lg";
   className?: string;
+  initialFocusRef?: React.RefObject<HTMLElement | null>;
 }) => {
   const ref = useRef<HTMLDialogElement>(null);
   const closeRef = useRef(onClose);
@@ -29,12 +31,13 @@ const Modal = ({
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     if (!dialog.open) dialog.showModal();
+    initialFocusRef?.current?.focus();
     return () => {
       dialog.close();
       document.body.style.overflow = previous;
       active?.focus();
     };
-  }, [isOpen]);
+  }, [initialFocusRef, isOpen]);
   if (!isOpen) return null;
   return (
     <dialog

@@ -624,6 +624,6 @@ export const convertServiceRequest = async (req: Request, res: Response) => {
         await auditInTransaction(tx, req, 'BOOKING_CREATE', 'booking', created.id, created.branchId, `${created.serviceType} for ${created.customer.name}`);
         createdNew = true;
         return created;
-    });
+    }, { maxWait: 10_000, timeout: 15_000 });
     res.status(createdNew ? 201 : 200).json(serializeBooking(booking));
 };

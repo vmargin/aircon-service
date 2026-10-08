@@ -156,6 +156,37 @@ export default function ServiceDesk() {
   const selectedRequest =
     requests.data?.find((request) => request.id === selectedId) ??
     (selectedSnapshot?.id === selectedId ? selectedSnapshot : null);
+  const storeRequest = (request: ServiceRequest) => {
+    setSelectedSnapshot(request);
+    client.setQueryData<ServiceRequest[]>(["service-requests"], (current) =>
+      current?.map((item) => (item.id === request.id ? request : item)),
+    );
+  };
+  const storeRevision = (requestId: string, revision: EstimateRevision) => {
+    const request =
+      selectedSnapshot?.id === requestId
+        ? selectedSnapshot
+        : requests.data?.find((item) => item.id === requestId);
+    if (!request) return;
+
+    const previousEstimate = request.estimate;
+    const revisions = [
+      revision,
+      ...(previousEstimate?.revisions ?? []).filter((item) => item.id !== revision.id),
+    ].sort((left, right) => right.revisionNumber - left.revisionNumber);
+    const updated: ServiceRequest = {
+      ...request,
+      status: revision.status === "APPROVED" ? "READY_TO_SCHEDULE" : request.status,
+      estimate: {
+        id: previousEstimate?.id ?? revision.estimateId,
+        serviceRequestId: request.id,
+        revisions,
+        createdAt: previousEstimate?.createdAt ?? revision.createdAt,
+        updatedAt: previousEstimate?.updatedAt ?? revision.createdAt,
+      },
+    };
+    storeRequest(updated);
+  };
   const queryError = requests.error || customers.error || (isAdmin ? branches.error : null);
 
   const visibleRequests = useMemo(() => {
@@ -198,7 +229,7 @@ export default function ServiceDesk() {
       return data;
     },
     onSuccess: (request) => {
-      setSelectedSnapshot(request);
+      storeRequest(request);
       setActionError("");
       invalidateServiceDesk(client);
     },
@@ -264,14 +295,15 @@ export default function ServiceDesk() {
   });
 
   const approve = useMutation({
-    mutationFn: async (values: { revisionId: string; method: EstimateApprovalMethod; contact: string; note: string }) => {
+    mutationFn: async (values: { requestId: string; revisionId: string; method: EstimateApprovalMethod; contact: string; note: string }) => {
       const { data } = await api.post<EstimateRevision>(
         `/estimate-revisions/${values.revisionId}/approve`,
         { method: values.method, contact: values.contact.trim(), note: values.note.trim() || null },
       );
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (revision, values) => {
+      storeRevision(values.requestId, revision);
       setActionError("");
       invalidateServiceDesk(client);
       setNotice("Estimate approval recorded. The request is ready to schedule.");
@@ -280,9 +312,12 @@ export default function ServiceDesk() {
   });
 
   const decline = useMutation({
-    mutationFn: async (values: { revisionId: string; note: string }) =>
-      api.post(`/estimate-revisions/${values.revisionId}/decline`, { note: values.note.trim() || null }),
-    onSuccess: () => {
+    mutationFn: async (values: { requestId: string; revisionId: string; note: string }) => {
+      const { data } = await api.post<EstimateRevision>(`/estimate-revisions/${values.revisionId}/decline`, { note: values.note.trim() || null });
+      return data;
+    },
+    onSuccess: (revision, values) => {
+      storeRevision(values.requestId, revision);
       setActionError("");
       invalidateServiceDesk(client);
       setNotice("Estimate decision recorded.");
@@ -291,9 +326,12 @@ export default function ServiceDesk() {
   });
 
   const sendEstimate = useMutation({
-    mutationFn: async (revisionId: string) =>
-      api.post(`/estimate-revisions/${revisionId}/send`),
-    onSuccess: () => {
+    mutationFn: async (values: { requestId: string; revisionId: string }) => {
+      const { data } = await api.post<EstimateRevision>(`/estimate-revisions/${values.revisionId}/send`);
+      return data;
+    },
+    onSuccess: (revision, values) => {
+      storeRevision(values.requestId, revision);
       setActionError("");
       invalidateServiceDesk(client);
       setNotice("Estimate marked as sent. Record the customer’s decision when they respond.");
@@ -601,9 +639,9 @@ export default function ServiceDesk() {
           sending={sendEstimate.isPending}
           onClose={() => { setDialog(null); setActionError(""); }}
           onSave={(values) => requestUpdate.mutate({ request: selectedRequest, ...values })}
-          onSend={(revisionId) => sendEstimate.mutate(revisionId)}
-          onApprove={(values) => approve.mutate(values)}
-          onDecline={(values) => decline.mutate(values)}
+          onSend={(revisionId) => sendEstimate.mutate({ requestId: selectedRequest.id, revisionId })}
+          onApprove={(values) => approve.mutate({ requestId: selectedRequest.id, ...values })}
+          onDecline={(values) => decline.mutate({ requestId: selectedRequest.id, ...values })}
           onEditEstimate={() => { setActionError(""); setDialog("estimate"); }}
           onConvert={() => { setActionError(""); setDialog("convert"); }}
           canConvert={canConvert}
@@ -622,7 +660,7 @@ export default function ServiceDesk() {
             try {
               const { data } = await api.post<EstimateRevision>(`/service-requests/${selectedRequest.id}/estimate`, values);
               setActionError("");
-              setSelectedSnapshot({ ...selectedRequest, estimate: {
+              storeRequest({ ...selectedRequest, estimate: {
                 id: selectedRequest.estimate?.id ?? data.estimateId,
                 serviceRequestId: selectedRequest.id,
                 revisions: [data, ...(selectedRequest.estimate?.revisions ?? []).filter((revision) => revision.id !== data.id)],
@@ -646,10 +684,11 @@ export default function ServiceDesk() {
           technicians={(technicians.data ?? []).filter((technician) => technician.branchId === selectedRequest.branchId && technician.isActive)}
           templates={(templates.data ?? []).filter((template) => template.serviceType === selectedRequest.serviceType)}
           loading={convert.isPending}
-          error={actionError || (templates.isError ? templates.error.message : "")}
-          onRetryTemplates={() => void templates.refetch()}
+          error={actionError}
+          templateError={templates.isError ? templates.error.message : ""}
+          onRetryTemplates={() => { setActionError(""); void templates.refetch(); }}
           onClose={() => { setDialog("request-detail"); setActionError(""); }}
-          onSubmit={(values) => convert.mutate({ requestId: selectedRequest.id, ...values })}
+          onSubmit={(values) => { setActionError(""); convert.mutate({ requestId: selectedRequest.id, ...values }); }}
         />
       )}
     </div>
@@ -1323,6 +1362,7 @@ function ConvertDialog({
   templates,
   loading,
   error,
+  templateError,
   onRetryTemplates,
   onClose,
   onSubmit,
@@ -1333,6 +1373,7 @@ function ConvertDialog({
   templates: InspectionTemplate[];
   loading: boolean;
   error: string;
+  templateError: string;
   onRetryTemplates: () => void;
   onClose: () => void;
   onSubmit: (values: { scheduledAt: string; technicianId: string; durationMinutes: number; inspectionTemplateId: string }) => void;
@@ -1364,7 +1405,7 @@ function ConvertDialog({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Schedule service job" subtitle={`${shortRequestNumber(request.id)} · ${request.customer?.name ?? "Client"}`} maxWidth="md">
       <form className="form-stack panel-body" onSubmit={submit}>
-        {(error || localError) && <p className="notice notice-error" role="alert">{error || localError}</p>}
+        {(error || templateError || localError) && <p className="notice notice-error" role="alert">{error || templateError || localError}</p>}
         <div className="notice">
           <strong>{request.serviceType}</strong> at {request.serviceAddress}
           {request.preferredWindowStart && request.preferredWindowEnd && <div>Preferred: {formatDate(request.preferredWindowStart, true)} to {formatDate(request.preferredWindowEnd, true)}</div>}
@@ -1391,10 +1432,10 @@ function ConvertDialog({
             {templates.map((template) => <option value={template.id} key={template.id}>{template.name}</option>)}
           </select>
         </Field>
-        {templates.length === 0 && !error && <p className="muted">No active template is available for {request.serviceType}.</p>}
+        {templates.length === 0 && !templateError && <p className="muted">No active template is available for {request.serviceType}.</p>}
         <div className="form-actions">
           <Button variant="secondary" type="button" onClick={onClose}>Back to request</Button>
-          {error && <Button variant="secondary" type="button" onClick={onRetryTemplates}>Retry templates</Button>}
+          {templateError && <Button variant="secondary" type="button" onClick={onRetryTemplates}>Retry templates</Button>}
           <Button type="submit" loading={loading}><CalendarClock size={15} /> Create work order</Button>
         </div>
       </form>

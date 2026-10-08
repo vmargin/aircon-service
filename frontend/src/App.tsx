@@ -123,6 +123,7 @@ function SearchDialog({
   onJob: (id: string) => void;
 }) {
   const [search, setSearch] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const result = useQuery({
     queryKey: ["global-search"],
@@ -161,18 +162,19 @@ function SearchDialog({
       title="Search service jobs and clients"
       subtitle="Search by work-order ID, client, service, or phone"
       className="search-dialog"
+      initialFocusRef={searchInputRef}
     >
       <div className="search-modal-content">
         <label className="sr-only" htmlFor="global-query">
           Search service jobs and clients
         </label>
         <input
+          ref={searchInputRef}
           id="global-query"
           className="field-input"
           placeholder="Client, WO-XXXXXXXX, service or phone…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          autoFocus
         />
         {result.isLoading ? (
           <Spinner label="Finding your records…" />

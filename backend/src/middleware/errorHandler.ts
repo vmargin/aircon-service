@@ -94,8 +94,10 @@ function fromPrisma(err: unknown): AppError | null {
       case 'P2025':
         return new NotFoundError('Record not found.');
       case 'P2034':
-      case 'P2028':
         return new ConflictError('This record is being updated. Please try again.');
+      case 'P2024':
+      case 'P2028':
+        return new AppError('The database is busy completing this change. Please retry in a moment.', 503);
       default:
         break;
     }
@@ -132,6 +134,7 @@ export function errorHandler(
       userId: req.user?.userId,
       orgId: req.user?.orgId,
       message: rawMessage,
+      ...(err instanceof Prisma.PrismaClientKnownRequestError ? { errorCode: err.code } : {}),
       body: redact(req.body),
       ...(isServerError && process.env.NODE_ENV !== 'production'
         ? { stack: err instanceof Error ? err.stack : undefined }
@@ -139,11 +142,15 @@ export function errorHandler(
     })
   );
 
-  // Never leak internal messages/stack traces to clients on a 500.
-  const message = isServerError
-    ? 'Internal server error'
-    : mapped?.message ?? rawMessage;
+  // Keep unexpected 5xx failures opaque, while retaining the safe retry guidance
+  // explicitly mapped for temporary database availability errors.
+  const message = status === 503
+    ? mapped?.message ?? 'Service temporarily unavailable. Please retry in a moment.'
+    : isServerError
+      ? 'Internal server error'
+      : mapped?.message ?? rawMessage;
 
+  if (status === 503) res.setHeader('Retry-After', '1');
   res.status(status).json({
     error: message,
     ...(mapped?.details ? { details: mapped.details } : {}),
