@@ -129,6 +129,24 @@ export default function BookingModal({
   const availableTechs = (technicians.data ?? []).filter(
     (t) => t.branchId === branchId && t.isActive,
   );
+  const assignedTechnician = booking?.technician ?? null;
+  const assignedTechnicianMissingFromChoices = Boolean(
+    assignedTechnician &&
+      assignedTechnician.id === technicianId &&
+      !availableTechs.some((technician) => technician.id === technicianId),
+  );
+  const assignedTechnicianBranch = assignedTechnician
+    ? branches.data?.find((branch) => branch.id === assignedTechnician.branchId)
+    : undefined;
+  const selectedBranch = branches.data?.find((branch) => branch.id === branchId);
+  const crossBranchTechnician = Boolean(
+    assignedTechnician &&
+      assignedTechnician.id === technicianId &&
+      assignedTechnician.branchId !== branchId,
+  );
+  const technicianHint = crossBranchTechnician
+    ? `${assignedTechnician?.name} belongs to ${assignedTechnicianBranch?.name ?? "another branch"}, not ${selectedBranch?.name ?? "this branch"}. Choose “Assign later” or a technician from ${selectedBranch?.name ?? "this branch"} before saving.`
+    : "Overlapping visits are checked before saving.";
   const customerUnits = (units.data ?? []).filter(
     (u) => u.customerId === customerId,
   );
@@ -229,7 +247,7 @@ export default function BookingModal({
             type="submit"
             form="booking-modal-form"
             loading={mutation.isPending}
-            disabled={Boolean(blockingLoadError)}
+            disabled={Boolean(blockingLoadError || crossBranchTechnician)}
           >
             Save booking
           </Button>
@@ -539,7 +557,7 @@ export default function BookingModal({
           <Field
             label="Technician"
             htmlFor="booking-technician"
-            hint="Overlapping visits are checked before saving."
+            hint={technicianHint}
           >
             <select
               id="booking-technician"
@@ -549,6 +567,16 @@ export default function BookingModal({
               onChange={(e) => setTechnicianId(e.target.value)}
             >
               <option value="">Assign later</option>
+              {assignedTechnicianMissingFromChoices && assignedTechnician && (
+                <option value={assignedTechnician.id} disabled>
+                  {assignedTechnician.name} ·{" "}
+                  {crossBranchTechnician
+                    ? `outside ${assignedTechnicianBranch?.name ?? "this branch"}`
+                    : !assignedTechnician.isActive
+                      ? "inactive"
+                      : "unavailable"}
+                </option>
+              )}
               {availableTechs.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name}
