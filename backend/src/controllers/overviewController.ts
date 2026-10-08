@@ -70,7 +70,7 @@ export const getOverview = async (req: Request, res: Response) => {
             WHERE br."organizationId" = ${user.orgId} AND (${branchId}::text IS NULL OR b."branchId" = ${branchId})
                 AND b."scheduledAt" >= ${months[0].date}
             GROUP BY key`,
-        prisma.$queryRaw<{ key: string; collected: Prisma.Decimal }[]>`
+        prisma.$queryRaw<{ key: string; collected: Prisma.Decimal | number }[]>`
             SELECT to_char(r.received AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Manila', 'YYYY-MM') AS key, sum(r.amount) AS collected
             FROM (
                 SELECT p.amount, p."createdAt" AS received, i."bookingId" FROM "Payment" p JOIN "Invoice" i ON i.id = p."invoiceId"
@@ -88,7 +88,7 @@ export const getOverview = async (req: Request, res: Response) => {
     res.json({
         summary: { scheduledJobs: todayGroups.reduce((sum, group) => sum + (group.status === BookingStatus.CANCELLED ? 0 : group._count._all), 0), completedJobs: todayCount(BookingStatus.COMPLETED), inProgressJobs: todayCount(BookingStatus.ON_SITE), attentionJobs, collected: collected.toFixed(2), outstanding: outstanding.toFixed(2), totalJobs, completionRate: totalJobs - cancelled > 0 ? Math.round(allCompleted / (totalJobs - cancelled) * 100) : 0, needsReviewInvoices: reviewCount },
         todayJobs: todayJobs.map(serializeBooking), technicians: technicians.map((technician) => ({ ...technician, todayJobs: technician._count.bookings })),
-        monthlyService: months.map((month) => { const job = monthJobs.find((row) => row.key === month.key); return { month: month.month, completed: Number(job?.completed ?? 0), scheduled: Number(job?.scheduled ?? 0), inProgress: Number(job?.inProgress ?? 0), collected: monthReceipts.find((row) => row.key === month.key)?.collected.toNumber() ?? 0 }; }),
+        monthlyService: months.map((month) => { const job = monthJobs.find((row) => row.key === month.key); return { month: month.month, completed: Number(job?.completed ?? 0), scheduled: Number(job?.scheduled ?? 0), inProgress: Number(job?.inProgress ?? 0), collected: Number(monthReceipts.find((row) => row.key === month.key)?.collected ?? 0) }; }),
         activity, lowStock: inventory.map((item) => ({ ...item, unitCost: item.unitCost.toFixed(2) })), dueUnits,
         recentInvoices: recentInvoices.map(serializeInvoice),
     });
